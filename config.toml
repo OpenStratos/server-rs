@@ -1,0 +1,19 @@
+# Debug mode
+debug =  true
+
+# Data directory.
+data_dir = "data"
+
+# Static pictures dimensions, in pixels.
+picture_height = 2464
+picture_width = 3280
+# Configuration options for EXIF information in pictures.
+exif = true
+
+# Video dimensions, in pixels.
+video_width = 1920
+video_height = 1080
+# Video framerate.
+video_fps = 30
+
+# TODO pins and so on.

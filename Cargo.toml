@@ -1,0 +1,19 @@
+[package]
+name = "openstratos-server"
+version = "2.0.0-dev"
+authors = ["Razican <razican@protonmail.ch>"]
+
+[dependencies]
+error-chain = "0.10"
+lazy_static = "0.2"
+toml = "0.3"
+serde = "0.9"
+serde_derive = "0.9"
+log = "0.3"
+colored = "1.4"
+chrono = "0.3"
+
+[dependencies.log4rs]
+version = "0.6"
+default_features = false
+features = ["file", "file_appender", "console_appender", "threshold_filter"]
