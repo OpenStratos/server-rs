@@ -51,10 +51,6 @@ script:
   - cargo build
   - cargo package
   - cargo test
-  - cargo build --features beta
-  - cargo test --features beta
-  - cargo build --features unstable
-  - cargo test --features unstable
   - |
       if [[ "$TRAVIS_RUST_VERSION" == "nightly" && $CLIPPY ]]; then
         cargo clippy
