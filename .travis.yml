@@ -1,10 +1,8 @@
 language: rust
-# cache: cargo
+cache: cargo
 dist: trusty
 sudo: true
-os:
-  - linux
-  - osx
+os: linux
 addons:
   apt:
     packages:
