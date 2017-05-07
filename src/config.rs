@@ -18,7 +18,7 @@ lazy_static! {
     /// Configuration object.
     pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
         Err(e) => {
-            print_system_failure(e, "Error loading configuration");
+            print_system_failure(&e, "Error loading configuration");
             panic!();
         },
         Ok(c) => c,
@@ -28,7 +28,7 @@ lazy_static! {
 /// Configuration object.
 #[derive(Debug, Deserialize)]
 pub struct Config {
-    debug: bool,
+    debug: Option<bool>,
     video: Video,
     picture: Picture,
     camera_rotation: Option<u16>,
@@ -74,6 +74,72 @@ impl Config {
             errors.push_str(
                 &format!("picture height must be below or equal to 2464px, found {}px\n",
                          self.picture.height));
+        }
+
+        if self.picture.quality > 100 {
+            ok = false;
+            errors.push_str(
+                &format!("picture quality must be a number between 0 and 100, found {}px\n",
+                         self.picture.quality));
+        }
+
+        if let Some(b @ 101...u8::MAX) = self.picture.brightness {
+            ok = false;
+            errors.push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
+                                     b));
+        }
+
+        match self.picture.contrast {
+            Some(c @ i8::MIN...-101) |
+            Some(c @ 101...i8::MAX) => {
+                ok = false;
+                errors.push_str(&format!("picture contrast must be between -100 and 100, found \
+                                          {}\n",
+                                         c));
+            }
+            _ => {}
+        }
+
+        match self.picture.sharpness {
+            Some(s @ i8::MIN...-101) |
+            Some(s @ 101...i8::MAX) => {
+                ok = false;
+                errors.push_str(&format!("picture sharpness must be between -100 and 100, found \
+                                          {}\n",
+                                         s));
+            }
+            _ => {}
+        }
+
+        match self.picture.saturation {
+            Some(s @ i8::MIN...-101) |
+            Some(s @ 101...i8::MAX) => {
+                ok = false;
+                errors.push_str(&format!("picture saturation must be between -100 and 100, found \
+                                          {}\n",
+                                         s));
+            }
+            _ => {}
+        }
+
+        match self.picture.iso {
+            Some(i @ 0...99) |
+            Some(i @ 801...u16::MAX) => {
+                ok = false;
+                errors.push_str(&format!("picture ISO must be between 100 and 800, found {}\n", i));
+            }
+            _ => {}
+        }
+
+        match self.picture.ev {
+            Some(e @ i8::MIN...-11) |
+            Some(e @ 11...i8::MAX) => {
+                ok = false;
+                errors.push_str(&format!("picture EV compensation must be between -10 and 10, \
+                                          found {}\n",
+                                         e));
+            }
+            _ => {}
         }
 
         // Check for video configuration errors.
@@ -179,7 +245,7 @@ impl Config {
 
     /// Gets wether OpenStratos should run in debug mode.
     pub fn debug(&self) -> bool {
-        self.debug
+        self.debug == Some(true)
     }
 
     /// Gets the configuration for video.
@@ -210,7 +276,7 @@ pub struct Video {
     width: u16,
     fps: u8,
     bitrate: u32,
-    exposure: Exposure,
+    exposure: Option<Exposure>,
     brightness: Option<u8>,
     contrast: Option<i8>,
     sharpness: Option<i8>,
@@ -218,6 +284,7 @@ pub struct Video {
     iso: Option<u16>,
     stabilization: Option<bool>,
     ev: Option<i8>,
+    white_balance: Option<WhiteBalance>,
 }
 
 impl Video {
@@ -242,7 +309,7 @@ impl Video {
     }
 
     /// Gets the configured exposure for videos.
-    pub fn exposure(&self) -> Exposure {
+    pub fn exposure(&self) -> Option<Exposure> {
         self.exposure
     }
 
@@ -275,6 +342,16 @@ impl Video {
     pub fn stabilization(&self) -> bool {
         self.stabilization == Some(true)
     }
+
+    /// Gets the configured EV compensation for videos.
+    pub fn ev(&self) -> Option<i8> {
+        self.ev
+    }
+
+    /// Gets the configured automatic white balance for videos.
+    pub fn white_balance(&self) -> Option<WhiteBalance> {
+        self.white_balance
+    }
 }
 
 /// Picture configuration structure.
@@ -282,7 +359,17 @@ impl Video {
 pub struct Picture {
     height: u16,
     width: u16,
+    quality: u8,
     exif: Option<bool>,
+    raw: Option<bool>,
+    exposure: Option<Exposure>,
+    brightness: Option<u8>,
+    contrast: Option<i8>,
+    sharpness: Option<i8>,
+    saturation: Option<i8>,
+    iso: Option<u16>,
+    ev: Option<i8>,
+    white_balance: Option<WhiteBalance>,
 }
 
 impl Picture {
@@ -296,9 +383,59 @@ impl Picture {
         self.width
     }
 
+    /// Gets the configured picture quality for the camera, in pixels.
+    pub fn quality(&self) -> u8 {
+        self.quality
+    }
+
     /// Gets wether the camera should add available EXIF information to pictures.
     pub fn exif(&self) -> bool {
         self.exif == Some(true)
+    }
+
+    /// Gets wether the camera should add raw sensor data to pictures as JPEG metadata.
+    pub fn raw(&self) -> bool {
+        self.raw == Some(true)
+    }
+
+    /// Gets the configured exposure for pictures.
+    pub fn exposure(&self) -> Option<Exposure> {
+        self.exposure
+    }
+
+    /// Gets the configured brightness for pictures.
+    pub fn brightness(&self) -> Option<u8> {
+        self.brightness
+    }
+
+    /// Gets the configured contrast for pictures.
+    pub fn contrast(&self) -> Option<i8> {
+        self.contrast
+    }
+
+    /// Gets the configured sharpness for pictures.
+    pub fn sharpness(&self) -> Option<i8> {
+        self.sharpness
+    }
+
+    /// Gets the configured saturation for pictures.
+    pub fn saturation(&self) -> Option<i8> {
+        self.saturation
+    }
+
+    /// Gets the configured ISO for pictures.
+    pub fn iso(&self) -> Option<u16> {
+        self.iso
+    }
+
+    /// Gets the configured EV compensation for pictures.
+    pub fn ev(&self) -> Option<i8> {
+        self.ev
+    }
+
+    /// Gets the configured automatic white balance for pictures.
+    pub fn white_balance(&self) -> Option<WhiteBalance> {
+        self.white_balance
     }
 }
 
@@ -350,6 +487,46 @@ impl AsRef<OsStr> for Exposure {
                        Exposure::FixedFps => "fixedfps",
                        Exposure::AntiShake => "antishake",
                        Exposure::Fireworks => "fireworks",
+                   })
+    }
+}
+
+/// Exposure setting.
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize)]
+#[serde(field_identifier, rename_all = "lowercase")]
+pub enum WhiteBalance {
+    /// Turn off white balance calculation.
+    Off,
+    /// Automatic mode (default).
+    Auto,
+    /// Sunny mode.
+    Sun,
+    /// Cloudy mode.
+    CloudShade,
+    /// Tungsten lighting mode.
+    Tungsten,
+    /// Fluorescent lighting mode.
+    Fluorescent,
+    /// Incandescent lighting mode.
+    Incandescent,
+    /// Flash mode.
+    Flash,
+    /// Horizon mode.
+    Horizon,
+}
+
+impl AsRef<OsStr> for WhiteBalance {
+    fn as_ref(&self) -> &OsStr {
+        OsStr::new(match *self {
+                       WhiteBalance::Off => "off",
+                       WhiteBalance::Auto => "auto",
+                       WhiteBalance::Sun => "sun",
+                       WhiteBalance::CloudShade => "cloudshade",
+                       WhiteBalance::Tungsten => "tungsten",
+                       WhiteBalance::Fluorescent => "fluorescent",
+                       WhiteBalance::Incandescent => "incandescent",
+                       WhiteBalance::Flash => "flash",
+                       WhiteBalance::Horizon => "horizon",
                    })
     }
 }

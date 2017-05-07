@@ -1,4 +1,59 @@
 //! OpenStratos balloon software.
+//!
+//! This crate provides the functionality required to control a stratospheric balloon. It provides
+//! several modules that can be enabled using cargo features, and it can be extended by adding more
+//! modules.
+//!
+//! ## Example:
+//!
+//! If you for example want to use the GPS and the GSM, but no real-time telemetry or Raspberry Pi
+//! camera, it's as simple as compiling the crate as follows:
+//!
+//! ```text
+//! cargo build --no-default-features --features="gps fona"
+//! ```
+//!
+//! Here, the `--no-default-features` is required since by default, GPS, GSM (Adafruit FONA),
+//! Raspberry Pi camera and real-time transparent serial telemetry will be activated.
+//!
+//! ## Configuration
+//!
+//! One of the main features of OpenStratos is that it's almost 100% configurable. Apart from the
+//! features above, the package contains a `config.toml` file, writen in
+//! [TOML](https://en.wikipedia.org/wiki/TOML) that enables the configuration of the setup without
+//! requiring a recompilation of the software. Things like the picture/video options, alert phone
+//! number, debug mode, pin numbers and many more can be modified with that file.
+//!
+//! Some documentation can be found in the file itself, thank to its comments, but main options are
+//! explained here:
+//!
+//! * **Debug mode** (`debug = bool`): Turns the debug mode on or off, it's off by default. The
+//! debug mode will print all serial communication in logs, and it will add more insightful logs,
+//! that enable debugging system malfunction. This mode will consume more resources than
+//! non-debugging mode, and it's not recommended for normal balloon operation. Also, debug logs will
+//! be full of silly comments that might not provide anything useful in a real flight.
+//! * **Camera rotation** (`camera_rotation = 0-359`): Sets the rotation of the camera for videos
+//! and pictures, in degrees. This is useful if the probe, by design, requires the camera to be in a
+//! non-vertical position.
+//! * **Data directory** (`data_dir = "/path/to/data"`): Sets the path to the main data output
+//! directory. Logs, images, videos and current state file will be stored in this path. Make sure
+//! it's a reliable path between reboots.
+//! * **Picture section** (`[picture]`): Sets the configuration for pictures. Dimensions, quality,
+//! brightness, contrast, ISO, exposure and many more can be configured. Two configuration options
+//! are a bit different from the rest actually. The `exif` parameter sets if GPS data should be
+//! added to images, so that the final image has position metadata, for example. The `raw` option
+//! controls if the raw sensor data should be added to images as JPEG metadata. This will add about
+//! 8MiB of information to the images, at least.
+//! * **Video section** (`[video]`): Sets the configuration for videos. Dimensions, frames per
+//! second, bitrate, and many more, most of them also available for pictures.
+//!
+//! ## Launcher
+//!
+//! The project has a launcher in `src/main.rs` and can be launched by running `cargo run`.
+//!
+//! ## Simulation mode
+//!
+//! *In development…*
 
 // #![forbid(deprecated, overflowing_literals, stable_features, trivial_casts,
 // unconditional_recursion,
@@ -11,10 +66,10 @@
 //     mutex_integer, mut_mut, mem_forget, print_stdout)]
 // #![deny(unused_qualifications, unused, unused_attributes)]
 #![warn(missing_docs, variant_size_differences, enum_glob_use, if_not_else,
-    invalid_upcast_comparisons, items_after_statements, non_ascii_literal, nonminimal_bool,
-    pub_enum_variant_names, shadow_reuse, shadow_same, shadow_unrelated, similar_names,
-    single_match_else, string_add, string_add_assign, unicode_not_nfc, unseparated_literal_suffix,
-    use_debug, wrong_pub_self_convention)]
+    invalid_upcast_comparisons, items_after_statements, nonminimal_bool, pub_enum_variant_names,
+    shadow_reuse, shadow_same, shadow_unrelated, similar_names, single_match_else, string_add,
+    string_add_assign, unicode_not_nfc, unseparated_literal_suffix, use_debug,
+    wrong_pub_self_convention)]
 // Allowing these at least for now.
 #![allow(missing_docs_in_private_items, unknown_lints, stutter, option_unwrap_used,
     result_unwrap_used, integer_arithmetic, cast_possible_truncation, cast_possible_wrap,
@@ -45,8 +100,14 @@ const STATE_FILE: &str = "last_state";
 pub mod error;
 pub mod config;
 pub mod logic;
+#[cfg(feature = "gps")]
 pub mod gps;
-pub mod camera;
+#[cfg(feature = "raspicam")]
+pub mod raspicam;
+#[cfg(feature = "fona")]
+pub mod fona;
+#[cfg(feature = "telemetry")]
+pub mod telemetry;
 
 use std::fs;
 use std::path::PathBuf;
@@ -82,13 +143,14 @@ pub fn initialize_data_filesystem() -> Result<()> {
 }
 
 /// Prints a stack trace of a complete system failure.
-pub fn print_system_failure<S: AsRef<str>>(error: Error, main_error: S) {
+pub fn print_system_failure<S: AsRef<str>>(error: &Error, main_error: S) {
     use colored::Colorize;
     print!("{}", generate_error_string(error, main_error).red());
 }
 
 /// Generates a stack trace string of an error.
-pub fn generate_error_string<S: AsRef<str>>(error: Error, main_error: S) -> String {
+#[allow(use_debug)]
+pub fn generate_error_string<S: AsRef<str>>(error: &Error, main_error: S) -> String {
     let mut result = format!("{}:\n{}\n", main_error.as_ref(), error);
 
     for e in error.iter().skip(1) {

@@ -1,8 +1,19 @@
+## OpenStratos configuration file ##
+
 # Debug mode.
 debug =  true
 
+# Camera rotation, in degrees.
+camera_rotation = 180
 # Data directory.
 data_dir = "data"
+
+# Picture interval, in seconds.
+pic_interval = 300
+# Repeat each picture after these seconds (for issues with probe movement). (optional)
+pic_repeat = 30
+# First picture timeout in seconds, from the launch.
+first_picture = 120
 
 # Picture configuration.
 [picture]
@@ -11,6 +22,26 @@ height = 2464
 width = 3280
 # Configuration options for EXIF information in pictures.
 exif = true
+# Picture quality
+quality = 95
+# Wether to add the raw camera data to the image metadata.
+raw = true
+# Picture exposure.
+exposure = "antishake"
+# Picture brightness.
+brightness = 50
+# Picture contrast.
+contrast = 50
+# Picture sharpness.
+#sharpness = 0
+# Picture saturation.
+#saturation = 0
+# Picture ISO.
+#iso = 400
+# Video EV compensation.
+#ev = 0
+# Automatic picture white balance
+white_balance = "horizon"
 
 [video]
 # Video dimensions, in pixels.
@@ -36,6 +67,8 @@ contrast = 50
 stabilization = true
 # Video EV compensation.
 #ev = 0
+# Automatic video white balance
+white_balance = "horizon"
 
 
-# TODO pins and so on.
+# TODO pins, phone number and so on.

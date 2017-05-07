@@ -1,4 +1,6 @@
 //! GPS module.
+//!
+//! *In development…*
 
 use std::fmt;
 use std::str::FromStr;

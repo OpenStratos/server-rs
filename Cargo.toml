@@ -22,6 +22,17 @@ path = "src/lib.rs"
 name = "launcher"
 path = "src/main.rs"
 
+[features]
+default = ["gps", "raspicam", "fona", "telemetry"]
+# GPS feature.
+gps = []
+# Raspberry Pi camera.
+raspicam = []
+# Adafruit FONA GSM module.
+fona = []
+# Transparent serial telemetry.
+telemetry = []
+
 [dependencies]
 error-chain = "0.10"
 lazy_static = "0.2"

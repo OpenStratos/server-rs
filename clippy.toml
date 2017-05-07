@@ -1,0 +1,5 @@
+doc-valid-idents = [
+  "MiB", "GiB", "TiB", "PiB", "EiB", "DirectX", "ECMAScript", "GPLv2", "GPLv3",
+  "GitHub", "IPv4", "IPv6", "JavaScript", "NaN", "OAuth", "OpenGL", "TrueType",
+  "iOS", "macOS", "TeX", "LaTeX", "BibTex", "BibLaTex", "MinGW", "OpenStratos",
+]

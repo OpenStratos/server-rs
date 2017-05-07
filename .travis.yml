@@ -38,6 +38,25 @@ before_script:
 script:
   - cargo build
   - cargo package
+  - cargo test --no-default-features
+  # Testing with fona
+  - cargo test --no-default-features --features="fona"
+  - cargo test --no-default-features --features="fona gps"
+  - cargo test --no-default-features --features="fona gps raspicam"
+  - cargo test --no-default-features --features="fona gps telemetry"
+  - cargo test --no-default-features --features="fona raspicam"
+  - cargo test --no-default-features --features="fona raspicam telemetry"
+  - cargo test --no-default-features --features="fona telemetry"
+  # Testing without FONA, with GPS
+  - cargo test --no-default-features --features="gps"
+  - cargo test --no-default-features --features="gps telemetry"
+  - cargo test --no-default-features --features="gps telemetry raspicam"
+  - cargo test --no-default-features --features="gps raspicam"
+  # Testing without FONA or GPS
+  - cargo test --no-default-features --features="raspicam"
+  - cargo test --no-default-features --features="raspicam telemetry"
+  - cargo test --no-default-features --features="telemetry"
+  # Overall final test (and for coverage report)
   - cargo test
   - |
       if [[ "$TRAVIS_RUST_VERSION" == "nightly" && $CLIPPY ]]; then
