@@ -10,6 +10,7 @@ use chrono::{DateTime, UTC};
 use error::*;
 use generate_error_string;
 use config::CONFIG;
+#[cfg(feature = "gps")]
 use gps::GPSStatus;
 
 lazy_static! {
@@ -216,6 +217,7 @@ impl Drop for Camera {
 }
 
 /// Structure representing EXIF data for a picture.
+#[cfg(feature = "gps")]
 #[derive(Debug)]
 pub struct ExifData {
     gps_latitude: Option<(LatitudeRef, f32)>,
@@ -229,6 +231,7 @@ pub struct ExifData {
     gps_track: Option<f32>,
 }
 
+#[cfg(feature = "gps")]
 impl ExifData {
     /// *In development…*
     fn new(wait: bool) -> Self {
@@ -240,6 +243,7 @@ impl ExifData {
     }
 }
 
+#[cfg(feature = "gps")]
 impl ToString for ExifData {
     fn to_string(&self) -> String {
         let mut exif = String::from(" -x GPSMeasureMode=3 -x GPS.GPSDifferential=0");
@@ -289,12 +293,14 @@ impl ToString for ExifData {
 }
 
 /// Latitude reference for EXIF data.
+#[cfg(feature = "gps")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LatitudeRef {
     North,
     South,
 }
 
+#[cfg(feature = "gps")]
 impl From<f32> for LatitudeRef {
     fn from(lat: f32) -> Self {
         if lat > 0_f32 {
@@ -305,6 +311,7 @@ impl From<f32> for LatitudeRef {
     }
 }
 
+#[cfg(feature = "gps")]
 impl fmt::Display for LatitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
@@ -317,12 +324,14 @@ impl fmt::Display for LatitudeRef {
 }
 
 /// Latitude reference for EXIF data.
+#[cfg(feature = "gps")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LongitudeRef {
     East,
     West,
 }
 
+#[cfg(feature = "gps")]
 impl From<f32> for LongitudeRef {
     fn from(lon: f32) -> Self {
         if lon > 0_f32 {
@@ -333,6 +342,7 @@ impl From<f32> for LongitudeRef {
     }
 }
 
+#[cfg(feature = "gps")]
 impl fmt::Display for LongitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
@@ -351,6 +361,7 @@ mod tests {
 
     /// Tests EXIF generation for a complete data structure.
     #[test]
+    #[cfg(feature = "gps")]
     fn exif_data_complete() {
         let data = ExifData {
             gps_latitude: Some((LatitudeRef::North, 23.44497)),
@@ -376,6 +387,7 @@ mod tests {
 
     /// Tests EXIF generation for an incomplete data structure.
     #[test]
+    #[cfg(feature = "gps")]
     fn exif_data_incomplete() {
         let data = ExifData {
             gps_latitude: None,
@@ -397,7 +409,7 @@ mod tests {
                     GPS.GPSSpeed=13500/1000");
     }
 
-    /// Tests if the camera is already recording
+    /// Tests that the camera is not already recording.
     #[test]
     fn is_recording() {
         assert!(!CAMERA.is_recording().unwrap());

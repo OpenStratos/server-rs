@@ -381,6 +381,7 @@ pub struct Picture {
     height: u16,
     width: u16,
     quality: u8,
+    #[cfg(feature = "gps")]
     exif: Option<bool>,
     raw: Option<bool>,
     exposure: Option<Exposure>,
@@ -411,6 +412,7 @@ impl Picture {
     }
 
     /// Gets wether the camera should add available EXIF information to pictures.
+    #[cfg(feature = "gps")]
     pub fn exif(&self) -> bool {
         self.exif == Some(true)
     }
@@ -570,7 +572,10 @@ mod tests {
         {
             assert_eq!(config.picture().height(), 2464);
             assert_eq!(config.picture().width(), 3280);
-            assert_eq!(config.picture().exif(), true);
+            #[cfg(feature = "gps")]
+            {
+                assert_eq!(config.picture().exif(), true);
+            }
             assert_eq!(config.video().height(), 1080);
             assert_eq!(config.video().width(), 1920);
             assert_eq!(config.video().fps(), 30);
@@ -580,23 +585,42 @@ mod tests {
     #[test]
     #[cfg(feature = "raspicam")]
     fn config_error() {
+        #[cfg(feature = "gps")]
+        let picture = Picture {
+            height: 10_345,
+            width: 5_246,
+            quality: 95,
+            raw: Some(true),
+            exif: Some(true),
+            exposure: Some(Exposure::AntiShake),
+            brightness: Some(50),
+            contrast: Some(50),
+            sharpness: None,
+            saturation: None,
+            iso: None,
+            ev: None,
+            white_balance: Some(WhiteBalance::Horizon),
+        };
+
+        #[cfg(not(feature = "gps"))]
+        let picture = Picture {
+            height: 10_345,
+            width: 5_246,
+            quality: 95,
+            raw: Some(true),
+            exposure: Some(Exposure::AntiShake),
+            brightness: Some(50),
+            contrast: Some(50),
+            sharpness: None,
+            saturation: None,
+            iso: None,
+            ev: None,
+            white_balance: Some(WhiteBalance::Horizon),
+        };
+
         let config = Config {
             debug: None,
-            picture: Picture {
-                height: 10_345,
-                width: 5_246,
-                quality: 95,
-                raw: Some(true),
-                exif: Some(true),
-                exposure: Some(Exposure::AntiShake),
-                brightness: Some(50),
-                contrast: Some(50),
-                sharpness: None,
-                saturation: None,
-                iso: None,
-                ev: None,
-                white_balance: Some(WhiteBalance::Horizon),
-            },
+            picture,
             video: Video {
                 height: 12_546,
                 width: 5_648,
