@@ -17,12 +17,16 @@ use config::CONFIG;
 
 /// Trait representing a state machine.
 pub trait StateMachine {
+    /// Type of the next state.
     type Next: MainLogic;
+
+    /// Executes this state and returns the next one.
     fn execute(self) -> Result<Self::Next>;
 }
 
 /// Trait implementing the main logic of the program.
 pub trait MainLogic {
+    /// Performs the main logic of the state.
     fn main_logic(self) -> Result<()>;
 }
 
@@ -44,16 +48,26 @@ pub fn init() -> OpenStratos<Init> {
     OpenStratos { state: Init }
 }
 
+/// States of the onboard computer.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum State {
+    /// Initialization.
     Init,
+    /// Acquiring GPS fix.
     AcquiringFix,
+    /// GPS fix has been acquired.
     FixAcquired,
+    /// Waiting for balloon launch.
     WaitingLaunch,
+    /// Going up.
     GoingUp,
+    /// Going down.
     GoingDown,
+    /// Probe landed.
     Landed,
+    /// Shutting computer down.
     ShutDown,
+    /// Safe mode operation.
     SafeMode,
 }
 
@@ -68,9 +82,11 @@ impl State {
         if !path.exists() {
             return Ok(None);
         }
-        let mut file = File::open(path).chain_err(|| ErrorKind::LastStateFileOpen)?;
+        let mut file = File::open(path)
+            .chain_err(|| ErrorKind::LastStateFileOpen)?;
         let mut state = String::new();
-        file.read_to_string(&mut state).chain_err(|| ErrorKind::LastStateFileRead)?;
+        file.read_to_string(&mut state)
+            .chain_err(|| ErrorKind::LastStateFileRead)?;
 
         if state.is_empty() {
             Ok(None)

@@ -3,7 +3,7 @@
 use std::{fmt, fs};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use std::process::Command;
+use std::process::{Command, Stdio};
 
 use chrono::{DateTime, UTC};
 
@@ -13,13 +13,16 @@ use config::CONFIG;
 use gps::GPSStatus;
 
 lazy_static! {
-    /// Camera controller.
+    /// Shared static camera object.
     pub static ref CAMERA: Camera = Camera {
         video_dir: CONFIG.data_dir().join("video"),
         img_dir: CONFIG.data_dir().join("img"),
     };
 }
 
+/// Camera structure.
+///
+/// This structure controlls the use of the camera.
 #[derive(Debug)]
 pub struct Camera {
     video_dir: PathBuf,
@@ -29,50 +32,96 @@ pub struct Camera {
 impl Camera {
     /// Starts recording video with the camera.
     ///
-    /// The only parameter for this function is a duration parameter. If `Some(Duration)` is passed,
-    /// the camera will stop recording after that time.
+    /// If `Some(Duration)` is passed, the camera will stop recording after that time. This should
+    /// be the default behaviour, and it will block for the given time. If no duration is given, it
+    /// will record indefinitely, and the thread won't block. To stop the camera recording anytime,
+    /// `Camera::stop_recording()` can be used.
+    ///
+    /// An optional second parameter can be provided to specify a file name for the video recording,
+    /// useful in case of testing. If that file name is provided, or if the method is executed
+    /// as a test, the file will be removed after the recording, except if the `mantain_test_video`
+    /// feature is used. If a file name is provided, a time should be provided too, and it will
+    /// throw a warning if not.
     ///
     /// **Panics** if the duration is less than 1 second.
-    pub fn record(&self, time: Option<Duration>) -> Result<()> {
+    pub fn record<P: AsRef<Path>>(&self,
+                                  time: Option<Duration>,
+                                  file_name: Option<P>)
+                                  -> Result<()> {
         if let Some(time) = time {
             info!("Recording video for {}.{} seconds.",
                   time.as_secs(),
                   time.subsec_nanos());
         } else {
             info!("Recording video indefinitely.");
+            if file_name.is_some() {
+                warn!("File name specified for testing purposes but trying to record indefinitely.")
+            }
         }
         if self.is_recording()? {
             error!("The camera is already recording.");
             return Err(ErrorKind::CameraAlreadyRecording.into());
         }
-        // string filename = time > 0 ? "data/video/test.h264" : "data/video/video-"+
-        //     to_string(get_file_count("data/video/")) +".h264";
-        // #ifdef OS_TESTING
-        //     filename = "data/video/test.h264";
-        // #endif
-        let file = self.video_dir.join(if cfg!(test) || time.is_some() {
-                                           "test.h264".to_owned()
-                                       } else {
-                                           format!("video-{}.h264",
-                                                   fs::read_dir(&self.video_dir)?.count())
-                                       });
-        if Path::new(&file).exists() {
-            error!("Trying to write the video in {} but the file already exists",
+        let file = self.video_dir
+            .join(if cfg!(test) {
+                      PathBuf::from("test.h264")
+                  } else if let Some(path) = file_name {
+                path.as_ref().to_path_buf()
+            } else {
+                PathBuf::from(&format!("video-{}.h264", fs::read_dir(&self.video_dir)?.count()))
+            });
+        if file.exists() {
+            error!("Trying to write the video in {} but the file already exists.",
                    file.display());
+            return Err(ErrorKind::CameraFileExists(file).into());
         }
 
         let mut command = Command::new("raspivid");
         command.arg("-n").arg("-o").arg(file);
         if let Some(time) = time {
-            command.arg("-t").arg(format!("{}",
-                                          time.as_secs() * 1_000 +
-                                          time.subsec_nanos() as u64 / 1_000_000));
+            command
+                .arg("-t")
+                .arg(format!("{}",
+                             time.as_secs() * 1_000 + time.subsec_nanos() as u64 / 1_000_000));
         }
-        command.arg("-w")
-            .arg(format!("{}", CONFIG.video_width()))
+        command
+            .arg("-w")
+            .arg(format!("{}", CONFIG.video().width()))
             .arg("-h")
-            .arg(format!("{}", CONFIG.video_height()));
-        unimplemented!()
+            .arg(format!("{}", CONFIG.video().height()))
+            .arg("-b")
+            .arg(format!("{}", CONFIG.video().bitrate()))
+            .arg("-ex")
+            .arg(CONFIG.video().exposure());
+        if let Some(rot) = CONFIG.camera_rotation() {
+            command.arg("-rot").arg(format!("{}", rot));
+        }
+
+        // .arg("-br")
+        // .arg(CONFIG.video().brightness());
+
+        debug!("Recording command: {:?}", command);
+        info!("Starting video recording…");
+
+        if time.is_some() {
+            let output = command.output()?;
+            if output.status.success() {
+                info!("Video recording finished successfully.");
+            } else {
+                let stdout = String::from_utf8(output.stdout)?;
+                let stderr = String::from_utf8(output.stderr)?;
+                warn!("Video recording ended with an error.\nstdout: {}, stderr: {}",
+                      stdout,
+                      stderr);
+            }
+        } else {
+            command.stdin(Stdio::null());
+            command.stdout(Stdio::null());
+            command.stderr(Stdio::null());
+            let child = command.spawn()?;
+            info!("Video recording started with PID {}.", child.id());
+        }
+        Ok(())
     }
 
     /// Stops the video recording.
@@ -85,7 +134,12 @@ impl Camera {
 
     /// Checks if the camera is currently recording video.
     pub fn is_recording(&self) -> Result<bool> {
-        unimplemented!()
+        Ok(Command::new("pidof")
+               .arg("-x")
+               .arg("raspivid")
+               .output()?
+               .status
+               .success())
     }
 
     /// Takes a picture with the camera.
@@ -251,10 +305,12 @@ impl fmt::Display for LongitudeRef {
     }
 }
 
+/// Tests module.
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// Tests EXIF generation for a complete data structure.
     #[test]
     fn exif_data_complete() {
         let data = ExifData {
@@ -279,6 +335,7 @@ mod tests {
                     GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000");
     }
 
+    /// Tests EXIF generation for an incomplete data structure.
     #[test]
     fn exif_data_incomplete() {
         let data = ExifData {
@@ -299,5 +356,11 @@ mod tests {
                     GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x \
                     GPS.GPSStatuss=V -x GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x \
                     GPS.GPSSpeed=13500/1000");
+    }
+
+    /// Tests if the camera is already recording
+    #[test]
+    fn is_recording() {
+        assert!(!CAMERA.is_recording().unwrap());
     }
 }

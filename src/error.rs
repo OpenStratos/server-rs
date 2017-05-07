@@ -6,11 +6,12 @@ use STATE_FILE;
 
 error_chain!{
     foreign_links {
-        Io(::std::io::Error);
-        Toml(::toml::de::Error);
-        Log(::log4rs::Error);
-        LogSet(::log::SetLoggerError);
-        LogConfig(::log4rs::config::Errors);
+        Io(::std::io::Error) #[allow(missing_docs)];
+        Toml(::toml::de::Error) #[allow(missing_docs)];
+        Log(::log4rs::Error) #[allow(missing_docs)];
+        LogSet(::log::SetLoggerError) #[allow(missing_docs)];
+        LogConfig(::log4rs::config::Errors) #[allow(missing_docs)];
+        FromUTF8(::std::string::FromUtf8Error) #[allow(missing_docs)];
     }
 
     errors {
@@ -84,6 +85,12 @@ error_chain!{
         CameraAlreadyRecording {
             description("the camera was already recording")
             display("the camera was already recording")
+        }
+
+        /// Camera was already recording
+        CameraFileExists(file: PathBuf) {
+            description("the output file for the camera already exists")
+            display("the output file {} for the camera already exists", file.display())
         }
     }
 }

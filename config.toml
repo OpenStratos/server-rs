@@ -1,19 +1,41 @@
-# Debug mode
+# Debug mode.
 debug =  true
 
 # Data directory.
 data_dir = "data"
 
+# Picture configuration.
+[picture]
 # Static pictures dimensions, in pixels.
-picture_height = 2464
-picture_width = 3280
+height = 2464
+width = 3280
 # Configuration options for EXIF information in pictures.
 exif = true
 
+[video]
 # Video dimensions, in pixels.
-video_width = 1920
-video_height = 1080
+width = 1920
+height = 1080
 # Video framerate.
-video_fps = 30
+fps = 30
+# Video bitrate.
+bitrate = 20000000
+# Video exposure.
+exposure = "antishake"
+# Video brightness.
+brightness = 50
+# Video contrast.
+contrast = 50
+# Video sharpness.
+#sharpness = 0
+# Video saturation.
+#saturation = 0
+# Video ISO.
+#iso = 400
+# Video stabilization
+stabilization = true
+# Video EV compensation.
+#ev = 0
+
 
 # TODO pins and so on.

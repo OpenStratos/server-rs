@@ -5,9 +5,12 @@ use std::str::FromStr;
 
 use error::*;
 
+/// GPS fix status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GPSStatus {
+    /// GPS fix active.
     Active,
+    /// GPS fix not valid.
     Void,
 }
 

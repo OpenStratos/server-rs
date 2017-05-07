@@ -1,5 +1,5 @@
 [package]
-name = "openstratos-server"
+name = "os_balloon"
 version = "2.0.0-dev"
 authors = [
     "Razican <razican@protonmail.ch>",
@@ -14,17 +14,25 @@ Stratospheric balloon control software.
 keywords = ["OpenStratos", "stratosphere", "raspberry", "balloon", "science"]
 categories = ["science"]
 
+[lib]
+name = "os_balloon"
+path = "src/lib.rs"
+
+[[bin]]
+name = "launcher"
+path = "src/main.rs"
+
 [dependencies]
 error-chain = "0.10"
 lazy_static = "0.2"
-toml = "0.3"
-serde = "0.9"
-serde_derive = "0.9"
+toml = "0.4"
+serde = "1.0"
+serde_derive = "1.0"
 log = "0.3"
-colored = "1.4"
+colored = "1.5"
 chrono = "0.3"
 
 [dependencies.log4rs]
-version = "0.6"
+version = "0.7"
 default_features = false
 features = ["file", "file_appender", "console_appender", "threshold_filter"]
