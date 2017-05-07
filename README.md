@@ -11,6 +11,6 @@ software. You can install it (also for Raspberry Pi) in [rustup.rs][rustup].
 [build_badge]: https://travis-ci.org/OpenStratos/server-rs.svg?branch=develop
 [build_status]: https://travis-ci.org/OpenStratos/server-rs
 [coverage_badge]: https://codecov.io/gh/OpenStratos/server-rs/branch/develop/graph/badge.svg
-[coverage_report]: https://codecov.io/gh/OpenStratos/server-rs
+[coverage_report]: https://codecov.io/gh/OpenStratos/server-rs/branch/develop
 [documentation]: https://openstratos.github.io/server-rs/
 [rustup]: https://rustup.rs/
