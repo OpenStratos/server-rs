@@ -39,8 +39,8 @@ extern crate log4rs;
 extern crate colored;
 extern crate chrono;
 
-const CONFIG_FILE: &'static str = "config.toml";
-const STATE_FILE: &'static str = "last_state";
+const CONFIG_FILE: &str = "config.toml";
+const STATE_FILE: &str = "last_state";
 
 pub mod error;
 pub mod config;

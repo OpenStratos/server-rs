@@ -20,7 +20,7 @@ rust:
   - nightly
   - beta
   - stable
-  - 1.15.1
+  - 1.17.0
 
 # Load travis-cargo
 before_script:
@@ -69,7 +69,7 @@ after_success:
       fi
   # Documentation upload
   - |
-      if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" && "$TRAVIS_PULL_REQUEST" = "false" && "$TRAVIS_BRANCH" == "master" ]]; then
+      if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" && "$TRAVIS_PULL_REQUEST" = "false" && "$TRAVIS_BRANCH" == "develop" ]]; then
         cargo doc &&
         echo "<meta http-equiv=refresh content=0;url=os_balloon/index.html>" > target/doc/index.html &&
         git clone https://github.com/davisp/ghp-import.git &&
