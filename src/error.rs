@@ -82,12 +82,14 @@ error_chain!{
         }
 
         /// Camera was already recording
+        #[cfg(feature = "raspicam")]
         CameraAlreadyRecording {
             description("the camera was already recording")
             display("the camera was already recording")
         }
 
         /// Camera was already recording
+        #[cfg(feature = "raspicam")]
         CameraFileExists(file: PathBuf) {
             description("the output file for the camera already exists")
             display("the output file {} for the camera already exists", file.display())

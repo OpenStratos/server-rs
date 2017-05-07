@@ -29,8 +29,11 @@ lazy_static! {
 #[derive(Debug, Deserialize)]
 pub struct Config {
     debug: Option<bool>,
+    #[cfg(feature = "raspicam")]
     video: Video,
+    #[cfg(feature = "raspicam")]
     picture: Picture,
+    #[cfg(feature = "raspicam")]
     camera_rotation: Option<u16>,
     data_dir: PathBuf,
 }
@@ -63,181 +66,193 @@ impl Config {
         let mut errors = String::new();
         let mut ok = true;
 
-        // Check for picture configuration errors.
-        if self.picture.width > 3280 {
-            ok = false;
-            errors.push_str(&format!("picture width must be below or equal to 3280px, found {}px\n",
-                                     self.picture.width));
-        }
-        if self.picture.height > 2464 {
-            ok = false;
-            errors.push_str(
-                &format!("picture height must be below or equal to 2464px, found {}px\n",
-                         self.picture.height));
-        }
-
-        if self.picture.quality > 100 {
-            ok = false;
-            errors.push_str(
-                &format!("picture quality must be a number between 0 and 100, found {}px\n",
-                         self.picture.quality));
-        }
-
-        if let Some(b @ 101...u8::MAX) = self.picture.brightness {
-            ok = false;
-            errors.push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
-                                     b));
-        }
-
-        match self.picture.contrast {
-            Some(c @ i8::MIN...-101) |
-            Some(c @ 101...i8::MAX) => {
+        #[cfg(feature = "raspicam")]
+        {
+            // Check for picture configuration errors.
+            if self.picture.width > 3280 {
                 ok = false;
-                errors.push_str(&format!("picture contrast must be between -100 and 100, found \
-                                          {}\n",
-                                         c));
+                errors.push_str(&format!("picture width must be below or equal to 3280px, found \
+                                          {}px\n",
+                                         self.picture.width));
             }
-            _ => {}
-        }
-
-        match self.picture.sharpness {
-            Some(s @ i8::MIN...-101) |
-            Some(s @ 101...i8::MAX) => {
-                ok = false;
-                errors.push_str(&format!("picture sharpness must be between -100 and 100, found \
-                                          {}\n",
-                                         s));
-            }
-            _ => {}
-        }
-
-        match self.picture.saturation {
-            Some(s @ i8::MIN...-101) |
-            Some(s @ 101...i8::MAX) => {
-                ok = false;
-                errors.push_str(&format!("picture saturation must be between -100 and 100, found \
-                                          {}\n",
-                                         s));
-            }
-            _ => {}
-        }
-
-        match self.picture.iso {
-            Some(i @ 0...99) |
-            Some(i @ 801...u16::MAX) => {
-                ok = false;
-                errors.push_str(&format!("picture ISO must be between 100 and 800, found {}\n", i));
-            }
-            _ => {}
-        }
-
-        match self.picture.ev {
-            Some(e @ i8::MIN...-11) |
-            Some(e @ 11...i8::MAX) => {
-                ok = false;
-                errors.push_str(&format!("picture EV compensation must be between -10 and 10, \
-                                          found {}\n",
-                                         e));
-            }
-            _ => {}
-        }
-
-        // Check for video configuration errors.
-        if self.video.width > 2592 {
-            ok = false;
-            errors.push_str(&format!("video width must be below or equal to 2592px, found {}px\n",
-                                     self.video.width));
-        }
-        if self.video.height > 1944 {
-            ok = false;
-            errors.push_str(&format!("video height must be below or equal to 1944px, found {}px\n",
-                                     self.video.height));
-        }
-        if self.video.fps > 90 {
-            ok = false;
-            errors.push_str(
-                &format!("video framerate must be below or equal to 90fps, found {}fps\n",
-                         self.video.fps));
-        }
-
-        // Video modes.
-        match (self.video.width, self.video.height, self.video.fps) {
-            (2592, 1944, 1...15) |
-            (1920, 1080, 1...30) |
-            (1296, 972, 1...42) |
-            (1296, 730, 1...49) |
-            (640, 480, 1...90) => {}
-            (w, h, f) => {
+            if self.picture.height > 2464 {
                 ok = false;
                 errors.push_str(
-                    &format!("video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, \
-                              1296×972 1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} \
-                              {}fps\n",
-                             w, h, f));
+                    &format!("picture height must be below or equal to 2464px, found {}px\n",
+                             self.picture.height));
             }
-        }
 
-        if let Some(r @ 360...u16::MAX) = self.camera_rotation {
-            ok = false;
-            errors.push_str(
-                &format!("camera rotation must be between 0 and 359 degrees, found {} degrees\n",
-                         r));
-        }
-
-        if let Some(b @ 101...u8::MAX) = self.video.brightness {
-            ok = false;
-            errors.push_str(&format!("video brightness must be between 0 and 100, found {}\n", b));
-        }
-
-        match self.video.contrast {
-            Some(c @ i8::MIN...-101) |
-            Some(c @ 101...i8::MAX) => {
+            if self.picture.quality > 100 {
                 ok = false;
-                errors.push_str(&format!("video contrast must be between -100 and 100, found {}\n",
-                                         c));
+                errors.push_str(
+                    &format!("picture quality must be a number between 0 and 100, found {}px\n",
+                             self.picture.quality));
             }
-            _ => {}
-        }
 
-        match self.video.sharpness {
-            Some(s @ i8::MIN...-101) |
-            Some(s @ 101...i8::MAX) => {
+            if let Some(b @ 101...u8::MAX) = self.picture.brightness {
                 ok = false;
-                errors.push_str(&format!("video sharpness must be between -100 and 100, found {}\n",
-                                         s));
+                errors.push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
+                                         b));
             }
-            _ => {}
-        }
 
-        match self.video.saturation {
-            Some(s @ i8::MIN...-101) |
-            Some(s @ 101...i8::MAX) => {
-                ok = false;
-                errors.push_str(&format!("video saturation must be between -100 and 100, found \
-                                          {}\n",
-                                         s));
+            match self.picture.contrast {
+                Some(c @ i8::MIN...-101) |
+                Some(c @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("picture contrast must be between -100 and 100, found \
+                                              {}\n",
+                                             c));
+                }
+                _ => {}
             }
-            _ => {}
-        }
 
-        match self.video.iso {
-            Some(i @ 0...99) |
-            Some(i @ 801...u16::MAX) => {
-                ok = false;
-                errors.push_str(&format!("video ISO must be between 100 and 800, found {}\n", i));
+            match self.picture.sharpness {
+                Some(s @ i8::MIN...-101) |
+                Some(s @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("picture sharpness must be between -100 and 100, \
+                                              found {}\n",
+                                             s));
+                }
+                _ => {}
             }
-            _ => {}
-        }
 
-        match self.video.ev {
-            Some(e @ i8::MIN...-11) |
-            Some(e @ 11...i8::MAX) => {
-                ok = false;
-                errors.push_str(&format!("video EV compensation must be between -10 and 10, found \
-                                          {}\n",
-                                         e));
+            match self.picture.saturation {
+                Some(s @ i8::MIN...-101) |
+                Some(s @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("picture saturation must be between -100 and 100, \
+                                              found {}\n",
+                                             s));
+                }
+                _ => {}
             }
-            _ => {}
+
+            match self.picture.iso {
+                Some(i @ 0...99) |
+                Some(i @ 801...u16::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("picture ISO must be between 100 and 800, found {}\n",
+                                             i));
+                }
+                _ => {}
+            }
+
+            match self.picture.ev {
+                Some(e @ i8::MIN...-11) |
+                Some(e @ 11...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("picture EV compensation must be between -10 and 10, \
+                                              found {}\n",
+                                             e));
+                }
+                _ => {}
+            }
+
+            // Check for video configuration errors.
+            if self.video.width > 2592 {
+                ok = false;
+                errors.push_str(&format!("video width must be below or equal to 2592px, found \
+                                          {}px\n",
+                                         self.video.width));
+            }
+            if self.video.height > 1944 {
+                ok = false;
+                errors.push_str(&format!("video height must be below or equal to 1944px, found \
+                                          {}px\n",
+                                         self.video.height));
+            }
+            if self.video.fps > 90 {
+                ok = false;
+                errors.push_str(
+                    &format!("video framerate must be below or equal to 90fps, found {}fps\n",
+                             self.video.fps));
+            }
+
+            // Video modes.
+            match (self.video.width, self.video.height, self.video.fps) {
+                (2592, 1944, 1...15) |
+                (1920, 1080, 1...30) |
+                (1296, 972, 1...42) |
+                (1296, 730, 1...49) |
+                (640, 480, 1...90) => {}
+                (w, h, f) => {
+                    ok = false;
+                    errors.push_str(
+                        &format!("video mode must be one of 2592×1944 1-15fps, 1920×1080 \
+                                  1-30fps, 1296×972 1-42fps, 1296×730 1-49fps, 640×480 1-60fps, \
+                                  found {}x{} {}fps\n",
+                                 w, h, f));
+                }
+            }
+
+            if let Some(r @ 360...u16::MAX) = self.camera_rotation {
+                ok = false;
+                errors.push_str(
+                    &format!("camera rotation must be between 0 and 359 degrees, found {} \
+                              degrees\n",
+                             r));
+            }
+
+            if let Some(b @ 101...u8::MAX) = self.video.brightness {
+                ok = false;
+                errors.push_str(&format!("video brightness must be between 0 and 100, found {}\n",
+                                         b));
+            }
+
+            match self.video.contrast {
+                Some(c @ i8::MIN...-101) |
+                Some(c @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("video contrast must be between -100 and 100, found \
+                                              {}\n",
+                                             c));
+                }
+                _ => {}
+            }
+
+            match self.video.sharpness {
+                Some(s @ i8::MIN...-101) |
+                Some(s @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("video sharpness must be between -100 and 100, found \
+                                              {}\n",
+                                             s));
+                }
+                _ => {}
+            }
+
+            match self.video.saturation {
+                Some(s @ i8::MIN...-101) |
+                Some(s @ 101...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("video saturation must be between -100 and 100, found \
+                                              {}\n",
+                                             s));
+                }
+                _ => {}
+            }
+
+            match self.video.iso {
+                Some(i @ 0...99) |
+                Some(i @ 801...u16::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("video ISO must be between 100 and 800, found {}\n",
+                                             i));
+                }
+                _ => {}
+            }
+
+            match self.video.ev {
+                Some(e @ i8::MIN...-11) |
+                Some(e @ 11...i8::MAX) => {
+                    ok = false;
+                    errors.push_str(&format!("video EV compensation must be between -10 and 10, \
+                                              found {}\n",
+                                             e));
+                }
+                _ => {}
+            }
         }
 
         (ok, errors)
@@ -249,16 +264,19 @@ impl Config {
     }
 
     /// Gets the configuration for video.
+    #[cfg(feature = "raspicam")]
     pub fn video(&self) -> &Video {
         &self.video
     }
 
     /// Gets the configuration for pictures.
+    #[cfg(feature = "raspicam")]
     pub fn picture(&self) -> &Picture {
         &self.picture
     }
 
     /// Gets the configured camera rotation.
+    #[cfg(feature = "raspicam")]
     pub fn camera_rotation(&self) -> Option<u16> {
         self.camera_rotation
     }
@@ -270,6 +288,7 @@ impl Config {
 }
 
 /// Video configuration structure.
+#[cfg(feature = "raspicam")]
 #[derive(Debug, Deserialize)]
 pub struct Video {
     height: u16,
@@ -287,6 +306,7 @@ pub struct Video {
     white_balance: Option<WhiteBalance>,
 }
 
+#[cfg(feature = "raspicam")]
 impl Video {
     /// Gets the configured video height for the camera, in pixels.
     pub fn height(&self) -> u16 {
@@ -355,6 +375,7 @@ impl Video {
 }
 
 /// Picture configuration structure.
+#[cfg(feature = "raspicam")]
 #[derive(Debug, Deserialize)]
 pub struct Picture {
     height: u16,
@@ -372,6 +393,7 @@ pub struct Picture {
     white_balance: Option<WhiteBalance>,
 }
 
+#[cfg(feature = "raspicam")]
 impl Picture {
     /// Gets the configured picture height for the camera, in pixels.
     pub fn height(&self) -> u16 {
@@ -440,6 +462,7 @@ impl Picture {
 }
 
 /// Exposure setting.
+#[cfg(feature = "raspicam")]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(field_identifier, rename_all = "lowercase")]
 pub enum Exposure {
@@ -471,6 +494,7 @@ pub enum Exposure {
     Fireworks,
 }
 
+#[cfg(feature = "raspicam")]
 impl AsRef<OsStr> for Exposure {
     fn as_ref(&self) -> &OsStr {
         OsStr::new(match *self {
@@ -492,6 +516,7 @@ impl AsRef<OsStr> for Exposure {
 }
 
 /// Exposure setting.
+#[cfg(feature = "raspicam")]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(field_identifier, rename_all = "lowercase")]
 pub enum WhiteBalance {
@@ -515,6 +540,7 @@ pub enum WhiteBalance {
     Horizon,
 }
 
+#[cfg(feature = "raspicam")]
 impl AsRef<OsStr> for WhiteBalance {
     fn as_ref(&self) -> &OsStr {
         OsStr::new(match *self {
@@ -540,29 +566,43 @@ mod tests {
         let config = Config::from_file("config.toml").unwrap();
 
         assert_eq!(config.debug(), true);
-        assert_eq!(config.picture().height(), 2464);
-        assert_eq!(config.picture().width(), 3280);
-        assert_eq!(config.picture().exif(), true);
-        assert_eq!(config.video().height(), 1080);
-        assert_eq!(config.video().width(), 1920);
-        assert_eq!(config.video().fps(), 30);
+        #[cfg(feature = "raspicam")]
+        {
+            assert_eq!(config.picture().height(), 2464);
+            assert_eq!(config.picture().width(), 3280);
+            assert_eq!(config.picture().exif(), true);
+            assert_eq!(config.video().height(), 1080);
+            assert_eq!(config.video().width(), 1920);
+            assert_eq!(config.video().fps(), 30);
+        }
     }
 
     #[test]
+    #[cfg(feature = "raspicam")]
     fn config_error() {
         let config = Config {
-            debug: false,
+            debug: None,
             picture: Picture {
                 height: 10_345,
                 width: 5_246,
+                quality: 95,
+                raw: Some(true),
                 exif: Some(true),
+                exposure: Some(Exposure::AntiShake),
+                brightness: Some(50),
+                contrast: Some(50),
+                sharpness: None,
+                saturation: None,
+                iso: None,
+                ev: None,
+                white_balance: Some(WhiteBalance::Horizon),
             },
             video: Video {
                 height: 12_546,
                 width: 5_648,
                 fps: 92,
                 bitrate: 20000000,
-                exposure: Exposure::AntiShake,
+                exposure: Some(Exposure::AntiShake),
                 brightness: Some(50),
                 contrast: Some(50),
                 sharpness: None,
@@ -570,6 +610,7 @@ mod tests {
                 iso: None,
                 stabilization: Some(true),
                 ev: None,
+                white_balance: Some(WhiteBalance::Horizon),
             },
             camera_rotation: Some(180),
             data_dir: PathBuf::from("data"),
@@ -578,13 +619,12 @@ mod tests {
 
         assert_eq!(verify, false);
         assert_eq!(errors,
-                   "picture width must be below or equal to 3280px, found 5246px\npicture \
-                            height must be below or equal to 2464px, found 10345px\nvideo width \
-                            must be below or equal to 2592px, found 5648px\nvideo height must be \
-                            below or equal to 1944px, found 12546px\nvideo framerate must be below \
-                            or equal to 90fps, found 92fps\nvideo mode must be one of 2592×1944 \
-                            1-15fps, 1920×1080 1-30fps, 1296×972 1-42fps, 1296×730 1-49fps, \
-                            640×480 1-60fps, found 5648x12546 92fps\n");
+                   "picture width must be below or equal to 3280px, found 5246px\npicture height \
+                    must be below or equal to 2464px, found 10345px\nvideo width must be below or \
+                    equal to 2592px, found 5648px\nvideo height must be below or equal to 1944px, \
+                    found 12546px\nvideo framerate must be below or equal to 90fps, found 92fps\n\
+                    video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
+                    1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n");
     }
 
     #[test]
