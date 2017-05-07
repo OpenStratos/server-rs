@@ -1,3 +1,7 @@
+#![doc(html_logo_url = "https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png",
+       html_favicon_url = "https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png",
+html_root_url = "https://openstratos.github.io/server-rs/")]
+
 //! OpenStratos balloon software.
 //!
 //! This crate provides the functionality required to control a stratospheric balloon. It provides
