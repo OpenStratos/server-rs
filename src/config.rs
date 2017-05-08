@@ -1,4 +1,36 @@
 //! Configuration module.
+//!
+//! One of the main features of OpenStratos is that it's almost 100% configurable. Apart from the
+//! features above, the package contains a `config.toml` file, writen in
+//! [TOML](https://en.wikipedia.org/wiki/TOML) that enables the configuration of the setup without
+//! requiring a recompilation of the software. Things like the picture/video options, alert phone
+//! number, debug mode, pin numbers and many more can be modified with that file.
+//!
+//! Some documentation can be found in the file itself, thank to its comments, but main options are
+//! explained here:
+//!
+//! * **Debug mode** (`debug = bool`): Turns the debug mode on or off, it's off by default. The
+//! debug mode will print all serial communication in logs, and it will add more insightful logs,
+//! that enable debugging system malfunction. This mode will consume more resources than
+//! non-debugging mode, and it's not recommended for normal balloon operation. Also, debug logs will
+//! be full of silly comments that might not provide anything useful in a real flight.
+//! * **Camera rotation** (`camera_rotation = 0-359`): Sets the rotation of the camera for videos
+//! and pictures, in degrees. This is useful if the probe, by design, requires the camera to be in a
+//! non-vertical position.
+//! * **Data directory** (`data_dir = "/path/to/data"`): Sets the path to the main data output
+//! directory. Logs, images, videos and current state file will be stored in this path. Make sure
+//! it's a reliable path between reboots.
+//! * **Picture section** (`[picture]`): Sets the configuration for pictures. Dimensions, quality,
+//! brightness, contrast, ISO, exposure and many more can be configured. Two configuration options
+//! are a bit different from the rest actually. The `exif` parameter sets if GPS data should be
+//! added to images, so that the final image has position metadata, for example. The `raw` option
+//! controls if the raw sensor data should be added to images as JPEG metadata. This will add about
+//! 8MiB of information to the images, at least.
+//! * **Video section** (`[video]`): Sets the configuration for videos. Dimensions, frames per
+//! second, bitrate, and many more, most of them also available for pictures.
+//!
+//! You can also check the [`Config`](struct.Config.html) structure for further implementation
+//! details.
 
 use std::{fmt, u8, i8, u16};
 use std::result::Result as StdResult;
