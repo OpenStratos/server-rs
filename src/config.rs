@@ -123,17 +123,19 @@ impl Config {
 
             if let Some(b @ 101...u8::MAX) = self.picture.brightness {
                 ok = false;
-                errors.push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
-                                         b));
+                errors
+                    .push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
+                                      b));
             }
 
             match self.picture.contrast {
                 Some(c @ i8::MIN...-101) |
                 Some(c @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("picture contrast must be between -100 and 100, found \
-                                              {}\n",
-                                             c));
+                    errors
+                        .push_str(&format!("picture contrast must be between -100 and 100, found \
+                                            {}\n",
+                                           c));
                 }
                 _ => {}
             }
@@ -165,7 +167,7 @@ impl Config {
                 Some(i @ 801...u16::MAX) => {
                     ok = false;
                     errors.push_str(&format!("picture ISO must be between 100 and 800, found {}\n",
-                                             i));
+                                            i));
                 }
                 _ => {}
             }
@@ -229,7 +231,7 @@ impl Config {
             if let Some(b @ 101...u8::MAX) = self.video.brightness {
                 ok = false;
                 errors.push_str(&format!("video brightness must be between 0 and 100, found {}\n",
-                                         b));
+                                        b));
             }
 
             match self.video.contrast {
@@ -258,9 +260,10 @@ impl Config {
                 Some(s @ i8::MIN...-101) |
                 Some(s @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("video saturation must be between -100 and 100, found \
-                                              {}\n",
-                                             s));
+                    errors
+                        .push_str(&format!("video saturation must be between -100 and 100, found \
+                                            {}\n",
+                                           s));
                 }
                 _ => {}
             }
@@ -269,8 +272,8 @@ impl Config {
                 Some(i @ 0...99) |
                 Some(i @ 801...u16::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("video ISO must be between 100 and 800, found {}\n",
-                                             i));
+                    errors
+                        .push_str(&format!("video ISO must be between 100 and 800, found {}\n", i));
                 }
                 _ => {}
             }

@@ -111,8 +111,36 @@ html_root_url = "https://openstratos.github.io/server-rs/")]
 //! in altitude to record the launch altitude (to check it later). It will then wait until launch.
 //! It will try to detect a rapid ascent, or as a backup, if the current altitude is much higher
 //! than the launch altitude (100m with good precission, more if the precission is bad). This will
-//! only work if GPS is enabled. If not, it will simply record, OpenStratos will have no way of
-//! knowing its state. You will need to provide your own tracking mechanism.
+//! only work if GPS is enabled. If not, it will simply record until the device is manually shut
+//! down, OpenStratos will have no way of knowing its state. You will need to provide your own
+//! tracking mechanism.
+//!
+//! Once launched, the balloon will wait for balloon burst. It will first send a launch confirmation
+//! SMS so that you can know that the software detected the launch properly, and will then try to
+//! send an SMS before loosing network connection, acknowledging that the launch was OK and that it
+//! will loose GSM connectivity. This happens before getting to 2km altitude. Once this SMS is sent,
+//! the FONA will be shut down and will only be turned on to check the batteries if configured to do
+//! so. Burst detection, once again will be done in two steps. It will first try to detect a fast
+//! decay in altitude, and if it doesn't, burst will be detected after loosing 1km from the maximum
+//! altitude ever reached.
+//!
+//! Once the balloon bursts, it will no longer take any pictures. The whole descent will be recorded
+//! in video (if the camera is enabled). Once the balloon gets to 2.5km altitude, it will turn on
+//! the GSM and try to send an SMS. It will try to send SMSs at 2.5km, 1.5km and 500m altitude above
+//! sea level. Some/all of them might fail, if the conectivity is poor or if the probe lands higher
+//! than any of those marks. It's not a problem, since once the landing is detected, a landed SMS
+//! will be sent. Landing is detected if the probe is more or less at the same altitude for a long
+//! time (expected descent rate is bigger than 5 m/s).
+//!
+//! Once the landed SMS is sent properly (it will try to send it as many times as the battery lets
+//! it if it fails), it will wait 10 minutes and send another one. This prevents against probe being
+//! in movement (could have landed in a river/truck or any other moving element).
+//!
+//! After both SMSs get sent, the probe shuts down cleanly.
+//!
+//! ## Safe mode
+//!
+//! *In development…*
 
 #[macro_use]
 extern crate log;
