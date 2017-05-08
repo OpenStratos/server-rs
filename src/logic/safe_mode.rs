@@ -1,0 +1,1 @@
+//! Safe mode logic.

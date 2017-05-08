@@ -8,6 +8,9 @@ mod going_up;
 mod going_down;
 mod landed;
 mod shut_down;
+#[cfg(not(feature = "gps"))]
+mod eternal_loop;
+mod safe_mode;
 
 use std::str::FromStr;
 
@@ -141,5 +144,6 @@ pub struct ShutDown;
 /// Safe mode state.
 pub struct SafeMode;
 
-/// Struct to allow type checking shut down.
-pub struct Void;
+/// Eternal loop state, if no GPS is enabled.
+#[cfg(not(feature = "gps"))]
+pub struct EternalLoop;

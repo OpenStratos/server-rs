@@ -213,9 +213,9 @@ impl Config {
                 (w, h, f) => {
                     ok = false;
                     errors.push_str(
-                        &format!("video mode must be one of 2592×1944 1-15fps, 1920×1080 \
-                                  1-30fps, 1296×972 1-42fps, 1296×730 1-49fps, 640×480 1-60fps, \
-                                  found {}x{} {}fps\n",
+                        &format!("video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps,\
+                                  1296×972 1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} \
+                                  {}fps\n",
                                  w, h, f));
                 }
             }
