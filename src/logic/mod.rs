@@ -82,8 +82,7 @@ impl State {
         if !path.exists() {
             return Ok(None);
         }
-        let mut file = File::open(path)
-            .chain_err(|| ErrorKind::LastStateFileOpen)?;
+        let mut file = File::open(path).chain_err(|| ErrorKind::LastStateFileOpen)?;
         let mut state = String::new();
         file.read_to_string(&mut state)
             .chain_err(|| ErrorKind::LastStateFileRead)?;

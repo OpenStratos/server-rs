@@ -250,18 +250,18 @@ impl ToString for ExifData {
 
         if let Some((lat_ref, lat)) = self.gps_latitude {
             exif.push_str(&format!(" -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
-                                   lat_ref,
-                                   lat * 1_000_000_f32));
+                                  lat_ref,
+                                  lat * 1_000_000_f32));
         }
         if let Some((lon_ref, lon)) = self.gps_longitude {
             exif.push_str(&format!(" -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
-                                   lon_ref,
-                                   lon * 1_000_000_f32));
+                                  lon_ref,
+                                  lon * 1_000_000_f32));
         }
         if let Some(alt) = self.gps_altitude {
             // TODO configurable altitude ref.
             exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-                                   alt * 100_f32));
+                                  alt * 100_f32));
         }
         // TODO add GPS timestamp
         // if let Some(timestamp) = self.gps_timestamp {
@@ -280,12 +280,12 @@ impl ToString for ExifData {
         if let Some(speed) = self.gps_speed {
             // TODO configurable speed ref.
             exif.push_str(&format!(" -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
-                                   speed * 1_000_f32));
+                                  speed * 1_000_f32));
         }
         if let Some(track) = self.gps_track {
             // TODO configurable track ref.
             exif.push_str(&format!(" -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
-                                   track * 1_000_f32));
+                                  track * 1_000_f32));
         }
 
         exif
