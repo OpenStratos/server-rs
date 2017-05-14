@@ -60,13 +60,18 @@ lazy_static! {
 /// Configuration object.
 #[derive(Debug, Deserialize)]
 pub struct Config {
+    /// Wether the application should run in debug mode or not.
     debug: Option<bool>,
+    /// Video configuration.
     #[cfg(feature = "raspicam")]
     video: Video,
+    /// Picture configuration.
     #[cfg(feature = "raspicam")]
     picture: Picture,
+    /// The rotation of the camera.
     #[cfg(feature = "raspicam")]
     camera_rotation: Option<u16>,
+    /// The data directory.
     data_dir: PathBuf,
 }
 
@@ -326,18 +331,31 @@ impl Config {
 #[cfg(feature = "raspicam")]
 #[derive(Debug, Deserialize)]
 pub struct Video {
+    /// Height of the video, in px.
     height: u16,
+    /// Width of the video, in px.
     width: u16,
+    /// Frames per second (FPS) for the video.
     fps: u8,
+    /// Bit rate for the video, in bps (bits per second).
     bitrate: u32,
+    /// Exposure configuration.
     exposure: Option<Exposure>,
+    /// Brightnes correction.
     brightness: Option<u8>,
+    /// Contrast correction.
     contrast: Option<i8>,
+    /// Sharpness configuration.
     sharpness: Option<i8>,
+    /// Saturation configuration.
     saturation: Option<i8>,
+    /// ISO for the image.
     iso: Option<u16>,
+    /// Video stabilization.
     stabilization: Option<bool>,
+    /// EV correction configuration.
     ev: Option<i8>,
+    /// White balance configuration.
     white_balance: Option<WhiteBalance>,
 }
 
@@ -413,19 +431,32 @@ impl Video {
 #[cfg(feature = "raspicam")]
 #[derive(Debug, Deserialize)]
 pub struct Picture {
+    /// Height of the picture, in px.
     height: u16,
+    /// Width of the picture, in px.
     width: u16,
+    /// Quality of the picture, in px.
     quality: u8,
+    /// Wether to add EXIF data to pictures or not.
     #[cfg(feature = "gps")]
     exif: Option<bool>,
+    /// Wether to save the raw sensor data as JPG metadata.
     raw: Option<bool>,
+    /// Exposure configuration.
     exposure: Option<Exposure>,
+    /// Brightnes correction.
     brightness: Option<u8>,
+    /// Contrast correction.
     contrast: Option<i8>,
+    /// Sharpness configuration.
     sharpness: Option<i8>,
+    /// Saturation configuration.
     saturation: Option<i8>,
+    /// ISO for the image.
     iso: Option<u16>,
+    /// EV correction configuration.
     ev: Option<i8>,
+    /// White balance configuration.
     white_balance: Option<WhiteBalance>,
 }
 
@@ -598,6 +629,7 @@ impl AsRef<OsStr> for WhiteBalance {
 mod tests {
     use super::*;
 
+    /// Loads the default configuration and checks it.
     #[test]
     fn load_config() {
         let config = Config::from_file("config.toml").unwrap();
@@ -617,6 +649,7 @@ mod tests {
         }
     }
 
+    /// Tests an invalid configuration, and the error output.
     #[test]
     #[cfg(feature = "raspicam")]
     fn config_error() {
@@ -686,6 +719,7 @@ mod tests {
                     1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n");
     }
 
+    /// Tests the default configuration and its loading using the static `CONFIG` constant.
     #[test]
     fn config_static() {
         assert!(CONFIG.debug());

@@ -47,9 +47,9 @@ white_balance = "horizon"
 # Video dimensions, in pixels.
 width = 1920
 height = 1080
-# Video framerate.
+# Video framerate, in frames per second.
 fps = 30
-# Video bitrate.
+# Video bitrate, in bits per second.
 bitrate = 20000000
 # Video exposure.
 exposure = "antishake"

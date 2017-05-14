@@ -1,9 +1,10 @@
 //! Raspberry Pi camera module.
 
-use std::{fmt, fs};
+use std::{fmt, fs, thread, mem};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
-use std::process::{Command, Stdio};
+use std::process::{Command, Stdio, Child};
+use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, UTC};
 
@@ -15,10 +16,11 @@ use gps::GPSStatus;
 
 lazy_static! {
     /// Shared static camera object.
-    pub static ref CAMERA: Camera = Camera {
+    pub static ref CAMERA: Mutex<Camera> = Mutex::new(Camera {
         video_dir: CONFIG.data_dir().join("video"),
-        img_dir: CONFIG.data_dir().join("img"),
-    };
+        picture_dir: CONFIG.data_dir().join("img"),
+        process: None,
+    });
 }
 
 /// Camera structure.
@@ -26,8 +28,12 @@ lazy_static! {
 /// This structure controlls the use of the camera.
 #[derive(Debug)]
 pub struct Camera {
+    /// Directory to save video files.
     video_dir: PathBuf,
-    img_dir: PathBuf,
+    /// Directory to save picture files.
+    picture_dir: PathBuf,
+    /// Video process handle.
+    process: Option<Child>,
 }
 
 impl Camera {
@@ -45,7 +51,7 @@ impl Camera {
     /// throw a warning if not.
     ///
     /// **Panics** if the duration is less than 1 second.
-    pub fn record<P: AsRef<Path>>(&self,
+    pub fn record<P: AsRef<Path>>(&mut self,
                                   time: Option<Duration>,
                                   file_name: Option<P>)
                                   -> Result<()> {
@@ -59,7 +65,7 @@ impl Camera {
                 warn!("File name specified for testing purposes but trying to record indefinitely.")
             }
         }
-        if self.is_recording()? {
+        if self.is_recording() {
             error!("The camera is already recording.");
             return Err(ErrorKind::CameraAlreadyRecording.into());
         }
@@ -67,10 +73,11 @@ impl Camera {
             .join(if cfg!(test) {
                       PathBuf::from("test.h264")
                   } else if let Some(path) = file_name {
-                path.as_ref().to_path_buf()
-            } else {
-                PathBuf::from(&format!("video-{}.h264", fs::read_dir(&self.video_dir)?.count()))
-            });
+                      path.as_ref().to_path_buf()
+                  } else {
+                      PathBuf::from(&format!("video-{}.h264",
+                                            fs::read_dir(&self.video_dir)?.count()))
+                  });
         if file.exists() {
             error!("Trying to write the video in {} but the file already exists.",
                    file.display());
@@ -92,7 +99,7 @@ impl Camera {
             } else {
                 let stdout = String::from_utf8(output.stdout)?;
                 let stderr = String::from_utf8(output.stderr)?;
-                warn!("Video recording ended with an error.\nstdout: {}, stderr: {}",
+                warn!("Video recording ended with an error.\n\tstdout: {}\n\tstderr: {}",
                       stdout,
                       stderr);
             }
@@ -102,6 +109,7 @@ impl Camera {
             command.stderr(Stdio::null());
             let child = command.spawn()?;
             info!("Video recording started with PID {}.", child.id());
+            self.process = Some(child);
         }
         Ok(())
     }
@@ -109,14 +117,10 @@ impl Camera {
     /// Generates the video command with the configured parameters.
     fn generate_video_command(time: Option<Duration>, file: PathBuf) -> Command {
         let mut command = Command::new("raspivid");
-        command.arg("-n").arg("-o").arg(file);
-        if let Some(time) = time {
-            command
-                .arg("-t")
-                .arg(format!("{}",
-                             time.as_secs() * 1_000 + time.subsec_nanos() as u64 / 1_000_000));
-        }
         command
+            .arg("-n")
+            .arg("-o")
+            .arg(file)
             .arg("-w")
             .arg(format!("{}", CONFIG.video().width()))
             .arg("-h")
@@ -125,6 +129,12 @@ impl Camera {
             .arg(format!("{}", CONFIG.video().fps()))
             .arg("-b")
             .arg(format!("{}", CONFIG.video().bitrate()));
+        if let Some(time) = time {
+            command
+                .arg("-t")
+                .arg(format!("{}",
+                             time.as_secs() * 1_000 + time.subsec_nanos() as u64 / 1_000_000));
+        }
         if let Some(rot) = CONFIG.camera_rotation() {
             command.arg("-rot").arg(format!("{}", rot));
         }
@@ -160,17 +170,38 @@ impl Camera {
     }
 
     /// Stops the video recording.
-    ///
-    /// It will return `Ok(_)` if the video stopped successfully. The boolean in the return type
-    /// indicates if the camera was already recording previously.
-    ///
-    /// *In development…*
-    pub fn stop_recording(&self) -> Result<bool> {
-        unimplemented!()
+    pub fn stop_recording(&mut self) -> Result<()> {
+        info!("Stopping video recording…");
+        if let Some(mut child) = mem::replace(&mut self.process, None) {
+            match child.kill() {
+                Ok(()) => {
+                    info!("Video recording stopped correctly.");
+                    thread::sleep(Duration::from_millis(50));
+                }
+                Err(e) => {
+                    error!("Something had already stopped the video when trying to stop it.");
+                    return Err(e.into());
+                }
+            }
+        } else {
+            warn!("There was no process to kill when trying to stop recording.");
+            if Camera::is_really_recording()? {
+                warn!("The raspivid process existed but it was not controlled by OpenStratos. \
+                       Killing it…");
+                Camera::kill_process()?;
+                info!("Forcefully killed the raspivid process");
+            }
+        }
+        Ok(())
     }
 
-    /// Checks if the camera is currently recording video.
-    pub fn is_recording(&self) -> Result<bool> {
+    /// Checks if the camera is recording.
+    pub fn is_recording(&self) -> bool {
+        self.process.is_some()
+    }
+
+    /// Checks if there is a `raspivid` process currently recording video.
+    fn is_really_recording() -> Result<bool> {
         Ok(Command::new("pidof")
                .arg("-x")
                .arg("raspivid")
@@ -179,37 +210,123 @@ impl Camera {
                .success())
     }
 
+    /// Forcefully kills the `raspivid` process.
+    fn kill_process() -> Result<()> {
+        match Command::new("pkill").arg("raspivid").output() {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.into()),
+        }
+    }
+
     /// Takes a picture with the camera.
-    ///
-    /// *In development…*
-    pub fn take_picture(&self) -> Result<()> {
-        unimplemented!()
+    pub fn take_picture<P: AsRef<Path>>(&mut self, file_name: Option<P>) -> Result<()> {
+        info!("Takin picture…");
+        if self.is_recording() {
+            warn!("The camera was recording video when trying to take the picture. Stopping…");
+            self.stop_recording()?;
+        }
+        let file = self.picture_dir
+            .join(if cfg!(test) {
+                      PathBuf::from("test.jpg")
+                  } else if let Some(path) = file_name {
+                      path.as_ref().to_path_buf()
+                  } else {
+                      PathBuf::from(&format!("img-{}.jpg",
+                                            fs::read_dir(&self.picture_dir)?.count()))
+                  });
+        if file.exists() {
+            error!("Trying to write the picture in {} but the file already exists.",
+                   file.display());
+            return Err(ErrorKind::CameraFileExists(file).into());
+        }
+
+        let mut command = Camera::generate_picture_command(file);
+        #[allow(use_debug)]
+        {
+            debug!("Picture command: {:?}", command);
+        }
+        info!("Taking picture…");
+
+        let output = command.output()?;
+        if output.status.success() {
+            info!("Picture taken successfully.");
+        } else {
+            let stdout = String::from_utf8(output.stdout)?;
+            let stderr = String::from_utf8(output.stderr)?;
+            warn!("Picture taking ended with an error.\n\tstdout: {}\n\tstderr: {}",
+                  stdout,
+                  stderr);
+        }
+
+        Ok(())
+    }
+
+    /// Generates the picture command with the configured parameters.
+    fn generate_picture_command(file: PathBuf) -> Command {
+        let mut command = Command::new("raspistill");
+        command
+            .arg("-n")
+            .arg("-o")
+            .arg(file)
+            .arg("-t")
+            .arg("0")
+            .arg("-w")
+            .arg(format!("{}", CONFIG.picture().width()))
+            .arg("-h")
+            .arg(format!("{}", CONFIG.picture().height()))
+            .arg("-q")
+            .arg(format!("{}", CONFIG.picture().quality()));
+        if let Some(rot) = CONFIG.camera_rotation() {
+            command.arg("-rot").arg(format!("{}", rot));
+        }
+        #[cfg(feature = "gps")]
+        {
+            if CONFIG.picture().exif() {
+                command.arg("-x").arg(ExifData::new().to_string());
+            }
+        }
+        if let Some(ex) = CONFIG.picture().exposure() {
+            command.arg("-ex").arg(ex);
+        }
+        if let Some(br) = CONFIG.picture().brightness() {
+            command.arg("-br").arg(format!("{}", br));
+        }
+        if let Some(co) = CONFIG.picture().contrast() {
+            command.arg("-co").arg(format!("{}", co));
+        }
+        if let Some(sh) = CONFIG.picture().sharpness() {
+            command.arg("-sh").arg(format!("{}", sh));
+        }
+        if let Some(sa) = CONFIG.picture().saturation() {
+            command.arg("-sa").arg(format!("{}", sa));
+        }
+        if let Some(iso) = CONFIG.picture().iso() {
+            command.arg("-ISO").arg(format!("{}", iso));
+        }
+        if let Some(ev) = CONFIG.picture().ev() {
+            command.arg("-ev").arg(format!("{}", ev));
+        }
+        if let Some(awb) = CONFIG.picture().white_balance() {
+            command.arg("-awb").arg(awb);
+        }
+
+        command
     }
 }
 
 impl Drop for Camera {
     fn drop(&mut self) {
         info!("Shutting down…");
-        match self.is_recording() {
-            Ok(true) => {
-                info!("The camera is recording video, stopping…");
-                match self.stop_recording() {
-                    Ok(p) => {
-                        info!("Video recording stopped.");
-                        if p {
-                            warn!("Video recording had already stopped.");
-                        }
-                    }
-                    Err(e) => {
-                        error!("{}",
-                               generate_error_string(&e, "Error stopping video recording"))
-                    }
+        if self.is_recording() {
+            info!("The camera is recording video, stopping…");
+            match self.stop_recording() {
+                Ok(()) => {
+                    info!("Video recording stopped.");
                 }
-            }
-            Ok(false) => {}
-            Err(e) => {
-                error!("{}",
-                       generate_error_string(&e, "Error checking if camera was recording video"))
+                Err(e) => {
+                    error!("{}",
+                           generate_error_string(&e, "Error stopping video recording"))
+                }
             }
         }
         info!("Shut down finished");
@@ -220,25 +337,31 @@ impl Drop for Camera {
 #[cfg(feature = "gps")]
 #[derive(Debug)]
 pub struct ExifData {
+    /// GPS latitude and reference.
     gps_latitude: Option<(LatitudeRef, f32)>,
+    /// GPS longitude and reference.
     gps_longitude: Option<(LongitudeRef, f32)>,
+    /// GPS altitude from sea level.
     gps_altitude: Option<f32>,
     // TODO gps_timestamp: Option<DateTime<UTC>>,
+    /// Number of GPS satellites.
     gps_satellites: Option<u8>,
+    /// GPS fix status.
     gps_status: Option<GPSStatus>,
+    /// GPS position dillution of precission.
     gps_dop: Option<f32>,
+    /// GPS speed.
     gps_speed: Option<f32>,
+    /// GPS course.
     gps_track: Option<f32>,
 }
 
 #[cfg(feature = "gps")]
 impl ExifData {
+    /// Creates new EXIF data from GPS.
+    ///
     /// *In development…*
-    fn new(wait: bool) -> Self {
-        if wait {
-            unimplemented!();
-        }
-
+    fn new() -> Self {
         unimplemented!();
     }
 }
@@ -296,7 +419,9 @@ impl ToString for ExifData {
 #[cfg(feature = "gps")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LatitudeRef {
+    /// North reference.
     North,
+    /// South reference.
     South,
 }
 
@@ -314,12 +439,10 @@ impl From<f32> for LatitudeRef {
 #[cfg(feature = "gps")]
 impl fmt::Display for LatitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               match *self {
-                   LatitudeRef::North => "N",
-                   LatitudeRef::South => "S",
-               })
+        write!(f, "{}", match *self {
+            LatitudeRef::North => "N",
+            LatitudeRef::South => "S",
+        })
     }
 }
 
@@ -327,7 +450,9 @@ impl fmt::Display for LatitudeRef {
 #[cfg(feature = "gps")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LongitudeRef {
+    /// East reference.
     East,
+    /// West reference.
     West,
 }
 
@@ -345,12 +470,10 @@ impl From<f32> for LongitudeRef {
 #[cfg(feature = "gps")]
 impl fmt::Display for LongitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}",
-               match *self {
-                   LongitudeRef::East => "E",
-                   LongitudeRef::West => "W",
-               })
+        write!(f, "{}", match *self {
+            LongitudeRef::East => "E",
+            LongitudeRef::West => "W",
+        })
     }
 }
 
@@ -412,6 +535,6 @@ mod tests {
     /// Tests that the camera is not already recording.
     #[test]
     fn is_recording() {
-        assert!(!CAMERA.is_recording().unwrap());
+        assert!(!CAMERA.lock().unwrap().is_recording());
     }
 }

@@ -48,11 +48,11 @@ html_root_url = "https://openstratos.github.io/server-rs/")]
     invalid_upcast_comparisons, items_after_statements, nonminimal_bool, pub_enum_variant_names,
     shadow_reuse, shadow_same, shadow_unrelated, similar_names, single_match_else, string_add,
     string_add_assign, unicode_not_nfc, unseparated_literal_suffix, use_debug,
-    wrong_pub_self_convention)]
+    wrong_pub_self_convention, option_unwrap_used, result_unwrap_used,
+    missing_docs_in_private_items)]
 // Allowing these at least for now.
-#![allow(missing_docs_in_private_items, unknown_lints, stutter, option_unwrap_used,
-    result_unwrap_used, integer_arithmetic, cast_possible_truncation, cast_possible_wrap,
-    indexing_slicing, cast_precision_loss, cast_sign_loss)]
+#![allow(unknown_lints, stutter, integer_arithmetic, cast_possible_truncation, cast_possible_wrap,
+         indexing_slicing, cast_precision_loss, cast_sign_loss)]
 
 #![allow(unused)]
 
@@ -73,8 +73,10 @@ extern crate log4rs;
 extern crate colored;
 extern crate chrono;
 
-const CONFIG_FILE: &str = "config.toml";
-const STATE_FILE: &str = "last_state";
+/// Configuration file.
+pub const CONFIG_FILE: &str = "config.toml";
+/// Last state file, in the `data` directory.
+pub const STATE_FILE: &str = "last_state";
 
 pub mod error;
 pub mod config;
@@ -162,11 +164,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
     let main = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(pattern_naive)))
         .build(format!("data/logs/main-{}.log", now))
-        .unwrap();
+        .chain_err(|| Error::from(ErrorKind::LogAppender("main")))?;
     let system = FileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(pattern_naive)))
         .build(format!("data/logs/system-{}.log", now))
-        .unwrap();
+        .chain_err(|| Error::from(ErrorKind::LogAppender("system")))?;
 
     let log_level = if CONFIG.debug() {
         LogLevelFilter::Trace
@@ -190,7 +192,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let camera = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_naive)))
             .build(format!("data/logs/camera-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("camera")))?;
 
         config
             .appender(Appender::builder().build("camera", Box::new(camera)))
@@ -205,11 +207,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let gps = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_naive)))
             .build(format!("data/logs/gps-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("gps")))?;
         let gps_frames = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_exact)))
             .build(format!("data/logs/gps_frames-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("gps_frames")))?;
         let gps_logger = {
             let mut builder = Logger::builder()
                 .appender("gps")
@@ -234,7 +236,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             let gps_serial = FileAppender::builder()
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/gps_serial-{}.log", now))
-                .unwrap();
+                .chain_err(|| Error::from(ErrorKind::LogAppender("gps_serial")))?;
             config.appender(Appender::builder().build("gps_serial", Box::new(gps_serial)))
         } else {
             config
@@ -246,11 +248,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let fona = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_naive)))
             .build(format!("data/logs/fona-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("fona")))?;
         let fona_frames = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_exact)))
             .build(format!("data/logs/fona_frames-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("fona_frames")))?;
         let fona_logger = {
             let mut builder = Logger::builder()
                 .appender("fona")
@@ -274,7 +276,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             let gsm_serial = FileAppender::builder()
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/fona_serial-{}.log", now))
-                .unwrap();
+                .chain_err(|| Error::from(ErrorKind::LogAppender("fona_serial")))?;
             config.appender(Appender::builder().build("fona_serial", Box::new(gsm_serial)))
         } else {
             config
@@ -286,11 +288,12 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let telemetry = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_exact)))
             .build(format!("data/logs/telemetry-{}.log", now))
-            .unwrap();
-        let telemetry_frames = FileAppender::builder()
-            .encoder(Box::new(PatternEncoder::new(pattern_exact)))
-            .build(format!("data/logs/telemetry_frames-{}.log", now))
-            .unwrap();
+            .chain_err(|| Error::from(ErrorKind::LogAppender("telemetry")))?;
+        let telemetry_frames =
+            FileAppender::builder()
+                .encoder(Box::new(PatternEncoder::new(pattern_exact)))
+                .build(format!("data/logs/telemetry_frames-{}.log", now))
+                .chain_err(|| Error::from(ErrorKind::LogAppender("telemetry_frames")))?;
 
         let telemetry_logger = {
             let mut builder = Logger::builder()
@@ -313,10 +316,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             .logger(telemetry_logger);
 
         if CONFIG.debug() {
-            let telemetry_serial = FileAppender::builder()
-                .encoder(Box::new(PatternEncoder::new(pattern_exact)))
-                .build(format!("data/logs/telemetry_serial-{}.log", now))
-                .unwrap();
+            let telemetry_serial =
+                FileAppender::builder()
+                    .encoder(Box::new(PatternEncoder::new(pattern_exact)))
+                    .build(format!("data/logs/telemetry_serial-{}.log", now))
+                    .chain_err(|| Error::from(ErrorKind::LogAppender("telemetry_serial")))?;
 
             config
                 .appender(Appender::builder().build("telemetry_serial", Box::new(telemetry_serial)))
@@ -329,7 +333,8 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         .build(Root::builder()
                    .appender("stdout")
                    .appender("main")
-                   .build(LogLevelFilter::Info))?;
+                   .build(LogLevelFilter::Info))
+        .chain_err(|| Error::from(ErrorKind::LogBuild))?;
 
     Ok(log4rs::init_config(config)?)
 }

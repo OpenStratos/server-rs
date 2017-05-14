@@ -6,16 +6,17 @@ use STATE_FILE;
 
 error_chain!{
     foreign_links {
-        Io(::std::io::Error) #[allow(missing_docs)];
-        Toml(::toml::de::Error) #[allow(missing_docs)];
-        Log(::log4rs::Error) #[allow(missing_docs)];
-        LogSet(::log::SetLoggerError) #[allow(missing_docs)];
-        LogConfig(::log4rs::config::Errors) #[allow(missing_docs)];
-        FromUTF8(::std::string::FromUtf8Error) #[allow(missing_docs)];
+        Io(::std::io::Error) #[doc = "Standard library I/O error."];
+        Toml(::toml::de::Error) #[doc = "TOML deserializing error."];
+        Log(::log4rs::Error) #[doc = "Log error."];
+        LogSet(::log::SetLoggerError) #[doc = "Error setting up logger."];
+        LogConfig(::log4rs::config::Errors) #[doc = "Logger configuration error."];
+        FromUTF8(::std::string::FromUtf8Error) #[doc = "Error creating a String from UTF-8 data."];
     }
 
     errors {
         /// Invalid GPS status.
+        #[cfg(feature = "gps")]
         GPSInvalidStatus(s: String) {
             description("invalid GPS status")
             display("invalid GPS status: '{}'", s)
@@ -45,10 +46,22 @@ error_chain!{
             display("the configuration is invalid:\n{}", errors)
         }
 
-        /// Error initializing the data/ filesystem.
+        /// Error initializing the `data` filesystem.
         DataFSInit {
             description("the camera was already recording")
             display("the camera was already recording")
+        }
+
+        /// Error creating a log appender.
+        LogAppender(appender_name: &'static str) {
+            description("error creating log appender")
+            display("error creating `{}` log appender", appender_name)
+        }
+
+        /// Error building the logger.
+        LogBuild {
+            display("error building the logger")
+            description("error building the logger")
         }
 
         /// Error creating a directory.
@@ -81,14 +94,14 @@ error_chain!{
             display("the last state '{}' is invalid", state)
         }
 
-        /// Camera was already recording
+        /// Camera was already recording.
         #[cfg(feature = "raspicam")]
         CameraAlreadyRecording {
             description("the camera was already recording")
             display("the camera was already recording")
         }
 
-        /// Camera was already recording
+        /// Camera output file already exists.
         #[cfg(feature = "raspicam")]
         CameraFileExists(file: PathBuf) {
             description("the output file for the camera already exists")
