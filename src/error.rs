@@ -88,10 +88,22 @@ error_chain!{
             display("error reading last state file {}", STATE_FILE)
         }
 
+        /// Error writing last state file.
+        LastStateFileWrite {
+            description("error writing last state file")
+            display("error writing last state file {}", STATE_FILE)
+        }
+
         /// Invalid last state.
         InvalidState(state: String) {
             description("the last state is invalid")
             display("the last state '{}' is invalid", state)
+        }
+
+        /// Initialization error.
+        Init {
+            description("initialization error")
+            display("there was an error during the initialization")
         }
 
         /// Camera was already recording.

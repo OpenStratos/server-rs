@@ -4,14 +4,32 @@
 
 use std::fmt;
 use std::str::FromStr;
+use std::sync::Mutex;
 
 use chrono::{DateTime, UTC};
 
 use error::*;
 
+lazy_static! {
+    /// GPS data for concurrent check.
+    pub static ref GPS_DATA: Mutex<GPS> = Mutex::new(GPS {
+        fix_time: UTC::now(),
+        status: GPSStatus::Void,
+        satellites: 0,
+        latitude: 0_f32,
+        longitude: 0_f32,
+        altitude: 0_f32,
+        pdop: 100_f32,
+        hdop: 100_f32,
+        vdop: 100_f32,
+        speed: 0_f32,
+        course: 0_f32,
+    });
+}
+
 /// GPS information structure.
 #[derive(Debug)]
-struct GPS {
+pub struct GPS {
     /// Time of the current fix.
     fix_time: DateTime<UTC>,
     /// GPS fix status.

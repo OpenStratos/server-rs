@@ -20,6 +20,9 @@ mod safe_mode;
 
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
+use std::path::Path;
+use std::fs::{OpenOptions, File};
+use std::io::{Read, Write};
 
 use error::*;
 use STATE_FILE;
@@ -65,8 +68,34 @@ impl<S> MainLogic for S
             };
             *current_state = new_state.get_state();
         }
+
+        save_current_state()?;
+
         new_state.main_logic()
     }
+}
+
+/// Saves the current state into the state file.
+fn save_current_state() -> Result<()> {
+    let path = CONFIG.data_dir().join(STATE_FILE);
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(path)
+        .chain_err(|| ErrorKind::LastStateFileOpen)?;
+    {
+        let current_state = match CURRENT_STATE.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                error!("The CURRENT_STATE mutex was poisoned.");
+                poisoned.into_inner()
+            }
+        };
+        file.write_all(current_state.as_str().as_bytes())
+            .chain_err(|| ErrorKind::LastStateFileWrite)?;
+    }
+    Ok(())
 }
 
 /// Main OpenStratos state machine
@@ -84,8 +113,9 @@ impl<S> GetState for OpenStratos<S>
 }
 
 /// Initializes a new state machine.
-pub fn init() -> OpenStratos<Init> {
-    OpenStratos { state: Init }
+pub fn init() -> Result<OpenStratos<Init>> {
+    save_current_state()?;
+    Ok(OpenStratos { state: Init })
 }
 
 /// States of the onboard computer.
@@ -123,10 +153,6 @@ pub enum State {
 impl State {
     /// Gets the last state of the application if there is one.
     pub fn get_last() -> Result<Option<State>> {
-        use std::path::Path;
-        use std::fs::File;
-        use std::io::Read;
-
         let path = CONFIG.data_dir().join(STATE_FILE);
         if !path.exists() {
             return Ok(None);
@@ -140,6 +166,29 @@ impl State {
             Ok(None)
         } else {
             Ok(Some(state.parse()?))
+        }
+    }
+
+    /// Gets the state as a string to be stored in the `LAST_STATE` file.
+    pub fn as_str(&self) -> &str {
+        match *self {
+            State::Init => "INITIALIZING",
+            #[cfg(feature = "gps")]
+            State::AcquiringFix => "ACQUIRING_FIX",
+            #[cfg(feature = "gps")]
+            State::FixAcquired => "FIX_ACQUIRED",
+            #[cfg(feature = "gps")]
+            State::WaitingLaunch => "WAITING_LAUNCH",
+            #[cfg(feature = "gps")]
+            State::GoingUp => "GOING_UP",
+            #[cfg(feature = "gps")]
+            State::GoingDown => "GOING_DOWN",
+            #[cfg(feature = "gps")]
+            State::Landed => "LANDED",
+            State::ShutDown => "SHUT_DOWN",
+            State::SafeMode => "SAFE_MODE",
+            #[cfg(not(feature = "gps"))]
+            State::EternalLoop => "ETERNAL_LOOP",
         }
     }
 }
@@ -293,6 +342,12 @@ mod tests {
         assert_eq!("INITIALIZING".parse::<State>().unwrap(), State::Init);
     }
 
+    /// Tests that the `State::Init` is translated to *INITIALIZING* as a string.
+    #[test]
+    fn it_as_str_init() {
+        assert_eq!("INITIALIZING", State::Init.as_str());
+    }
+
     /// Tests if the `AcquiringFix` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -318,6 +373,13 @@ mod tests {
         "ACQUIRING_FIX".parse::<State>().unwrap();
     }
 
+    /// Tests that the `State::AcquiringFix` is translated to *ACQUIRING_FIX* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_acquiring_fix() {
+        assert_eq!("ACQUIRING_FIX", State::AcquiringFix.as_str());
+    }
+
     /// Tests if the `FixAcquired` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -340,6 +402,13 @@ mod tests {
     #[cfg(not(feature = "gps"))]
     fn it_from_str_fix_acquired() {
         "FIX_ACQUIRED".parse::<State>().unwrap();
+    }
+
+    /// Tests that the `State::FixAcquired` is translated to *FIX_ACQUIRED* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_fix_acquired() {
+        assert_eq!("FIX_ACQUIRED", State::FixAcquired.as_str());
     }
 
     /// Tests if the `WaitingLaunch` state generates the correct `State` enumeration variant in
@@ -367,6 +436,13 @@ mod tests {
         "WAITING_LAUNCH".parse::<State>().unwrap();
     }
 
+    /// Tests that the `State::WaitingLaunch` is translated to *WAITIN_LAUNCH* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_waiting_launch() {
+        assert_eq!("WAITING_LAUNCH", State::WaitingLaunch.as_str());
+    }
+
     /// Tests if the `GoingUp` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -389,6 +465,13 @@ mod tests {
     #[cfg(not(feature = "gps"))]
     fn it_from_str_going_up() {
         "GOING_UP".parse::<State>().unwrap();
+    }
+
+    /// Tests that the `State::GoingUp` is translated to *GOING_UP* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_going_up() {
+        assert_eq!("GOING_UP", State::GoingUp.as_str());
     }
 
     /// Tests if the `GoingDown` state generates the correct `State` enumeration variant in
@@ -415,6 +498,13 @@ mod tests {
         "GOING_DOWN".parse::<State>().unwrap();
     }
 
+    /// Tests that the `State::GoingDown` is translated to *GOING_DOWN* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_going_down() {
+        assert_eq!("GOING_DOWN", State::GoingDown.as_str());
+    }
+
     /// Tests if the `Landed` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -439,6 +529,13 @@ mod tests {
         "LANDED".parse::<State>().unwrap();
     }
 
+    /// Tests that the `State::Landed` is translated to *LANDED* as a string.
+    #[test]
+    #[cfg(feature = "gps")]
+    fn it_as_str_landed() {
+        assert_eq!("LANDED", State::Landed.as_str());
+    }
+
     /// Tests if the `ShutDown` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -453,6 +550,12 @@ mod tests {
         assert_eq!("SHUT_DOWN".parse::<State>().unwrap(), State::ShutDown);
     }
 
+    /// Tests that the `State::ShutDown` is translated to *SHUT_DOWN* as a string.
+    #[test]
+    fn it_as_str_shut_down() {
+        assert_eq!("SHUT_DOWN", State::ShutDown.as_str());
+    }
+
     /// Tests if the `SafeMode` state generates the correct `State` enumeration variant in
     /// `get_state()`.
     #[test]
@@ -465,6 +568,12 @@ mod tests {
     #[test]
     fn it_from_str_safe_mode() {
         assert_eq!("SAFE_MODE".parse::<State>().unwrap(), State::SafeMode);
+    }
+
+    /// Tests that the `State::SafeMode` is translated to *SAFE_MODE* as a string.
+    #[test]
+    fn it_as_str_safe_mode() {
+        assert_eq!("SAFE_MODE", State::SafeMode.as_str());
     }
 
     /// Tests if the `EternalLoop` state generates the correct `State` enumeration variant in
@@ -489,5 +598,12 @@ mod tests {
     #[cfg(feature = "gps")]
     fn it_from_str_eternal_loop() {
         "ETERNAL_LOOP".parse::<State>().unwrap();;
+    }
+
+    /// Tests that the `State::EternalLoop` is translated to *ETERNAL_LOOP* as a string.
+    #[test]
+    #[cfg(not(feature = "gps"))]
+    fn it_as_str_eternal_loop() {
+        assert_eq!("ETERNAL_LOOP", State::EternalLoop.as_str());
     }
 }

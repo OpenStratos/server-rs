@@ -12,7 +12,7 @@ use error::*;
 use generate_error_string;
 use config::CONFIG;
 #[cfg(feature = "gps")]
-use gps::GPSStatus;
+use gps::{GPS_DATA, GPSStatus};
 
 lazy_static! {
     /// Shared static camera object.
@@ -338,22 +338,22 @@ impl Drop for Camera {
 #[derive(Debug)]
 pub struct ExifData {
     /// GPS latitude and reference.
-    gps_latitude: Option<(LatitudeRef, f32)>,
+    gps_latitude: (LatitudeRef, f32),
     /// GPS longitude and reference.
-    gps_longitude: Option<(LongitudeRef, f32)>,
+    gps_longitude: (LongitudeRef, f32),
     /// GPS altitude from sea level.
-    gps_altitude: Option<f32>,
-    // TODO gps_timestamp: Option<DateTime<UTC>>,
+    gps_altitude: f32,
+    // TODO gps_timestamp: DateTime<UTC>,
     /// Number of GPS satellites.
-    gps_satellites: Option<u8>,
+    gps_satellites: u8,
     /// GPS fix status.
-    gps_status: Option<GPSStatus>,
+    gps_status: GPSStatus,
     /// GPS position dillution of precission.
-    gps_dop: Option<f32>,
+    gps_dop: f32,
     /// GPS speed.
-    gps_speed: Option<f32>,
+    gps_speed: f32,
     /// GPS course.
-    gps_track: Option<f32>,
+    gps_track: f32,
 }
 
 #[cfg(feature = "gps")]
@@ -362,7 +362,25 @@ impl ExifData {
     ///
     /// *In development…*
     fn new() -> Self {
-        unimplemented!();
+        let gps = match GPS_DATA.lock() {
+            Ok(guard) => guard,
+            Err(poisoned) => {
+                error!("The GPS_DATA mutex was poisoned.");
+                poisoned.into_inner()
+            }
+        };
+
+        ExifData {
+            gps_latitude: (LatitudeRef::from(gps.latitude()), gps.latitude()),
+            gps_longitude: (LongitudeRef::from(gps.longitude()), gps.longitude()),
+            gps_altitude: gps.altitude(),
+            // TODO gps_timestamp: DateTime<UTC>,
+            gps_satellites: gps.satellites(),
+            gps_status: gps.status(),
+            gps_dop: gps.pdop(),
+            gps_speed: gps.speed(),
+            gps_track: gps.course(),
+        }
     }
 }
 
@@ -371,45 +389,35 @@ impl ToString for ExifData {
     fn to_string(&self) -> String {
         let mut exif = String::from(" -x GPSMeasureMode=3 -x GPS.GPSDifferential=0");
 
-        if let Some((lat_ref, lat)) = self.gps_latitude {
-            exif.push_str(&format!(" -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
-                                  lat_ref,
-                                  lat * 1_000_000_f32));
-        }
-        if let Some((lon_ref, lon)) = self.gps_longitude {
-            exif.push_str(&format!(" -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
-                                  lon_ref,
-                                  lon * 1_000_000_f32));
-        }
-        if let Some(alt) = self.gps_altitude {
-            // TODO configurable altitude ref.
-            exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-                                  alt * 100_f32));
-        }
+        let (lat_ref, lat) = self.gps_latitude;
+        exif.push_str(&format!(" -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
+                              lat_ref,
+                              lat * 1_000_000_f32));
+
+        let (lon_ref, lon) = self.gps_longitude;
+        exif.push_str(&format!(" -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
+                              lon_ref,
+                              lon * 1_000_000_f32));
+
+        // TODO configurable altitude ref.
+        exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
+                              self.gps_altitude * 100_f32));
+
         // TODO add GPS timestamp
-        // if let Some(timestamp) = self.gps_timestamp {
-        //     exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-        //                            alt * 100f32))
-        // }
-        if let Some(sat) = self.gps_satellites {
-            exif.push_str(&format!(" -x GPS.GPSSatellites={}", sat));
-        }
-        if let Some(status) = self.gps_status {
-            exif.push_str(&format!(" -x GPS.GPSStatuss={}", status));
-        }
-        if let Some(dop) = self.gps_dop {
-            exif.push_str(&format!(" -x GPS.GPSDOP={:.0}/1000", dop * 1_000_f32));
-        }
-        if let Some(speed) = self.gps_speed {
-            // TODO configurable speed ref.
-            exif.push_str(&format!(" -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
-                                  speed * 1_000_f32));
-        }
-        if let Some(track) = self.gps_track {
-            // TODO configurable track ref.
-            exif.push_str(&format!(" -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
-                                  track * 1_000_f32));
-        }
+        // exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
+        //                        self.gps_timestamp * 100f32));
+
+        exif.push_str(&format!(" -x GPS.GPSSatellites={}", self.gps_satellites));
+        exif.push_str(&format!(" -x GPS.GPSStatuss={}", self.gps_status));
+        exif.push_str(&format!(" -x GPS.GPSDOP={:.0}/1000", self.gps_dop * 1_000_f32));
+
+        // TODO configurable speed ref.
+        exif.push_str(&format!(" -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
+                              self.gps_speed * 1_000_f32));
+
+        // TODO configurable track ref.
+        exif.push_str(&format!(" -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
+                              self.gps_track * 1_000_f32));
 
         exif
     }
@@ -482,21 +490,21 @@ impl fmt::Display for LongitudeRef {
 mod tests {
     use super::*;
 
-    /// Tests EXIF generation for a complete data structure.
+    /// Tests EXIF generation.
     #[test]
     #[cfg(feature = "gps")]
     fn exif_data_complete() {
         let data = ExifData {
-            gps_latitude: Some((LatitudeRef::North, 23.44497)),
-            gps_longitude: Some((LongitudeRef::East, 100.05792)),
-            gps_altitude: Some(1500.34),
+            gps_latitude: (LatitudeRef::North, 23.44497),
+            gps_longitude: (LongitudeRef::East, 100.05792),
+            gps_altitude: 1500.34,
             // gps_timestamp:
             //     DateTime::<UTC>::from_utc(NaiveDateTime::from_timestamp(1490443906, 0), UTC),
-            gps_satellites: Some(7),
-            gps_status: Some(GPSStatus::Active),
-            gps_dop: Some(3.21),
-            gps_speed: Some(13.5),
-            gps_track: Some(1.65),
+            gps_satellites: 7,
+            gps_status: GPSStatus::Active,
+            gps_dop: 3.21,
+            gps_speed: 13.5,
+            gps_track: 1.65,
         };
 
         assert_eq!(data.to_string(),
@@ -506,30 +514,6 @@ mod tests {
                     GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatuss=A -x \
                     GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed=13500/1000 -x \
                     GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000");
-    }
-
-    /// Tests EXIF generation for an incomplete data structure.
-    #[test]
-    #[cfg(feature = "gps")]
-    fn exif_data_incomplete() {
-        let data = ExifData {
-            gps_latitude: None,
-            gps_longitude: Some((LongitudeRef::West, 100.05792)),
-            gps_altitude: Some(1500.34),
-            // gps_timestamp: None,
-            gps_satellites: Some(7),
-            gps_status: Some(GPSStatus::Void),
-            gps_dop: Some(3.21),
-            gps_speed: Some(13.5),
-            gps_track: None,
-        };
-
-        assert_eq!(data.to_string(),
-                   " -x GPSMeasureMode=3 -x GPS.GPSDifferential=0 -x \
-                    GPS.GPSLongitudeRef=W -x GPS.GPSLongitude=100057920/1000000 -x \
-                    GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x \
-                    GPS.GPSStatuss=V -x GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x \
-                    GPS.GPSSpeed=13500/1000");
     }
 
     /// Tests that the camera is not already recording.
