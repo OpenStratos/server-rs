@@ -71,6 +71,8 @@ pub struct Config {
     /// The rotation of the camera.
     #[cfg(feature = "raspicam")]
     camera_rotation: Option<u16>,
+    /// Flight information
+    flight: Flight,
     /// The data directory.
     data_dir: PathBuf,
 }
@@ -319,6 +321,11 @@ impl Config {
     #[cfg(feature = "raspicam")]
     pub fn camera_rotation(&self) -> Option<u16> {
         self.camera_rotation
+    }
+
+    /// Gets the flight information.
+    pub fn flight(&self) -> &Flight {
+        &self.flight
     }
 
     /// Gets the configured data directory.
@@ -622,6 +629,20 @@ impl AsRef<OsStr> for WhiteBalance {
                        WhiteBalance::Flash => "flash",
                        WhiteBalance::Horizon => "horizon",
                    })
+    }
+}
+
+/// Flight information structure.
+#[derive(Debug, Deserialize)]
+pub struct Flight {
+    /// Expected length of the flight, in minutes.
+    length: u32,
+}
+
+impl Flight {
+    /// Gets the expected length for the flight.
+    pub fn length(&self) -> u32 {
+        self.length
     }
 }
 

@@ -70,5 +70,9 @@ stabilization = true
 # Automatic video white balance
 white_balance = "horizon"
 
+[flight]
+# Expected flight length, in minutes.
+length = 300
+
 
 # TODO pins, phone number and so on.

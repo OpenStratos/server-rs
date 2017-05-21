@@ -72,6 +72,7 @@ extern crate log;
 extern crate log4rs;
 extern crate colored;
 extern crate chrono;
+extern crate libc;
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";
