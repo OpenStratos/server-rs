@@ -129,9 +129,18 @@ error_chain!{
         }
 
         /// Camera testing error.
+        #[cfg(feature = "raspicam")]
         CameraTest {
             description("camera test error")
-            description("an error occurred when trying to test the camera")
+            display("an error occurred when trying to test the camera")
+        }
+
+        /// Error removing camera test file.
+        #[cfg(feature = "raspicam")]
+        CameraTestRemove(test_file: PathBuf) {
+            description("error removing camera test file")
+            display("there was an error trying to remove the camera test file {}",
+                    test_file.display())
         }
     }
 }

@@ -14,11 +14,16 @@ use config::CONFIG;
 #[cfg(feature = "gps")]
 use gps::{GPS_DATA, GPSStatus};
 
+/// Video directory inside data directory.
+pub const VIDEO_DIR: &str = "video";
+/// Image directory inside data directory.
+pub const IMG_DIR: &str = "img";
+
 lazy_static! {
     /// Shared static camera object.
     pub static ref CAMERA: Mutex<Camera> = Mutex::new(Camera {
-        video_dir: CONFIG.data_dir().join("video"),
-        picture_dir: CONFIG.data_dir().join("img"),
+        video_dir: CONFIG.data_dir().join(VIDEO_DIR),
+        picture_dir: CONFIG.data_dir().join(IMG_DIR),
         process: None,
     });
 }

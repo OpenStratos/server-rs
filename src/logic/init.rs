@@ -9,6 +9,12 @@ use super::*;
 use error::*;
 #[cfg(feature = "gps")]
 use gps::GPS_DATA;
+#[cfg(feature = "raspicam")]
+use raspicam::VIDEO_DIR;
+
+/// Test video file.
+#[cfg(feature = "raspicam")]
+pub const TEST_VIDEO_FILE: &str = "test.h264";
 
 impl StateMachine for OpenStratos<Init> {
     #[cfg(feature = "gps")]
@@ -128,12 +134,10 @@ impl StateMachine for OpenStratos<Init> {
             // 	else
             // 		logger.log("Error turning GPS off.");
             //
-            // 	#ifndef NO_POWER_OFF
-            // 		sync();
-            // 		reboot(RB_POWER_OFF);
-            // 	#else
-            // 		exit(1);
-            // 	#endif
+            // #[cfg(not(feature = "no_power_off"))]
+            // power_off();
+            // #[cfg(feature = "no_power_off")]
+            // process::exit(1);
             // }
 
             info!("Waiting for GSM connectivity…");
@@ -155,25 +159,65 @@ impl StateMachine for OpenStratos<Init> {
 
         #[cfg(feature = "raspicam")]
         {
+            use std::fs::remove_file;
+
             use raspicam::CAMERA;
 
             info!("Testing camera recording…");
             info!("Recording 10 seconds as test…");
             match CAMERA.lock() {
                 Ok(mut cam) => {
-                    cam.record(Duration::from_secs(10), "test.h264")
+                    cam.record(Duration::from_secs(10), TEST_VIDEO_FILE)
                         .chain_err(|| ErrorKind::CameraTest)?
                 }
                 Err(poisoned) => {
                     error!("The CAMERA mutex was poisoned.");
                     poisoned
                         .into_inner()
-                        .record(Duration::from_secs(10), "test.h264")
+                        .record(Duration::from_secs(10), TEST_VIDEO_FILE)
                         .chain_err(|| ErrorKind::CameraTest)?
                 }
             }
+
+            let video_path = CONFIG.data_dir().join(VIDEO_DIR).join(TEST_VIDEO_FILE);
+            if video_path.exists() {
+                info!("Camera test OK.");
+                info!("Removing test file…");
+                remove_file(&video_path)
+                    .chain_err(|| ErrorKind::CameraTestRemove(video_path.clone()))?;
+                info!("Test file removed.");
+            } else {
+                error!("Camera test file was not created.");
+                // TODO
+                // logger.log("Turning GSM off...");
+                // if (GSM::get_instance().turn_off())
+                // 	logger.log("GSM off.");
+                // else
+                // 	logger.log("Error turning GSM off.");
+                //
+                // logger.log("Turning GPS off...");
+                // if (GPS::get_instance().turn_off())
+                // 	logger.log("GPS off.");
+                // else
+                // 	logger.log("Error turning GPS off.");
+
+                #[cfg(not(feature = "no_power_off"))]
+                power_off();
+                #[cfg(feature = "no_power_off")]
+                process::exit(1);
+            }
+
+            #[cfg(feature = "gps")]
+            {
+                Ok(OpenStratos { state: AcquiringFix })
+            }
+
+
+            #[cfg(not(feature = "gps"))]
+            {
+                Ok(OpenStratos { state: EternalLoop })
+            }
         }
-        unimplemented!()
     }
 }
 
@@ -202,6 +246,7 @@ fn get_available_disk_space() -> Result<u64> {
 /// Powers the system off.
 ///
 /// It takes care of disk synchronization.
+#[cfg(not(feature = "no_power_off"))]
 fn power_off() -> Result<()> {
     use libc::{reboot, RB_POWER_OFF};
 
