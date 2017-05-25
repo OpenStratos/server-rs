@@ -42,7 +42,10 @@ before_script:
 script:
   - cargo build
   - cargo package
+  - cargo test
+  - cargo test --features="no_power_off"
   - cargo test --no-default-features
+  - cargo test --no-default-features --features="no_power_off"
   # Testing with fona
   - cargo test --no-default-features --features="fona"
   - cargo test --no-default-features --features="fona gps"

@@ -51,10 +51,14 @@ impl Camera {
     /// throw a warning if not.
     ///
     /// **Panics** if the duration is less than 1 second.
-    pub fn record<P: AsRef<Path>>(&mut self,
-                                  time: Option<Duration>,
-                                  file_name: Option<P>)
-                                  -> Result<()> {
+    pub fn record<T, P, FN>(&mut self, time: T, file_name: FN) -> Result<()>
+        where T: Into<Option<Duration>>,
+              P: AsRef<Path>,
+              FN: Into<Option<P>>
+    {
+        let time = time.into();
+        let file_name = file_name.into();
+
         if let Some(time) = time {
             info!("Recording video for {}.{} seconds.",
                   time.as_secs(),
@@ -219,7 +223,12 @@ impl Camera {
     }
 
     /// Takes a picture with the camera.
-    pub fn take_picture<P: AsRef<Path>>(&mut self, file_name: Option<P>) -> Result<()> {
+    pub fn take_picture<P, FN>(&mut self, file_name: FN) -> Result<()>
+        where P: AsRef<Path>,
+              FN: Into<Option<P>>
+    {
+        let file_name = file_name.into();
+
         info!("Takin picture…");
         if self.is_recording() {
             warn!("The camera was recording video when trying to take the picture. Stopping…");

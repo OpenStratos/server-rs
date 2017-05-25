@@ -55,6 +55,11 @@ pub struct GPS {
 }
 
 impl GPS {
+    /// Initializes the GPS.
+    pub fn initialize(&mut self) -> Result<()> {
+        unimplemented!()
+    }
+
     /// Gets the time of the current fix.
     pub fn fix_time(&self) -> DateTime<UTC> {
         self.fix_time

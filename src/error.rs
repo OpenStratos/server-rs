@@ -23,6 +23,13 @@ error_chain!{
             display("invalid GPS status: '{}'", s)
         }
 
+        /// GPS initialization error.
+        #[cfg(feature = "gps")]
+        GPSInit {
+            description("GPS initialization error")
+            display("an error occurred trying to initialize the GPS module")
+        }
+
         /// Error opening configuration file.
         ConfigOpen(path: PathBuf) {
             description("error opening config file")
@@ -119,6 +126,12 @@ error_chain!{
         CameraFileExists(file: PathBuf) {
             description("the output file for the camera already exists")
             display("the output file {} for the camera already exists", file.display())
+        }
+
+        /// Camera testing error.
+        CameraTest {
+            description("camera test error")
+            description("an error occurred when trying to test the camera")
         }
     }
 }

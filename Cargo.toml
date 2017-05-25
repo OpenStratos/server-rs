@@ -32,6 +32,8 @@ raspicam = []
 fona = []
 # Transparent serial telemetry.
 telemetry = []
+# Do not ever power off the system, only exit.
+no_power_off = []
 
 [dependencies]
 error-chain = "0.10"
