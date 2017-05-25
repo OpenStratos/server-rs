@@ -41,7 +41,10 @@ before_script:
 # The main build
 script:
   - cargo build
-  - cargo package
+  - |
+      if [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
+        cargo package
+      fi
   - cargo test
   - cargo test --features="no_power_off"
   - cargo test --no-default-features
