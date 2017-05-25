@@ -726,6 +726,7 @@ mod tests {
                 white_balance: Some(WhiteBalance::Horizon),
             },
             camera_rotation: Some(180),
+            flight: Flight { length: 300 },
             data_dir: PathBuf::from("data"),
         };
         let (verify, errors) = config.verify();

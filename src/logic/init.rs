@@ -1,12 +1,13 @@
 //! Initialization logic.
 
-use std::{io, thread};
+use std::{io, thread, process};
 use std::time::Duration;
 
 use libc::c_ulong;
 
 use super::*;
 use error::*;
+#[cfg(feature = "gps")]
 use gps::GPS_DATA;
 
 impl StateMachine for OpenStratos<Init> {
@@ -44,7 +45,7 @@ impl StateMachine for OpenStratos<Init> {
             #[cfg(not(feature = "no_power_off"))]
             power_off();
             #[cfg(feature = "no_power_off")]
-            std::process::exit(1);
+            process::exit(1);
         }
 
         #[cfg(feature = "gps")]
