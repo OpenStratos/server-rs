@@ -12,7 +12,7 @@ use error::*;
 use generate_error_string;
 use config::CONFIG;
 #[cfg(feature = "gps")]
-use gps::{GPS_DATA, GPSStatus};
+use gps::{GPS, GPSStatus};
 
 /// Video directory inside data directory.
 pub const VIDEO_DIR: &str = "video";
@@ -376,10 +376,10 @@ impl ExifData {
     ///
     /// *In development…*
     fn new() -> Self {
-        let gps = match GPS_DATA.lock() {
+        let gps = match GPS.lock() {
             Ok(guard) => guard,
             Err(poisoned) => {
-                error!("The GPS_DATA mutex was poisoned.");
+                error!("The GPS mutex was poisoned.");
                 poisoned.into_inner()
             }
         };

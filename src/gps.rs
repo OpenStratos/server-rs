@@ -2,9 +2,10 @@
 //!
 //! *In development…*
 
-use std::fmt;
+use std::{fmt, thread};
 use std::str::FromStr;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use chrono::{DateTime, UTC};
 
@@ -12,7 +13,7 @@ use error::*;
 
 lazy_static! {
     /// GPS data for concurrent check.
-    pub static ref GPS_DATA: Mutex<GPS> = Mutex::new(GPS {
+    pub static ref GPS: Mutex<Gps> = Mutex::new(Gps {
         fix_time: UTC::now(),
         status: GPSStatus::Void,
         satellites: 0,
@@ -24,12 +25,13 @@ lazy_static! {
         vdop: 100_f32,
         speed: 0_f32,
         course: 0_f32,
+        initialized: false,
     });
 }
 
 /// GPS information structure.
 #[derive(Debug)]
-pub struct GPS {
+pub struct Gps {
     /// Time of the current fix.
     fix_time: DateTime<UTC>,
     /// GPS fix status.
@@ -52,11 +54,53 @@ pub struct GPS {
     speed: f32,
     /// Course of the velocity vector, in *°* (degrees).
     course: f32,
+    /// Wether the GPS has already been initialized.
+    initialized: bool,
 }
 
-impl GPS {
+impl Gps {
     /// Initializes the GPS.
     pub fn initialize(&mut self) -> Result<()> {
+        // TODO set ENABLE_GPIO to OUTPUT
+
+        if self.is_on()? {
+            info!("GPS is on, turning off for 2 seconds for stability.");
+            self.turn_off()?;
+            thread::sleep(Duration::from_secs(2));
+        }
+
+        info!("Turning GPS on…");
+        self.turn_on()?;
+
+        // TODO start serial and so on.
+
+        unimplemented!()
+    }
+
+    /// Turns the GPS on.
+    pub fn turn_on(&mut self) -> Result<()> {
+        if self.is_on()? {
+            warn!("Turning on GPS but GPS was already on.");
+        } else {
+            // TODO set GPIO.
+            unimplemented!()
+        }
+        Ok(())
+    }
+
+    /// Turns the GPS off.
+    pub fn turn_off(&mut self) -> Result<()> {
+        if self.is_on()? {
+            // TODO set GPIO.
+            unimplemented!()
+        } else {
+            warn!("Turning off GPS but GPS was already off.");
+        }
+        Ok(())
+    }
+
+    /// Checks if the GPS is on.
+    pub fn is_on(&self) -> Result<bool> {
         unimplemented!()
     }
 

@@ -8,7 +8,7 @@ use libc::c_ulong;
 use super::*;
 use error::*;
 #[cfg(feature = "gps")]
-use gps::GPS_DATA;
+use gps::GPS;
 #[cfg(feature = "raspicam")]
 use raspicam::VIDEO_DIR;
 
@@ -57,10 +57,10 @@ impl StateMachine for OpenStratos<Init> {
         #[cfg(feature = "gps")]
         {
             info!("Initializing GPS…");
-            match GPS_DATA.lock() {
+            match GPS.lock() {
                 Ok(mut gps) => gps.initialize().chain_err(|| ErrorKind::GPSInit)?,
                 Err(poisoned) => {
-                    error!("The GPS_DATA mutex was poisoned.");
+                    error!("The GPS mutex was poisoned.");
                     poisoned
                         .into_inner()
                         .initialize()
@@ -92,7 +92,7 @@ impl StateMachine for OpenStratos<Init> {
             // if ( ! GSM::get_instance().get_battery_status(main_battery, gsm_battery) &&
             // 	 ! GSM::get_instance().get_battery_status(main_battery, gsm_battery))
             // {
-            // 	logger.log("Error checking batteries.");
+            // 	error!("Error checking batteries.");
             //
             // 	logger.log("Turning GSM off...");
             // 	if (GSM::get_instance().turn_off())
@@ -100,27 +100,38 @@ impl StateMachine for OpenStratos<Init> {
             // 	else
             // 		logger.log("Error turning GSM off.");
             //
-            // 	logger.log("Turning GPS off...");
-            // 	if (GPS::get_instance().turn_off())
-            // 		logger.log("GPS off.");
-            // 	else
-            // 		logger.log("Error turning GPS off.");
-            //
-            // 	#ifndef NO_POWER_OFF
-            // 		sync();
-            // 		reboot(RB_POWER_OFF);
-            // 	#else
-            // 		exit(1);
-            // 	#endif
+            // info!("Turning GPS off…");
+            // match GPS.lock() {
+            //     Ok(mut gps) => {
+            //         if let Ok(_) = gps.turn_off() {
+            //             info!("GPS off.");
+            //         } else {
+            //             error!("Could not turn GPS off.");
+            //         }
+            //     }
+            //     Err(poisoned) => {
+            //         error!("The GPS mutex was poisoned.");
+            //         if let Ok(_) = poisoned.into_inner().turn_off() {
+            //             info!("GPS off.");
+            //         } else {
+            //             error!("Could not turn GPS off.");
+            //         }
+            //     }
             // }
             //
-            // logger.log("Batteries checked => Main battery: "+
+            // #[cfg(not(feature = "no_power_off"))]
+            // power_off();
+            // #[cfg(feature = "no_power_off")]
+            // process::exit(1);
+            // }
+            //
+            // info!("Batteries checked => Main battery: "+
             //(main_battery > -1 ? to_string(main_battery*100)+"%" : "disconnected") +
             // 	" - GSM battery: "+ to_string(gsm_battery*100) +"%");
             //
             // if ((main_battery < MIN_MAIN_BAT  && main_battery > -1) || gsm_battery < MIN_GSM_BAT)
             // {
-            // 	logger.log("Error: Not enough battery.");
+            // 	error!("Not enough battery.");
             //
             // 	logger.log("Turning GSM off...");
             // 	if (GSM::get_instance().turn_off())
@@ -128,11 +139,24 @@ impl StateMachine for OpenStratos<Init> {
             // 	else
             // 		logger.log("Error turning GSM off.");
             //
-            // 	logger.log("Turning GPS off...");
-            // 	if (GPS::get_instance().turn_off())
-            // 		logger.log("GPS off.");
-            // 	else
-            // 		logger.log("Error turning GPS off.");
+            // info!("Turning GPS off…");
+            // match GPS.lock() {
+            //     Ok(mut gps) => {
+            //         if let Ok(_) = gps.turn_off() {
+            //             info!("GPS off.");
+            //         } else {
+            //             error!("Could not turn GPS off.");
+            //         }
+            //     }
+            //     Err(poisoned) => {
+            //         error!("The GPS mutex was poisoned.");
+            //         if let Ok(_) = poisoned.into_inner().turn_off() {
+            //             info!("GPS off.");
+            //         } else {
+            //             error!("Could not turn GPS off.");
+            //         }
+            //     }
+            // }
             //
             // #[cfg(not(feature = "no_power_off"))]
             // power_off();

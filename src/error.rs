@@ -30,6 +30,13 @@ error_chain!{
             display("an error occurred trying to initialize the GPS module")
         }
 
+        /// GPS was already initialized when trying to initialize it.
+        #[cfg(feature = "gps")]
+        GpsAlreadyInitialized {
+            description("GPS was already initialized")
+            display("GPS was already initialized when trying to initialize it")
+        }
+
         /// Error opening configuration file.
         ConfigOpen(path: PathBuf) {
             description("error opening config file")
