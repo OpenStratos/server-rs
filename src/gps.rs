@@ -1,6 +1,4 @@
 //! GPS module.
-//!
-//! *In development…*
 
 use std::{fmt, thread};
 use std::str::FromStr;
@@ -8,8 +6,10 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use chrono::{DateTime, UTC};
+use sysfs_gpio::{Direction, Pin};
 
 use error::*;
+use config::CONFIG;
 
 lazy_static! {
     /// GPS data for concurrent check.
@@ -25,7 +25,6 @@ lazy_static! {
         vdop: 100_f32,
         speed: 0_f32,
         course: 0_f32,
-        initialized: false,
     });
 }
 
@@ -54,14 +53,13 @@ pub struct Gps {
     speed: f32,
     /// Course of the velocity vector, in *°* (degrees).
     course: f32,
-    /// Wether the GPS has already been initialized.
-    initialized: bool,
 }
 
 impl Gps {
     /// Initializes the GPS.
     pub fn initialize(&mut self) -> Result<()> {
-        // TODO set ENABLE_GPIO to OUTPUT
+        let pin = Pin::new(CONFIG.gps().power_gpio());
+        pin.set_direction(Direction::Out)?;
 
         if self.is_on()? {
             info!("GPS is on, turning off for 2 seconds for stability.");
@@ -73,7 +71,6 @@ impl Gps {
         self.turn_on()?;
 
         // TODO start serial and so on.
-
         unimplemented!()
     }
 
@@ -82,8 +79,8 @@ impl Gps {
         if self.is_on()? {
             warn!("Turning on GPS but GPS was already on.");
         } else {
-            // TODO set GPIO.
-            unimplemented!()
+            let pin = Pin::new(CONFIG.gps().power_gpio());
+            pin.set_value(1)?;
         }
         Ok(())
     }
@@ -91,8 +88,8 @@ impl Gps {
     /// Turns the GPS off.
     pub fn turn_off(&mut self) -> Result<()> {
         if self.is_on()? {
-            // TODO set GPIO.
-            unimplemented!()
+            let pin = Pin::new(CONFIG.gps().power_gpio());
+            pin.set_value(0)?;
         } else {
             warn!("Turning off GPS but GPS was already off.");
         }
@@ -101,7 +98,8 @@ impl Gps {
 
     /// Checks if the GPS is on.
     pub fn is_on(&self) -> Result<bool> {
-        unimplemented!()
+        let pin = Pin::new(CONFIG.gps().power_gpio());
+        Ok(pin.get_value()? == 1)
     }
 
     /// Gets the time of the current fix.

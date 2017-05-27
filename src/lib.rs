@@ -73,6 +73,8 @@ extern crate log4rs;
 extern crate colored;
 extern crate chrono;
 extern crate libc;
+extern crate sysfs_gpio;
+extern crate tokio_serial;
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";

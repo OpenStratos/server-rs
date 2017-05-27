@@ -41,6 +41,7 @@ use std::ffi::OsStr;
 
 use toml;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
+use tokio_serial::BaudRate;
 
 use error::*;
 use CONFIG_FILE;
@@ -71,6 +72,9 @@ pub struct Config {
     /// The rotation of the camera.
     #[cfg(feature = "raspicam")]
     camera_rotation: Option<u16>,
+    /// GPS configuration.
+    #[cfg(feature = "gps")]
+    gps: Gps,
     /// Flight information
     flight: Flight,
     /// The data directory.
@@ -321,6 +325,12 @@ impl Config {
     #[cfg(feature = "raspicam")]
     pub fn camera_rotation(&self) -> Option<u16> {
         self.camera_rotation
+    }
+
+    /// Gets the GPS configuration.
+    #[cfg(feature = "gps")]
+    pub fn gps(&self) -> &Gps {
+        &self.gps
     }
 
     /// Gets the flight information.
@@ -630,6 +640,104 @@ impl AsRef<OsStr> for WhiteBalance {
                        WhiteBalance::Horizon => "horizon",
                    })
     }
+}
+
+/// GPS configuration structure.
+#[cfg(feature = "gps")]
+#[derive(Debug, Deserialize)]
+pub struct Gps {
+    /// UART serial console path.
+    uart: PathBuf,
+    /// Serial console baud rate.
+    #[serde(deserialize_with = "deserialize_baudrate")]
+    baud_rate: BaudRate,
+    /// Power GPIO pin number.
+    power_gpio: u64,
+}
+
+#[cfg(feature = "gps")]
+impl Gps {
+    /// Gets the UART serial console path.
+    pub fn uart(&self) -> &Path {
+        &self.uart
+    }
+
+    /// Gets the serial console baud rate.
+    pub fn baud_rate(&self) -> BaudRate {
+        self.baud_rate
+    }
+
+    /// Gets the power GPIO pin number.
+    pub fn power_gpio(&self) -> u64 {
+        self.power_gpio
+    }
+}
+
+/// Deserializes a serial baud rate.
+#[cfg(any(feature = "gps", feature = "fona"))]
+fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error>
+    where D: Deserializer<'de>
+{
+    /// Visitor for u32 (comparing to usize).
+    struct U32Visitor;
+    impl<'dev> Visitor<'dev> for U32Visitor {
+        type Value = u32;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            use std::usize;
+            write!(formatter, "an integer between 0 and {}", usize::MAX)
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_u8<E>(self, value: u8) -> StdResult<u32, E>
+            where E: de::Error
+        {
+            use std::usize;
+            if value <= usize::MAX as u8 {
+                Ok(value as u32)
+            } else {
+                Err(E::custom(format!("baud rate out of range: {}", value)))
+            }
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_u16<E>(self, value: u16) -> StdResult<u32, E>
+            where E: de::Error
+        {
+            use std::usize;
+            if value <= usize::MAX as u16 {
+                Ok(value as u32)
+            } else {
+                Err(E::custom(format!("baud rate out of range: {}", value)))
+            }
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_u32<E>(self, value: u32) -> StdResult<u32, E>
+            where E: de::Error
+        {
+            use std::usize;
+            if value <= usize::MAX as u32 {
+                Ok(value as u32)
+            } else {
+                Err(E::custom(format!("baud rate out of range: {}", value)))
+            }
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_u64<E>(self, value: u64) -> StdResult<u32, E>
+            where E: de::Error
+        {
+            use std::usize;
+            if value <= usize::MAX as u64 {
+                Ok(value as u32)
+            } else {
+                Err(E::custom(format!("baud rate out of range: {}", value)))
+            }
+        }
+    }
+
+    Ok(BaudRate::from_speed(deserializer.deserialize_u32(U32Visitor)? as usize))
 }
 
 /// Flight information structure.

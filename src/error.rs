@@ -13,6 +13,7 @@ error_chain!{
         LogConfig(::log4rs::config::Errors) #[doc = "Logger configuration error."];
         FromUTF8(::std::string::FromUtf8Error) #[doc = "Error creating a String from UTF-8 data."];
         NulError(::std::ffi::NulError) #[doc = "A nul byte was found in the vector provided."];
+        GPIO(::sysfs_gpio::Error) #[doc = "A GPIO library error."];
     }
 
     errors {

@@ -272,9 +272,12 @@ fn get_available_disk_space() -> Result<u64> {
 /// It takes care of disk synchronization.
 #[cfg(not(feature = "no_power_off"))]
 fn power_off() -> Result<()> {
-    use libc::{reboot, RB_POWER_OFF};
+    use libc::{sync, reboot, RB_POWER_OFF};
 
-    // TODO sync();
+    // Safe because `sync()` is always successful.
+    unsafe {
+        sync();
+    }
 
     if unsafe { reboot(RB_POWER_OFF) } == -1 {
         Err(Error::from(io::Error::last_os_error()))

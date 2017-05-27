@@ -74,5 +74,26 @@ white_balance = "horizon"
 # Expected flight length, in minutes.
 length = 300
 
+[gps]
+# GPS UART serial console path.
+uart = "/dev/ttyAMA0"
+# GPS serial baud rate.
+baud_rate = 9600
+# GPS power control GPIO pin number.
+power_gpio = 3
+
+[fona]
+# FONA UART serial console path.
+uart = "/dev/ttyUSB0"
+# FONA serial baud rate.
+baud_rate = 9600
+# FONA power control GPIO pin number.
+power_gpio = 7
+# FONA status GPIO pin number.
+status_gpio = 21
+# SMS receiver phone number.
+sms_phone = ""
+# Operator GSM location service domain.
+location_service = "gprs-service.com"
 
 # TODO pins, phone number and so on.
