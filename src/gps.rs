@@ -58,8 +58,7 @@ pub struct Gps {
 impl Gps {
     /// Initializes the GPS.
     pub fn initialize(&mut self) -> Result<()> {
-        let pin = Pin::new(CONFIG.gps().power_gpio());
-        pin.set_direction(Direction::Out)?;
+        CONFIG.gps().power_gpio().set_direction(Direction::Out)?;
 
         if self.is_on()? {
             info!("GPS is on, turning off for 2 seconds for stability.");
@@ -79,8 +78,7 @@ impl Gps {
         if self.is_on()? {
             warn!("Turning on GPS but GPS was already on.");
         } else {
-            let pin = Pin::new(CONFIG.gps().power_gpio());
-            pin.set_value(1)?;
+            CONFIG.gps().power_gpio().set_value(1)?;
         }
         Ok(())
     }
@@ -88,8 +86,7 @@ impl Gps {
     /// Turns the GPS off.
     pub fn turn_off(&mut self) -> Result<()> {
         if self.is_on()? {
-            let pin = Pin::new(CONFIG.gps().power_gpio());
-            pin.set_value(0)?;
+            CONFIG.gps().power_gpio().set_value(0)?;
         } else {
             warn!("Turning off GPS but GPS was already off.");
         }
@@ -98,8 +95,7 @@ impl Gps {
 
     /// Checks if the GPS is on.
     pub fn is_on(&self) -> Result<bool> {
-        let pin = Pin::new(CONFIG.gps().power_gpio());
-        Ok(pin.get_value()? == 1)
+        Ok(CONFIG.gps().power_gpio().get_value()? == 1)
     }
 
     /// Gets the time of the current fix.
@@ -157,6 +153,8 @@ impl Gps {
         self.course
     }
 }
+
+// TODO drop.
 
 /// GPS fix status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

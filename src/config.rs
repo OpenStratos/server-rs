@@ -42,6 +42,7 @@ use std::ffi::OsStr;
 use toml;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use tokio_serial::BaudRate;
+use sysfs_gpio::Pin;
 
 use error::*;
 use CONFIG_FILE;
@@ -75,6 +76,9 @@ pub struct Config {
     /// GPS configuration.
     #[cfg(feature = "gps")]
     gps: Gps,
+    /// FONA module configuration.
+    #[cfg(feature = "fona")]
+    fona: Fona,
     /// Flight information
     flight: Flight,
     /// The data directory.
@@ -333,6 +337,12 @@ impl Config {
     #[cfg(feature = "gps")]
     pub fn gps(&self) -> &Gps {
         &self.gps
+    }
+
+    /// Gets the FONA module configuration.
+    #[cfg(feature = "fona")]
+    pub fn fona(&self) -> &Fona {
+        &self.fona
     }
 
     /// Gets the flight information.
@@ -656,8 +666,9 @@ pub struct Gps {
     /// `u32`).
     #[serde(deserialize_with = "deserialize_baudrate")]
     baud_rate: BaudRate,
-    /// Power GPIO pin number.
-    power_gpio: u64,
+    /// Power GPIO pin.
+    #[serde(deserialize_with = "deserialize_pin")]
+    power_gpio: Pin,
 }
 
 #[cfg(feature = "gps")]
@@ -672,9 +683,70 @@ impl Gps {
         self.baud_rate
     }
 
-    /// Gets the power GPIO pin number.
-    pub fn power_gpio(&self) -> u64 {
-        self.power_gpio
+    /// Gets the power GPIO pin.
+    pub fn power_gpio(&self) -> Pin {
+        self.power_gpio.clone() // TODO copy
+    }
+}
+
+/// Fona configuration structure
+#[cfg(feature = "fona")]
+#[derive(Debug, Deserialize)]
+pub struct Fona {
+    /// UART serial console path.
+    uart: PathBuf,
+    /// Serial console baud rate.
+    #[serde(deserialize_with = "deserialize_baudrate")]
+    baud_rate: BaudRate,
+    /// Power control GPIO pin.
+    #[serde(deserialize_with = "deserialize_pin")]
+    power_gpio: Pin,
+    /// Status GPIO pin.
+    #[serde(deserialize_with = "deserialize_pin")]
+    status_gpio: Pin,
+    /// SMS receiver phone number.
+    sms_phone: PhoneNumber,
+    /// Operator GSM location service domain.
+    location_service: String,
+}
+
+#[cfg(feature = "fona")]
+impl Fona {
+    /// Gets the UART serial console path.
+    pub fn uart(&self) -> &Path {
+        &self.uart
+    }
+
+    /// Gets the serial console baud rate.
+    pub fn baud_rate(&self) -> BaudRate {
+        self.baud_rate
+    }
+
+    /// Gets the power GPIO pin.
+    pub fn power_gpio(&self) -> Pin {
+        self.power_gpio.clone() // TODO copy
+    }
+
+    /// Gets the status GPIO pin.
+    pub fn status_gpio(&self) -> Pin {
+        self.status_gpio.clone() // TODO copy
+    }
+
+    /// Gets the phone number for SMSs.
+    pub fn sms_phone(&self) -> &PhoneNumber {
+        &self.sms_phone
+    }
+}
+
+/// Phone number representation.
+#[cfg(feature = "fona")]
+#[derive(Debug, Deserialize)]
+pub struct PhoneNumber(String);
+
+impl PhoneNumber {
+    /// Gets the phone number as a string.
+    pub fn as_str(&self) -> &str {
+        &self.0
     }
 }
 
@@ -708,6 +780,38 @@ fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error
     }
 
     deserializer.deserialize_u32(BaudRateVisitor)
+}
+
+/// Deserializes a Raspberry Pi pin number into a `Pin` structure.
+///
+/// Note: it will make sure it deserializes a Pin between 2 and 28 (pin numbers for Raspberry Pi).
+#[cfg(any(feature = "gps", feature = "fona"))]
+fn deserialize_pin<'de, D>(deserializer: D) -> StdResult<Pin, D::Error>
+    where D: Deserializer<'de>
+{
+    /// Visitor for u32 (comparing to usize).
+    struct PinVisitor;
+    impl<'dev> Visitor<'dev> for PinVisitor {
+        type Value = Pin;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            use std::u32;
+            formatter.write_str("an integer between 2 and 28")
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_i64<E>(self, value: i64) -> StdResult<Pin, E>
+            where E: de::Error
+        {
+            if value >= 2 && value <= 28 {
+                Ok(Pin::new(value as u64))
+            } else {
+                Err(E::custom(format!("pin out of range: {}", value)))
+            }
+        }
+    }
+
+    deserializer.deserialize_u8(PinVisitor)
 }
 
 /// Flight information structure.

@@ -27,7 +27,7 @@ rust:
 before_install:
 - sudo apt-get update
 
-# Load travis-cargo
+# Add rustfmt and clippy
 before_script:
   - |
       if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" ]]; then

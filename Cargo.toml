@@ -14,6 +14,12 @@ Stratospheric balloon control software.
 keywords = ["OpenStratos", "stratosphere", "raspberry", "balloon", "science"]
 categories = ["science"]
 
+[badges]
+travis-ci = { repository = "OpenStratos/server-rs", branch = "master" }
+codecov = { repository = "OpenStratos/server-rs", branch = "master", service = "github" }
+is-it-maintained-issue-resolution = { repository = "OpenStratos/server-rs" }
+is-it-maintained-open-issues = { repository = "OpenStratos/server-rs" }
+
 [lib]
 name = "os_balloon"
 path = "src/lib.rs"
