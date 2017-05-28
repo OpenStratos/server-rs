@@ -14,6 +14,7 @@ addons:
       - binutils-dev
       - libiberty-dev
       - zlib1g-dev
+      - libudev-dev
 
 # Run builds for all the supported trains
 rust:
