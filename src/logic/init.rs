@@ -230,17 +230,17 @@ impl StateMachine for OpenStratos<Init> {
                 #[cfg(feature = "no_power_off")]
                 process::exit(1);
             }
+        }
 
-            #[cfg(feature = "gps")]
-            {
-                Ok(OpenStratos { state: AcquiringFix })
-            }
+        #[cfg(feature = "gps")]
+        {
+            Ok(OpenStratos { state: AcquiringFix })
+        }
 
 
-            #[cfg(not(feature = "gps"))]
-            {
-                Ok(OpenStratos { state: EternalLoop })
-            }
+        #[cfg(not(feature = "gps"))]
+        {
+            Ok(OpenStratos { state: EternalLoop })
         }
     }
 }
