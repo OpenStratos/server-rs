@@ -301,6 +301,8 @@ impl Config {
             }
         }
 
+        // TODO check GPS configuration
+
         (ok, errors)
     }
 
@@ -649,6 +651,9 @@ pub struct Gps {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
+    ///
+    /// **Note:** it will only accept baud rates from 1 to `u32::MAX` (`usize` in Raspberry Pi is
+    /// `u32`).
     #[serde(deserialize_with = "deserialize_baudrate")]
     baud_rate: BaudRate,
     /// Power GPIO pin number.
@@ -679,65 +684,30 @@ fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error
     where D: Deserializer<'de>
 {
     /// Visitor for u32 (comparing to usize).
-    struct U32Visitor;
-    impl<'dev> Visitor<'dev> for U32Visitor {
-        type Value = u32;
+    struct BaudRateVisitor;
+    impl<'dev> Visitor<'dev> for BaudRateVisitor {
+        type Value = BaudRate;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            use std::usize;
-            write!(formatter, "an integer between 0 and {}", usize::MAX)
+            use std::u32;
+            write!(formatter, "an integer between 1 and {}", u32::MAX)
         }
 
         #[allow(absurd_extreme_comparisons)]
-        fn visit_u8<E>(self, value: u8) -> StdResult<u32, E>
+        fn visit_i64<E>(self, value: i64) -> StdResult<BaudRate, E>
             where E: de::Error
         {
-            use std::usize;
-            if value <= usize::MAX as u8 {
-                Ok(value as u32)
-            } else {
-                Err(E::custom(format!("baud rate out of range: {}", value)))
-            }
-        }
+            use std::{u32, usize};
 
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_u16<E>(self, value: u16) -> StdResult<u32, E>
-            where E: de::Error
-        {
-            use std::usize;
-            if value <= usize::MAX as u16 {
-                Ok(value as u32)
-            } else {
-                Err(E::custom(format!("baud rate out of range: {}", value)))
-            }
-        }
-
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_u32<E>(self, value: u32) -> StdResult<u32, E>
-            where E: de::Error
-        {
-            use std::usize;
-            if value <= usize::MAX as u32 {
-                Ok(value as u32)
-            } else {
-                Err(E::custom(format!("baud rate out of range: {}", value)))
-            }
-        }
-
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_u64<E>(self, value: u64) -> StdResult<u32, E>
-            where E: de::Error
-        {
-            use std::usize;
-            if value <= usize::MAX as u64 {
-                Ok(value as u32)
+            if value > 0 && u32::MAX as i64 >= value {
+                Ok(BaudRate::from_speed(value as usize))
             } else {
                 Err(E::custom(format!("baud rate out of range: {}", value)))
             }
         }
     }
 
-    Ok(BaudRate::from_speed(deserializer.deserialize_u32(U32Visitor)? as usize))
+    deserializer.deserialize_u32(BaudRateVisitor)
 }
 
 /// Flight information structure.
@@ -756,6 +726,8 @@ impl Flight {
 
 #[cfg(test)]
 mod tests {
+    use tokio_serial::BaudRate;
+
     use super::*;
 
     /// Loads the default configuration and checks it.
@@ -775,6 +747,13 @@ mod tests {
             assert_eq!(config.video().height(), 1080);
             assert_eq!(config.video().width(), 1920);
             assert_eq!(config.video().fps(), 30);
+        }
+
+        #[cfg(feature = "gps")]
+        {
+            assert_eq!(config.gps().uart(), Path::new("/dev/ttyAMA0"));
+            assert_eq!(config.gps().baud_rate(), BaudRate::Baud9600);
+            assert_eq!(config.gps().power_gpio(), 3)
         }
     }
 
@@ -834,6 +813,11 @@ mod tests {
                 white_balance: Some(WhiteBalance::Horizon),
             },
             camera_rotation: Some(180),
+            gps: Gps {
+                uart: PathBuf::from("/dev/ttyAMA0"),
+                baud_rate: BaudRate::Baud9600,
+                power_gpio: 3,
+            },
             flight: Flight { length: 300 },
             data_dir: PathBuf::from("data"),
         };
