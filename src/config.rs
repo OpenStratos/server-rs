@@ -762,41 +762,23 @@ mod tests {
     #[cfg(feature = "raspicam")]
     fn config_error() {
         #[cfg(feature = "gps")]
-        let picture = Picture {
-            height: 10_345,
-            width: 5_246,
-            quality: 95,
-            raw: Some(true),
-            exif: Some(true),
-            exposure: Some(Exposure::AntiShake),
-            brightness: Some(50),
-            contrast: Some(50),
-            sharpness: None,
-            saturation: None,
-            iso: None,
-            ev: None,
-            white_balance: Some(WhiteBalance::Horizon),
-        };
-
-        #[cfg(not(feature = "gps"))]
-        let picture = Picture {
-            height: 10_345,
-            width: 5_246,
-            quality: 95,
-            raw: Some(true),
-            exposure: Some(Exposure::AntiShake),
-            brightness: Some(50),
-            contrast: Some(50),
-            sharpness: None,
-            saturation: None,
-            iso: None,
-            ev: None,
-            white_balance: Some(WhiteBalance::Horizon),
-        };
-
         let config = Config {
             debug: None,
-            picture,
+            picture: Picture {
+                height: 10_345,
+                width: 5_246,
+                quality: 95,
+                raw: Some(true),
+                exif: Some(true),
+                exposure: Some(Exposure::AntiShake),
+                brightness: Some(50),
+                contrast: Some(50),
+                sharpness: None,
+                saturation: None,
+                iso: None,
+                ev: None,
+                white_balance: Some(WhiteBalance::Horizon),
+            },
             video: Video {
                 height: 12_546,
                 width: 5_648,
@@ -821,6 +803,44 @@ mod tests {
             flight: Flight { length: 300 },
             data_dir: PathBuf::from("data"),
         };
+
+        #[cfg(not(feature = "gps"))]
+        let config = Config {
+            debug: None,
+            picture: Picture {
+                height: 10_345,
+                width: 5_246,
+                quality: 95,
+                raw: Some(true),
+                exposure: Some(Exposure::AntiShake),
+                brightness: Some(50),
+                contrast: Some(50),
+                sharpness: None,
+                saturation: None,
+                iso: None,
+                ev: None,
+                white_balance: Some(WhiteBalance::Horizon),
+            },
+            video: Video {
+                height: 12_546,
+                width: 5_648,
+                fps: 92,
+                bitrate: 20000000,
+                exposure: Some(Exposure::AntiShake),
+                brightness: Some(50),
+                contrast: Some(50),
+                sharpness: None,
+                saturation: None,
+                iso: None,
+                stabilization: Some(true),
+                ev: None,
+                white_balance: Some(WhiteBalance::Horizon),
+            },
+            camera_rotation: Some(180),
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
         let (verify, errors) = config.verify();
 
         assert_eq!(verify, false);
