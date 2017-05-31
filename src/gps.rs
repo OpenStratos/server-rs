@@ -211,6 +211,7 @@ impl fmt::Display for GPSStatus {
 mod tests {
     use super::*;
 
+    /// Checks the GPS status from string conversion.
     #[test]
     fn gps_status_from_str() {
         assert_eq!("A".parse::<GPSStatus>().unwrap(), GPSStatus::Active);
@@ -223,9 +224,34 @@ mod tests {
         assert!("Ab".parse::<GPSStatus>().is_err());
     }
 
+    /// Checks the GPS status to string conversion.
     #[test]
     fn gps_status_display() {
         assert_eq!(format!("{}", GPSStatus::Active), "A");
         assert_eq!(format!("{}", GPSStatus::Void), "V");
+    }
+
+    /// Checks the GPS initialization.
+    #[test]
+    #[ignore]
+    fn gps_initialize() {
+        let mut gps = GPS.lock().unwrap();
+        gps.initialize().unwrap();
+        assert!(gps.is_on().unwrap());
+    }
+
+    /// Checks the GPS on/off behaviour.
+    #[test]
+    #[ignore]
+    fn gps_on_off() {
+        let mut gps = GPS.lock().unwrap();
+        gps.initialize().unwrap();
+        assert!(gps.is_on().unwrap());
+
+        gps.turn_off().unwrap();
+        assert!(!gps.is_on().unwrap());
+
+        gps.turn_on();
+        assert!(gps.is_on().unwrap());
     }
 }

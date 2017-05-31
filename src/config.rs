@@ -686,7 +686,7 @@ impl Gps {
 
     /// Gets the power GPIO pin.
     pub fn power_gpio(&self) -> Pin {
-        self.power_gpio.clone() // TODO copy
+        self.power_gpio
     }
 }
 
@@ -725,12 +725,12 @@ impl Fona {
 
     /// Gets the power GPIO pin.
     pub fn power_gpio(&self) -> Pin {
-        self.power_gpio.clone() // TODO copy
+        self.power_gpio
     }
 
     /// Gets the status GPIO pin.
     pub fn status_gpio(&self) -> Pin {
-        self.status_gpio.clone() // TODO copy
+        self.status_gpio
     }
 
     /// Gets the phone number for SMSs.
@@ -741,13 +741,42 @@ impl Fona {
 
 /// Phone number representation.
 #[cfg(feature = "fona")]
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 pub struct PhoneNumber(String);
 
+#[cfg(feature = "fona")]
 impl PhoneNumber {
     /// Gets the phone number as a string.
     pub fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+#[cfg(feature = "fona")]
+impl<'de> Deserialize<'de> for PhoneNumber {
+    fn deserialize<D>(deserializer: D) -> StdResult<PhoneNumber, D::Error>
+        where D: Deserializer<'de>
+    {
+        // TODO: better parsing and checking
+
+        /// Visitor for phone numbers.
+        struct PhoneNumberVisitor;
+        impl<'dev> Visitor<'dev> for PhoneNumberVisitor {
+            type Value = PhoneNumber;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a valid phone number")
+            }
+
+            #[allow(absurd_extreme_comparisons)]
+            fn visit_str<E>(self, value: &str) -> StdResult<PhoneNumber, E>
+                where E: de::Error
+            {
+                Ok(PhoneNumber(value.to_owned()))
+            }
+        }
+
+        deserializer.deserialize_str(PhoneNumberVisitor)
     }
 }
 
@@ -756,7 +785,7 @@ impl PhoneNumber {
 fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error>
     where D: Deserializer<'de>
 {
-    /// Visitor for u32 (comparing to usize).
+    /// Visitor for baud rate.
     struct BaudRateVisitor;
     impl<'dev> Visitor<'dev> for BaudRateVisitor {
         type Value = BaudRate;
@@ -832,6 +861,7 @@ impl Flight {
 #[cfg(test)]
 mod tests {
     use tokio_serial::BaudRate;
+    use sysfs_gpio::Pin;
 
     use super::*;
 
@@ -858,7 +888,7 @@ mod tests {
         {
             assert_eq!(config.gps().uart(), Path::new("/dev/ttyAMA0"));
             assert_eq!(config.gps().baud_rate(), BaudRate::Baud9600);
-            assert_eq!(config.gps().power_gpio(), 3)
+            assert_eq!(config.gps().power_gpio().get_pin(), 3)
         }
     }
 
@@ -867,80 +897,110 @@ mod tests {
     #[cfg(feature = "raspicam")]
     fn config_error() {
         #[cfg(feature = "gps")]
+        let picture = Picture {
+            height: 10_345,
+            width: 5_246,
+            quality: 95,
+            raw: Some(true),
+            exif: Some(true),
+            exposure: Some(Exposure::AntiShake),
+            brightness: Some(50),
+            contrast: Some(50),
+            sharpness: None,
+            saturation: None,
+            iso: None,
+            ev: None,
+            white_balance: Some(WhiteBalance::Horizon),
+        };
+
+        #[cfg(not(feature = "gps"))]
+        let picture = Picture {
+            height: 10_345,
+            width: 5_246,
+            quality: 95,
+            raw: Some(true),
+            exposure: Some(Exposure::AntiShake),
+            brightness: Some(50),
+            contrast: Some(50),
+            sharpness: None,
+            saturation: None,
+            iso: None,
+            ev: None,
+            white_balance: Some(WhiteBalance::Horizon),
+        };
+
+        let video = Video {
+            height: 12_546,
+            width: 5_648,
+            fps: 92,
+            bitrate: 20000000,
+            exposure: Some(Exposure::AntiShake),
+            brightness: Some(50),
+            contrast: Some(50),
+            sharpness: None,
+            saturation: None,
+            iso: None,
+            stabilization: Some(true),
+            ev: None,
+            white_balance: Some(WhiteBalance::Horizon),
+        };
+
+        #[cfg(feature = "fona")]
+        let fona = Fona {
+            uart: PathBuf::from("/dev/ttyUSB0"),
+            baud_rate: BaudRate::Baud9600,
+            power_gpio: Pin::new(7),
+            status_gpio: Pin::new(21),
+            sms_phone: PhoneNumber(String::new()),
+            location_service: "gprs-service.com".to_owned(),
+        };
+
+        #[cfg(feature = "gps")]
+        let gps = Gps {
+            uart: PathBuf::from("/dev/ttyAMA0"),
+            baud_rate: BaudRate::Baud9600,
+            power_gpio: Pin::new(3),
+        };
+
+        #[cfg(all(feature = "gps", feature = "fona"))]
         let config = Config {
             debug: None,
-            picture: Picture {
-                height: 10_345,
-                width: 5_246,
-                quality: 95,
-                raw: Some(true),
-                exif: Some(true),
-                exposure: Some(Exposure::AntiShake),
-                brightness: Some(50),
-                contrast: Some(50),
-                sharpness: None,
-                saturation: None,
-                iso: None,
-                ev: None,
-                white_balance: Some(WhiteBalance::Horizon),
-            },
-            video: Video {
-                height: 12_546,
-                width: 5_648,
-                fps: 92,
-                bitrate: 20000000,
-                exposure: Some(Exposure::AntiShake),
-                brightness: Some(50),
-                contrast: Some(50),
-                sharpness: None,
-                saturation: None,
-                iso: None,
-                stabilization: Some(true),
-                ev: None,
-                white_balance: Some(WhiteBalance::Horizon),
-            },
+            picture,
+            video,
             camera_rotation: Some(180),
-            gps: Gps {
-                uart: PathBuf::from("/dev/ttyAMA0"),
-                baud_rate: BaudRate::Baud9600,
-                power_gpio: 3,
-            },
+            gps,
+            fona,
             flight: Flight { length: 300 },
             data_dir: PathBuf::from("data"),
         };
 
-        #[cfg(not(feature = "gps"))]
+        #[cfg(all(feature = "gps", not(feature = "fona")))]
         let config = Config {
             debug: None,
-            picture: Picture {
-                height: 10_345,
-                width: 5_246,
-                quality: 95,
-                raw: Some(true),
-                exposure: Some(Exposure::AntiShake),
-                brightness: Some(50),
-                contrast: Some(50),
-                sharpness: None,
-                saturation: None,
-                iso: None,
-                ev: None,
-                white_balance: Some(WhiteBalance::Horizon),
-            },
-            video: Video {
-                height: 12_546,
-                width: 5_648,
-                fps: 92,
-                bitrate: 20000000,
-                exposure: Some(Exposure::AntiShake),
-                brightness: Some(50),
-                contrast: Some(50),
-                sharpness: None,
-                saturation: None,
-                iso: None,
-                stabilization: Some(true),
-                ev: None,
-                white_balance: Some(WhiteBalance::Horizon),
-            },
+            picture,
+            video,
+            camera_rotation: Some(180),
+            gps,
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(not(feature = "gps"), feature = "fona"))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
+            fona,
+            camera_rotation: Some(180),
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(not(feature = "gps"), not(feature = "fona")))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
             camera_rotation: Some(180),
             flight: Flight { length: 300 },
             data_dir: PathBuf::from("data"),

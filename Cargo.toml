@@ -51,7 +51,7 @@ log = "0.3"
 colored = "1.5"
 chrono = "0.3"
 libc = { git = "https://github.com/rust-lang/libc.git" }
-sysfs_gpio = "0.5.0"
+sysfs_gpio = { git = "https://github.com/rust-embedded/rust-sysfs-gpio.git" }
 tokio-serial = "0.5.0"
 
 [dependencies.log4rs]
