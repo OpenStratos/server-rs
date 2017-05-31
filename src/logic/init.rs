@@ -11,6 +11,8 @@ use error::*;
 use gps::GPS;
 #[cfg(feature = "raspicam")]
 use raspicam::VIDEO_DIR;
+#[cfg(feature = "fona")]
+use fona::FONA;
 
 /// Test video file.
 #[cfg(feature = "raspicam")]
@@ -37,7 +39,7 @@ impl StateMachine for OpenStratos<Init> {
         if {
                #[cfg(feature = "raspicam")]
                {
-                   // 1.2 times the length of the light, just in case.
+                   // 1.2 times the length of the flight, just in case.
                    disk_space <
                    CONFIG.flight().length() as u64 * 6 * 60 * CONFIG.video().bitrate() as u64 /
                    (8 * 5)
@@ -73,17 +75,16 @@ impl StateMachine for OpenStratos<Init> {
         #[cfg(feature = "fona")]
         {
             info!("Initializing Adafruit FONA GSM module…");
-            // TODO
-            // match FONA.lock() {
-            //     Ok(mut fona) => fona.initialize().chain_err(|| ErrorKind::FONAInit)?,
-            //     Err(poisoned) => {
-            //         error!("The FONA mutex was poisoned.");
-            //         poisoned
-            //             .into_inner()
-            //             .initialize()
-            //             .chain_err(|| ErrorKind::FONAInit)?
-            //     }
-            // }
+            match FONA.lock() {
+                Ok(mut fona) => fona.initialize().chain_err(|| ErrorKind::FonaInit)?,
+                Err(poisoned) => {
+                    error!("The FONA mutex was poisoned.");
+                    poisoned
+                        .into_inner()
+                        .initialize()
+                        .chain_err(|| ErrorKind::FonaInit)?
+                }
+            }
             info!("Adafruit FONA GSM module initialized.");
 
             info!("Checking batteries…");

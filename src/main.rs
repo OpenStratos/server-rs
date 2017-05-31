@@ -144,7 +144,10 @@ html_root_url = "https://openstratos.github.io/server-rs/")]
 
 #[macro_use]
 extern crate log;
+extern crate colored;
 extern crate os_balloon;
+
+use colored::Colorize;
 
 use os_balloon::*;
 
@@ -158,13 +161,17 @@ pub fn main() {
         println!("Debug mode active");
     }
     if let Err(e) = init_loggers() {
-        print_system_failure(&e, "Error initializing loggers");
+        println!("{}",
+                 generate_error_string(&e, "Error initializing loggers").red());
         panic!();
     }
     info!("OpenStratos {} starting", env!("CARGO_PKG_VERSION"));
 
     if let Err(e) = run() {
-        print_system_failure(&e, "Error running OpenStratos");
+        let error = generate_error_string(&e, "Error running OpenStratos");
+        error!("{}", error);
+        println!("{}", error.red());
+
         panic!(); // TODO safe mode / recovery mode / restart...
     }
 }

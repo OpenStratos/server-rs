@@ -43,16 +43,17 @@ use toml;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use tokio_serial::BaudRate;
 use sysfs_gpio::Pin;
+use colored::Colorize;
 
 use error::*;
 use CONFIG_FILE;
-use print_system_failure;
+use generate_error_string;
 
 lazy_static! {
     /// Configuration object.
     pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
         Err(e) => {
-            print_system_failure(&e, "Error loading configuration");
+            println!("{}", generate_error_string(&e, "Error loading configuration").red());
             panic!();
         },
         Ok(c) => c,

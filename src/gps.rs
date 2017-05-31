@@ -10,6 +10,7 @@ use sysfs_gpio::{Direction, Pin};
 
 use error::*;
 use config::CONFIG;
+use generate_error_string;
 
 lazy_static! {
     /// GPS data for concurrent check.
@@ -154,7 +155,28 @@ impl Gps {
     }
 }
 
-// TODO drop.
+impl Drop for Gps {
+    fn drop(&mut self) {
+        // TODO stop serial.
+
+        match self.is_on() {
+            Ok(true) => {
+                info!("Turning off GPS…");
+                if let Err(e) = self.turn_off() {
+                    error!("{}", generate_error_string(&e, "Error turning GPS off"));
+                }
+                info!("GPS off.");
+            }
+            Ok(false) => {}
+            Err(e) => {
+                error!("{}",
+                       generate_error_string(&e,
+                                             "Could not check if GPS was on when dropping the GPS \
+                                              object"));
+            }
+        }
+    }
+}
 
 /// GPS fix status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

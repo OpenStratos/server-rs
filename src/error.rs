@@ -122,6 +122,20 @@ error_chain!{
             display("there was an error during the initialization")
         }
 
+        /// FONA initialization error.
+        #[cfg(feature = "fona")]
+        FonaInit {
+            description("FONA initialization error")
+            display("FONA module initialization error")
+        }
+
+        /// FONA could not be turned on.
+        #[cfg(feature = "fona")]
+        FonaInitNoPowerOn {
+            description("FONA could not be turned on")
+            display("FONA did not turn on after doing the turn on process")
+        }
+
         /// Camera was already recording.
         #[cfg(feature = "raspicam")]
         CameraAlreadyRecording {

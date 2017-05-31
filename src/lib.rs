@@ -52,7 +52,7 @@ html_root_url = "https://openstratos.github.io/server-rs/")]
     missing_docs_in_private_items)]
 // Allowing these at least for now.
 #![allow(unknown_lints, stutter, integer_arithmetic, cast_possible_truncation, cast_possible_wrap,
-         indexing_slicing, cast_precision_loss, cast_sign_loss)]
+         indexing_slicing, cast_precision_loss, cast_sign_loss, cyclomatic_complexity)]
 
 #![allow(unused)]
 
@@ -124,12 +124,6 @@ pub fn initialize_data_filesystem() -> Result<()> {
         .chain_err(|| ErrorKind::DirectoryCreation(img_path))?;
 
     Ok(())
-}
-
-/// Prints a stack trace of a complete system failure.
-pub fn print_system_failure<S: AsRef<str>>(error: &Error, main_error: S) {
-    use colored::Colorize;
-    print!("{}", generate_error_string(error, main_error).red());
 }
 
 /// Generates a stack trace string of an error.
