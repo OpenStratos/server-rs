@@ -30,7 +30,6 @@ impl Fona {
             thread::sleep(Duration::from_secs(3));
         }
 
-        info!("Turning module on…");
         self.turn_on()?;
         if !self.is_on()? {
             error!("The module is still off. Finishing initialization.");
@@ -147,8 +146,6 @@ impl Drop for Fona {
         }
     }
 }
-
-// TODO drop.
 
 /// Structure representing the location of the probe as obtained by the FONA module.
 pub struct Location {

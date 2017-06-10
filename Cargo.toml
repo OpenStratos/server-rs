@@ -36,6 +36,8 @@ gps = []
 raspicam = []
 # Adafruit FONA GSM module.
 fona = []
+# Do not send SMSs (so that it does not cost money)
+no_sms = ["fona"]
 # Transparent serial telemetry.
 telemetry = []
 # Do not ever power off the system, only exit.
@@ -58,3 +60,22 @@ tokio-serial = "0.5.0"
 version = "0.7"
 default_features = false
 features = ["file", "file_appender", "console_appender", "threshold_filter"]
+
+# The release profile, used for `cargo build`.
+[profile.dev]
+opt-level = 0
+debug = true
+rpath = false
+lto = false
+debug-assertions = true
+codegen-units = 1
+panic = 'unwind'
+
+# The release profile, used for `cargo build --release`.
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+panic = 'unwind'
