@@ -166,3 +166,13 @@ impl Location {
         self.longitude
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    /// Tests FONA initialization.
+    #[test]
+    fn it_initialize() {
+        // FONA.lock().unwrap().initialize().unwrap();
+    }
+}
