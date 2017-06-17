@@ -103,8 +103,9 @@ use logic::{MainLogic, State, OpenStratos};
 
 /// The main logic of the program.
 pub fn run() -> Result<()> {
-    initialize_data_filesystem()
-        .chain_err(|| ErrorKind::DataFSInit)?;
+    initialize_data_filesystem().chain_err(
+        || ErrorKind::DataFSInit,
+    )?;
 
     if let Some(state) = State::get_last().chain_err(|| ErrorKind::LastStateRead)? {
         unimplemented!()
@@ -116,12 +117,14 @@ pub fn run() -> Result<()> {
 /// Initializes the data file system for videos and images.
 pub fn initialize_data_filesystem() -> Result<()> {
     let video_path = CONFIG.data_dir().join("video");
-    fs::create_dir_all(&video_path)
-        .chain_err(|| ErrorKind::DirectoryCreation(video_path))?;
+    fs::create_dir_all(&video_path).chain_err(|| {
+        ErrorKind::DirectoryCreation(video_path)
+    })?;
 
     let img_path = CONFIG.data_dir().join("img");
-    fs::create_dir_all(&img_path)
-        .chain_err(|| ErrorKind::DirectoryCreation(img_path))?;
+    fs::create_dir_all(&img_path).chain_err(|| {
+        ErrorKind::DirectoryCreation(img_path)
+    })?;
 
     Ok(())
 }
@@ -193,10 +196,10 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
 
         config
             .appender(Appender::builder().build("camera", Box::new(camera)))
-            .logger(Logger::builder()
-                        .appender("camera")
-                        .additive(false)
-                        .build("camera", LogLevelFilter::Info))
+            .logger(Logger::builder().appender("camera").additive(false).build(
+                "camera",
+                LogLevelFilter::Info,
+            ))
     };
 
     #[cfg(feature = "gps")]
@@ -221,12 +224,16 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         };
 
         let config = config
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
-                          .build("gps", Box::new(gps)))
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                          .build("gps_frames", Box::new(gps_frames)))
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
+                    .build("gps", Box::new(gps)),
+            )
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
+                    .build("gps_frames", Box::new(gps_frames)),
+            )
             .logger(gps_logger);
 
         if CONFIG.debug() {
@@ -234,7 +241,10 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/gps_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("gps_serial"))?;
-            config.appender(Appender::builder().build("gps_serial", Box::new(gps_serial)))
+            config.appender(Appender::builder().build(
+                "gps_serial",
+                Box::new(gps_serial),
+            ))
         } else {
             config
         }
@@ -261,12 +271,16 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             builder.build("fona", log_level)
         };
         let config = config
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
-                          .build("fona", Box::new(fona)))
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                          .build("fona_frames", Box::new(fona_frames)))
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
+                    .build("fona", Box::new(fona)),
+            )
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
+                    .build("fona_frames", Box::new(fona_frames)),
+            )
             .logger(fona_logger);
 
         if CONFIG.debug() {
@@ -274,7 +288,10 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/fona_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("fona_serial"))?;
-            config.appender(Appender::builder().build("fona_serial", Box::new(gsm_serial)))
+            config.appender(Appender::builder().build(
+                "fona_serial",
+                Box::new(gsm_serial),
+            ))
         } else {
             config
         }
@@ -303,12 +320,16 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         };
 
         let config = config
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
-                          .build("telemetry", Box::new(telemetry)))
-            .appender(Appender::builder()
-                          .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                          .build("telemetry_frames", Box::new(telemetry_frames)))
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
+                    .build("telemetry", Box::new(telemetry)),
+            )
+            .appender(
+                Appender::builder()
+                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
+                    .build("telemetry_frames", Box::new(telemetry_frames)),
+            )
             .logger(telemetry_logger);
 
         if CONFIG.debug() {
@@ -317,18 +338,19 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .build(format!("data/logs/telemetry_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("telemetry_serial"))?;
 
-            config
-                .appender(Appender::builder().build("telemetry_serial", Box::new(telemetry_serial)))
+            config.appender(Appender::builder().build(
+                "telemetry_serial",
+                Box::new(telemetry_serial),
+            ))
         } else {
             config
         }
     };
 
     let config = config
-        .build(Root::builder()
-                   .appender("stdout")
-                   .appender("main")
-                   .build(LogLevelFilter::Info))
+        .build(Root::builder().appender("stdout").appender("main").build(
+            LogLevelFilter::Info,
+        ))
         .chain_err(|| ErrorKind::LogBuild)?;
 
     Ok(log4rs::init_config(config)?)

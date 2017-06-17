@@ -161,8 +161,10 @@ pub fn main() {
         println!("Debug mode active");
     }
     if let Err(e) = init_loggers() {
-        println!("{}",
-                 generate_error_string(&e, "Error initializing loggers").red());
+        println!(
+            "{}",
+            generate_error_string(&e, "Error initializing loggers").red()
+        );
         panic!();
     }
     info!("OpenStratos {} starting", env!("CARGO_PKG_VERSION"));

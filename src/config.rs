@@ -89,18 +89,19 @@ pub struct Config {
 impl Config {
     /// Creates a new configuration object from a path.
     fn from_file<P: AsRef<Path>>(path: P) -> Result<Config> {
-        let file = File::open(path.as_ref())
-            .chain_err(|| ErrorKind::ConfigOpen(path.as_ref().to_owned()))?;
+        let file = File::open(path.as_ref()).chain_err(|| {
+            ErrorKind::ConfigOpen(path.as_ref().to_owned())
+        })?;
         let mut reader = BufReader::new(file);
         let mut contents = String::new();
 
-        reader
-            .read_to_string(&mut contents)
-            .chain_err(|| ErrorKind::ConfigRead(path.as_ref().to_owned()))?;
+        reader.read_to_string(&mut contents).chain_err(|| {
+            ErrorKind::ConfigRead(path.as_ref().to_owned())
+        })?;
 
-        let config: Config =
-            toml::from_str(&contents)
-                .chain_err(|| ErrorKind::ConfigInvalidToml(path.as_ref().to_owned()))?;
+        let config: Config = toml::from_str(&contents).chain_err(|| {
+            ErrorKind::ConfigInvalidToml(path.as_ref().to_owned())
+        })?;
 
         if let (false, errors) = config.verify() {
             Err(ErrorKind::ConfigInvalid(errors).into())
@@ -119,39 +120,45 @@ impl Config {
             // Check for picture configuration errors.
             if self.picture.width > 3280 {
                 ok = false;
-                errors.push_str(&format!("picture width must be below or equal to 3280px, found \
+                errors.push_str(&format!(
+                    "picture width must be below or equal to 3280px, found \
                                           {}px\n",
-                                         self.picture.width));
+                    self.picture.width
+                ));
             }
             if self.picture.height > 2464 {
                 ok = false;
-                errors.push_str(
-                    &format!("picture height must be below or equal to 2464px, found {}px\n",
-                             self.picture.height));
+                errors.push_str(&format!(
+                    "picture height must be below or equal to 2464px, found {}px\n",
+                    self.picture.height
+                ));
             }
 
             if self.picture.quality > 100 {
                 ok = false;
-                errors.push_str(
-                    &format!("picture quality must be a number between 0 and 100, found {}px\n",
-                             self.picture.quality));
+                errors.push_str(&format!(
+                    "picture quality must be a number between 0 and 100, found {}px\n",
+                    self.picture.quality
+                ));
             }
 
             if let Some(b @ 101...u8::MAX) = self.picture.brightness {
                 ok = false;
-                errors
-                    .push_str(&format!("picture brightness must be between 0 and 100, found {}\n",
-                                      b));
+                errors.push_str(&format!(
+                    "picture brightness must be between 0 and 100, found {}\n",
+                    b
+                ));
             }
 
             match self.picture.contrast {
                 Some(c @ i8::MIN...-101) |
                 Some(c @ 101...i8::MAX) => {
                     ok = false;
-                    errors
-                        .push_str(&format!("picture contrast must be between -100 and 100, found \
+                    errors.push_str(&format!(
+                        "picture contrast must be between -100 and 100, found \
                                             {}\n",
-                                           c));
+                        c
+                    ));
                 }
                 _ => {}
             }
@@ -160,9 +167,11 @@ impl Config {
                 Some(s @ i8::MIN...-101) |
                 Some(s @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("picture sharpness must be between -100 and 100, \
+                    errors.push_str(&format!(
+                        "picture sharpness must be between -100 and 100, \
                                               found {}\n",
-                                             s));
+                        s
+                    ));
                 }
                 _ => {}
             }
@@ -171,9 +180,11 @@ impl Config {
                 Some(s @ i8::MIN...-101) |
                 Some(s @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("picture saturation must be between -100 and 100, \
+                    errors.push_str(&format!(
+                        "picture saturation must be between -100 and 100, \
                                               found {}\n",
-                                             s));
+                        s
+                    ));
                 }
                 _ => {}
             }
@@ -182,8 +193,10 @@ impl Config {
                 Some(i @ 0...99) |
                 Some(i @ 801...u16::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("picture ISO must be between 100 and 800, found {}\n",
-                                            i));
+                    errors.push_str(&format!(
+                        "picture ISO must be between 100 and 800, found {}\n",
+                        i
+                    ));
                 }
                 _ => {}
             }
@@ -192,9 +205,11 @@ impl Config {
                 Some(e @ i8::MIN...-11) |
                 Some(e @ 11...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("picture EV compensation must be between -10 and 10, \
+                    errors.push_str(&format!(
+                        "picture EV compensation must be between -10 and 10, \
                                               found {}\n",
-                                             e));
+                        e
+                    ));
                 }
                 _ => {}
             }
@@ -202,21 +217,26 @@ impl Config {
             // Check for video configuration errors.
             if self.video.width > 2592 {
                 ok = false;
-                errors.push_str(&format!("video width must be below or equal to 2592px, found \
+                errors.push_str(&format!(
+                    "video width must be below or equal to 2592px, found \
                                           {}px\n",
-                                         self.video.width));
+                    self.video.width
+                ));
             }
             if self.video.height > 1944 {
                 ok = false;
-                errors.push_str(&format!("video height must be below or equal to 1944px, found \
+                errors.push_str(&format!(
+                    "video height must be below or equal to 1944px, found \
                                           {}px\n",
-                                         self.video.height));
+                    self.video.height
+                ));
             }
             if self.video.fps > 90 {
                 ok = false;
-                errors.push_str(
-                    &format!("video framerate must be below or equal to 90fps, found {}fps\n",
-                             self.video.fps));
+                errors.push_str(&format!(
+                    "video framerate must be below or equal to 90fps, found {}fps\n",
+                    self.video.fps
+                ));
             }
 
             // Video modes.
@@ -238,25 +258,30 @@ impl Config {
 
             if let Some(r @ 360...u16::MAX) = self.camera_rotation {
                 ok = false;
-                errors.push_str(
-                    &format!("camera rotation must be between 0 and 359 degrees, found {} \
+                errors.push_str(&format!(
+                    "camera rotation must be between 0 and 359 degrees, found {} \
                               degrees\n",
-                             r));
+                    r
+                ));
             }
 
             if let Some(b @ 101...u8::MAX) = self.video.brightness {
                 ok = false;
-                errors.push_str(&format!("video brightness must be between 0 and 100, found {}\n",
-                                        b));
+                errors.push_str(&format!(
+                    "video brightness must be between 0 and 100, found {}\n",
+                    b
+                ));
             }
 
             match self.video.contrast {
                 Some(c @ i8::MIN...-101) |
                 Some(c @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("video contrast must be between -100 and 100, found \
+                    errors.push_str(&format!(
+                        "video contrast must be between -100 and 100, found \
                                               {}\n",
-                                             c));
+                        c
+                    ));
                 }
                 _ => {}
             }
@@ -265,9 +290,11 @@ impl Config {
                 Some(s @ i8::MIN...-101) |
                 Some(s @ 101...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("video sharpness must be between -100 and 100, found \
+                    errors.push_str(&format!(
+                        "video sharpness must be between -100 and 100, found \
                                               {}\n",
-                                             s));
+                        s
+                    ));
                 }
                 _ => {}
             }
@@ -276,10 +303,11 @@ impl Config {
                 Some(s @ i8::MIN...-101) |
                 Some(s @ 101...i8::MAX) => {
                     ok = false;
-                    errors
-                        .push_str(&format!("video saturation must be between -100 and 100, found \
+                    errors.push_str(&format!(
+                        "video saturation must be between -100 and 100, found \
                                             {}\n",
-                                           s));
+                        s
+                    ));
                 }
                 _ => {}
             }
@@ -288,8 +316,10 @@ impl Config {
                 Some(i @ 0...99) |
                 Some(i @ 801...u16::MAX) => {
                     ok = false;
-                    errors
-                        .push_str(&format!("video ISO must be between 100 and 800, found {}\n", i));
+                    errors.push_str(&format!(
+                        "video ISO must be between 100 and 800, found {}\n",
+                        i
+                    ));
                 }
                 _ => {}
             }
@@ -298,9 +328,11 @@ impl Config {
                 Some(e @ i8::MIN...-11) |
                 Some(e @ 11...i8::MAX) => {
                     ok = false;
-                    errors.push_str(&format!("video EV compensation must be between -10 and 10, \
+                    errors.push_str(&format!(
+                        "video EV compensation must be between -10 and 10, \
                                               found {}\n",
-                                             e));
+                        e
+                    ));
                 }
                 _ => {}
             }
@@ -596,20 +628,20 @@ pub enum Exposure {
 impl AsRef<OsStr> for Exposure {
     fn as_ref(&self) -> &OsStr {
         OsStr::new(match *self {
-                       Exposure::Off => "off",
-                       Exposure::Auto => "auto",
-                       Exposure::Night => "night",
-                       Exposure::NightPreview => "nightpreview",
-                       Exposure::BackLight => "backlight",
-                       Exposure::SpotLight => "spotlight",
-                       Exposure::Sports => "sports",
-                       Exposure::Snow => "snow",
-                       Exposure::Beach => "beach",
-                       Exposure::VeryLong => "verylong",
-                       Exposure::FixedFps => "fixedfps",
-                       Exposure::AntiShake => "antishake",
-                       Exposure::Fireworks => "fireworks",
-                   })
+            Exposure::Off => "off",
+            Exposure::Auto => "auto",
+            Exposure::Night => "night",
+            Exposure::NightPreview => "nightpreview",
+            Exposure::BackLight => "backlight",
+            Exposure::SpotLight => "spotlight",
+            Exposure::Sports => "sports",
+            Exposure::Snow => "snow",
+            Exposure::Beach => "beach",
+            Exposure::VeryLong => "verylong",
+            Exposure::FixedFps => "fixedfps",
+            Exposure::AntiShake => "antishake",
+            Exposure::Fireworks => "fireworks",
+        })
     }
 }
 
@@ -642,16 +674,16 @@ pub enum WhiteBalance {
 impl AsRef<OsStr> for WhiteBalance {
     fn as_ref(&self) -> &OsStr {
         OsStr::new(match *self {
-                       WhiteBalance::Off => "off",
-                       WhiteBalance::Auto => "auto",
-                       WhiteBalance::Sun => "sun",
-                       WhiteBalance::CloudShade => "cloudshade",
-                       WhiteBalance::Tungsten => "tungsten",
-                       WhiteBalance::Fluorescent => "fluorescent",
-                       WhiteBalance::Incandescent => "incandescent",
-                       WhiteBalance::Flash => "flash",
-                       WhiteBalance::Horizon => "horizon",
-                   })
+            WhiteBalance::Off => "off",
+            WhiteBalance::Auto => "auto",
+            WhiteBalance::Sun => "sun",
+            WhiteBalance::CloudShade => "cloudshade",
+            WhiteBalance::Tungsten => "tungsten",
+            WhiteBalance::Fluorescent => "fluorescent",
+            WhiteBalance::Incandescent => "incandescent",
+            WhiteBalance::Flash => "flash",
+            WhiteBalance::Horizon => "horizon",
+        })
     }
 }
 
@@ -755,7 +787,8 @@ impl PhoneNumber {
 #[cfg(feature = "fona")]
 impl<'de> Deserialize<'de> for PhoneNumber {
     fn deserialize<D>(deserializer: D) -> StdResult<PhoneNumber, D::Error>
-        where D: Deserializer<'de>
+    where
+        D: Deserializer<'de>,
     {
         // TODO: better parsing and checking
 
@@ -770,7 +803,8 @@ impl<'de> Deserialize<'de> for PhoneNumber {
 
             #[allow(absurd_extreme_comparisons)]
             fn visit_str<E>(self, value: &str) -> StdResult<PhoneNumber, E>
-                where E: de::Error
+            where
+                E: de::Error,
             {
                 Ok(PhoneNumber(value.to_owned()))
             }
@@ -783,7 +817,8 @@ impl<'de> Deserialize<'de> for PhoneNumber {
 /// Deserializes a serial baud rate.
 #[cfg(any(feature = "gps", feature = "fona"))]
 fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error>
-    where D: Deserializer<'de>
+where
+    D: Deserializer<'de>,
 {
     /// Visitor for baud rate.
     struct BaudRateVisitor;
@@ -797,7 +832,8 @@ fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error
 
         #[allow(absurd_extreme_comparisons)]
         fn visit_i64<E>(self, value: i64) -> StdResult<BaudRate, E>
-            where E: de::Error
+        where
+            E: de::Error,
         {
             use std::{u32, usize};
 
@@ -817,7 +853,8 @@ fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error
 /// Note: it will make sure it deserializes a Pin between 2 and 28 (pin numbers for Raspberry Pi).
 #[cfg(any(feature = "gps", feature = "fona"))]
 fn deserialize_pin<'de, D>(deserializer: D) -> StdResult<Pin, D::Error>
-    where D: Deserializer<'de>
+where
+    D: Deserializer<'de>,
 {
     /// Visitor for u32 (comparing to usize).
     struct PinVisitor;
@@ -831,7 +868,8 @@ fn deserialize_pin<'de, D>(deserializer: D) -> StdResult<Pin, D::Error>
 
         #[allow(absurd_extreme_comparisons)]
         fn visit_i64<E>(self, value: i64) -> StdResult<Pin, E>
-            where E: de::Error
+        where
+            E: de::Error,
         {
             if value >= 2 && value <= 28 {
                 Ok(Pin::new(value as u64))
@@ -1009,13 +1047,15 @@ mod tests {
         let (verify, errors) = config.verify();
 
         assert_eq!(verify, false);
-        assert_eq!(errors,
-                   "picture width must be below or equal to 3280px, found 5246px\npicture height \
+        assert_eq!(
+            errors,
+            "picture width must be below or equal to 3280px, found 5246px\npicture height \
                     must be below or equal to 2464px, found 10345px\nvideo width must be below or \
                     equal to 2592px, found 5648px\nvideo height must be below or equal to 1944px, \
                     found 12546px\nvideo framerate must be below or equal to 90fps, found 92fps\n\
                     video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
-                    1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n");
+                    1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n"
+        );
     }
 
     /// Tests the default configuration and its loading using the static `CONFIG` constant.

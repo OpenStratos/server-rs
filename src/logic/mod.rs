@@ -54,7 +54,8 @@ pub trait MainLogic: GetState {
 }
 
 impl<S> MainLogic for S
-    where S: StateMachine + GetState
+where
+    S: StateMachine + GetState,
 {
     fn main_logic(self) -> Result<()> {
         let new_state = self.execute()?;
@@ -105,7 +106,8 @@ pub struct OpenStratos<S: GetState> {
 }
 
 impl<S> GetState for OpenStratos<S>
-    where S: GetState
+where
+    S: GetState,
 {
     fn get_state(&self) -> State {
         self.state.get_state()
@@ -159,8 +161,9 @@ impl State {
         }
         let mut file = File::open(path).chain_err(|| ErrorKind::LastStateFileOpen)?;
         let mut state = String::new();
-        file.read_to_string(&mut state)
-            .chain_err(|| ErrorKind::LastStateFileRead)?;
+        file.read_to_string(&mut state).chain_err(|| {
+            ErrorKind::LastStateFileRead
+        })?;
 
         if state.is_empty() {
             Ok(None)
@@ -361,8 +364,10 @@ mod tests {
     #[test]
     #[cfg(feature = "gps")]
     fn it_from_str_acquiring_fix() {
-        assert_eq!("ACQUIRING_FIX".parse::<State>().unwrap(),
-                   State::AcquiringFix);
+        assert_eq!(
+            "ACQUIRING_FIX".parse::<State>().unwrap(),
+            State::AcquiringFix
+        );
     }
 
     /// Tests that the `State::AcquiringFix` is not parsed properly if the GPS feature is off.
@@ -424,8 +429,10 @@ mod tests {
     #[test]
     #[cfg(feature = "gps")]
     fn it_from_str_waiting_launch() {
-        assert_eq!("WAITING_LAUNCH".parse::<State>().unwrap(),
-                   State::WaitingLaunch);
+        assert_eq!(
+            "WAITING_LAUNCH".parse::<State>().unwrap(),
+            State::WaitingLaunch
+        );
     }
 
     /// Tests that the `State::WaitingLaunch` is not parsed properly if the GPS feature is off.

@@ -169,10 +169,14 @@ impl Drop for Gps {
             }
             Ok(false) => {}
             Err(e) => {
-                error!("{}",
-                       generate_error_string(&e,
-                                             "Could not check if GPS was on when dropping the GPS \
-                                              object"));
+                error!(
+                    "{}",
+                    generate_error_string(
+                        &e,
+                        "Could not check if GPS was on when dropping the GPS \
+                                              object",
+                    )
+                );
             }
         }
     }
@@ -200,10 +204,14 @@ impl FromStr for GPSStatus {
 
 impl fmt::Display for GPSStatus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            GPSStatus::Active => "A",
-            GPSStatus::Void => "V",
-        })
+        write!(
+            f,
+            "{}",
+            match *self {
+                GPSStatus::Active => "A",
+                GPSStatus::Void => "V",
+            }
+        )
     }
 }
 

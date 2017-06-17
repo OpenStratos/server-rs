@@ -57,17 +57,20 @@ impl Camera {
     ///
     /// **Panics** if the duration is less than 1 second.
     pub fn record<T, P, FN>(&mut self, time: T, file_name: FN) -> Result<()>
-        where T: Into<Option<Duration>>,
-              P: AsRef<Path>,
-              FN: Into<Option<P>>
+    where
+        T: Into<Option<Duration>>,
+        P: AsRef<Path>,
+        FN: Into<Option<P>>,
     {
         let time = time.into();
         let file_name = file_name.into();
 
         if let Some(time) = time {
-            info!("Recording video for {}.{} seconds.",
-                  time.as_secs(),
-                  time.subsec_nanos());
+            info!(
+                "Recording video for {}.{} seconds.",
+                time.as_secs(),
+                time.subsec_nanos()
+            );
         } else {
             info!("Recording video indefinitely.");
             if file_name.is_some() {
@@ -78,18 +81,21 @@ impl Camera {
             error!("The camera is already recording.");
             return Err(ErrorKind::CameraAlreadyRecording.into());
         }
-        let file = self.video_dir
-            .join(if cfg!(test) {
-                      PathBuf::from("test.h264")
-                  } else if let Some(path) = file_name {
-                      path.as_ref().to_path_buf()
-                  } else {
-                      PathBuf::from(&format!("video-{}.h264",
-                                            fs::read_dir(&self.video_dir)?.count()))
-                  });
+        let file = self.video_dir.join(if cfg!(test) {
+            PathBuf::from("test.h264")
+        } else if let Some(path) = file_name {
+            path.as_ref().to_path_buf()
+        } else {
+            PathBuf::from(&format!(
+                "video-{}.h264",
+                fs::read_dir(&self.video_dir)?.count()
+            ))
+        });
         if file.exists() {
-            error!("Trying to write the video in {} but the file already exists.",
-                   file.display());
+            error!(
+                "Trying to write the video in {} but the file already exists.",
+                file.display()
+            );
             return Err(ErrorKind::CameraFileExists(file).into());
         }
 
@@ -108,9 +114,11 @@ impl Camera {
             } else {
                 let stdout = String::from_utf8(output.stdout)?;
                 let stderr = String::from_utf8(output.stderr)?;
-                warn!("Video recording ended with an error.\n\tstdout: {}\n\tstderr: {}",
-                      stdout,
-                      stderr);
+                warn!(
+                    "Video recording ended with an error.\n\tstdout: {}\n\tstderr: {}",
+                    stdout,
+                    stderr
+                );
             }
         } else {
             command.stdin(Stdio::null());
@@ -139,10 +147,11 @@ impl Camera {
             .arg("-b")
             .arg(format!("{}", CONFIG.video().bitrate()));
         if let Some(time) = time {
-            command
-                .arg("-t")
-                .arg(format!("{}",
-                             time.as_secs() * 1_000 + time.subsec_nanos() as u64 / 1_000_000));
+            command.arg("-t").arg(format!(
+                "{}",
+                time.as_secs() * 1_000 +
+                    time.subsec_nanos() as u64 / 1_000_000
+            ));
         }
         if let Some(rot) = CONFIG.camera_rotation() {
             command.arg("-rot").arg(format!("{}", rot));
@@ -195,8 +204,10 @@ impl Camera {
         } else {
             warn!("There was no process to kill when trying to stop recording.");
             if Camera::is_really_recording()? {
-                warn!("The raspivid process existed but it was not controlled by OpenStratos. \
-                       Killing it…");
+                warn!(
+                    "The raspivid process existed but it was not controlled by OpenStratos. \
+                       Killing it…"
+                );
                 Camera::kill_process()?;
                 info!("Forcefully killed the raspivid process");
             }
@@ -211,12 +222,14 @@ impl Camera {
 
     /// Checks if there is a `raspivid` process currently recording video.
     fn is_really_recording() -> Result<bool> {
-        Ok(Command::new("pidof")
-               .arg("-x")
-               .arg("raspivid")
-               .output()?
-               .status
-               .success())
+        Ok(
+            Command::new("pidof")
+                .arg("-x")
+                .arg("raspivid")
+                .output()?
+                .status
+                .success(),
+        )
     }
 
     /// Forcefully kills the `raspivid` process.
@@ -229,8 +242,9 @@ impl Camera {
 
     /// Takes a picture with the camera.
     pub fn take_picture<P, FN>(&mut self, file_name: FN) -> Result<()>
-        where P: AsRef<Path>,
-              FN: Into<Option<P>>
+    where
+        P: AsRef<Path>,
+        FN: Into<Option<P>>,
     {
         let file_name = file_name.into();
 
@@ -239,18 +253,21 @@ impl Camera {
             warn!("The camera was recording video when trying to take the picture. Stopping…");
             self.stop_recording()?;
         }
-        let file = self.picture_dir
-            .join(if cfg!(test) {
-                      PathBuf::from("test.jpg")
-                  } else if let Some(path) = file_name {
-                      path.as_ref().to_path_buf()
-                  } else {
-                      PathBuf::from(&format!("img-{}.jpg",
-                                            fs::read_dir(&self.picture_dir)?.count()))
-                  });
+        let file = self.picture_dir.join(if cfg!(test) {
+            PathBuf::from("test.jpg")
+        } else if let Some(path) = file_name {
+            path.as_ref().to_path_buf()
+        } else {
+            PathBuf::from(&format!(
+                "img-{}.jpg",
+                fs::read_dir(&self.picture_dir)?.count()
+            ))
+        });
         if file.exists() {
-            error!("Trying to write the picture in {} but the file already exists.",
-                   file.display());
+            error!(
+                "Trying to write the picture in {} but the file already exists.",
+                file.display()
+            );
             return Err(ErrorKind::CameraFileExists(file).into());
         }
 
@@ -267,9 +284,11 @@ impl Camera {
         } else {
             let stdout = String::from_utf8(output.stdout)?;
             let stderr = String::from_utf8(output.stderr)?;
-            warn!("Picture taking ended with an error.\n\tstdout: {}\n\tstderr: {}",
-                  stdout,
-                  stderr);
+            warn!(
+                "Picture taking ended with an error.\n\tstdout: {}\n\tstderr: {}",
+                stdout,
+                stderr
+            );
         }
 
         Ok(())
@@ -338,8 +357,10 @@ impl Drop for Camera {
                     info!("Video recording stopped.");
                 }
                 Err(e) => {
-                    error!("{}",
-                           generate_error_string(&e, "Error stopping video recording"))
+                    error!(
+                        "{}",
+                        generate_error_string(&e, "Error stopping video recording")
+                    )
                 }
             }
         }
@@ -404,18 +425,24 @@ impl ToString for ExifData {
         let mut exif = String::from(" -x GPSMeasureMode=3 -x GPS.GPSDifferential=0");
 
         let (lat_ref, lat) = self.gps_latitude;
-        exif.push_str(&format!(" -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
-                              lat_ref,
-                              lat * 1_000_000_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
+            lat_ref,
+            lat * 1_000_000_f32
+        ));
 
         let (lon_ref, lon) = self.gps_longitude;
-        exif.push_str(&format!(" -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
-                              lon_ref,
-                              lon * 1_000_000_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
+            lon_ref,
+            lon * 1_000_000_f32
+        ));
 
         // TODO configurable altitude ref.
-        exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-                              self.gps_altitude * 100_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
+            self.gps_altitude * 100_f32
+        ));
 
         // TODO add GPS timestamp
         // exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
@@ -423,15 +450,22 @@ impl ToString for ExifData {
 
         exif.push_str(&format!(" -x GPS.GPSSatellites={}", self.gps_satellites));
         exif.push_str(&format!(" -x GPS.GPSStatuss={}", self.gps_status));
-        exif.push_str(&format!(" -x GPS.GPSDOP={:.0}/1000", self.gps_dop * 1_000_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSDOP={:.0}/1000",
+            self.gps_dop * 1_000_f32
+        ));
 
         // TODO configurable speed ref.
-        exif.push_str(&format!(" -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
-                              self.gps_speed * 1_000_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
+            self.gps_speed * 1_000_f32
+        ));
 
         // TODO configurable track ref.
-        exif.push_str(&format!(" -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
-                              self.gps_track * 1_000_f32));
+        exif.push_str(&format!(
+            " -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
+            self.gps_track * 1_000_f32
+        ));
 
         exif
     }
@@ -461,10 +495,14 @@ impl From<f32> for LatitudeRef {
 #[cfg(feature = "gps")]
 impl fmt::Display for LatitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            LatitudeRef::North => "N",
-            LatitudeRef::South => "S",
-        })
+        write!(
+            f,
+            "{}",
+            match *self {
+                LatitudeRef::North => "N",
+                LatitudeRef::South => "S",
+            }
+        )
     }
 }
 
@@ -492,10 +530,14 @@ impl From<f32> for LongitudeRef {
 #[cfg(feature = "gps")]
 impl fmt::Display for LongitudeRef {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", match *self {
-            LongitudeRef::East => "E",
-            LongitudeRef::West => "W",
-        })
+        write!(
+            f,
+            "{}",
+            match *self {
+                LongitudeRef::East => "E",
+                LongitudeRef::West => "W",
+            }
+        )
     }
 }
 
@@ -521,13 +563,15 @@ mod tests {
             gps_track: 1.65,
         };
 
-        assert_eq!(data.to_string(),
-                   " -x GPSMeasureMode=3 -x GPS.GPSDifferential=0 -x GPS.GPSLatitudeRef=N -x \
+        assert_eq!(
+            data.to_string(),
+            " -x GPSMeasureMode=3 -x GPS.GPSDifferential=0 -x GPS.GPSLatitudeRef=N -x \
                     GPS.GPSLatitude=23444970/1000000 -x GPS.GPSLongitudeRef=E -x \
                     GPS.GPSLongitude=100057920/1000000 -x GPS.GPSAltitudeRef=0 -x \
                     GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatuss=A -x \
                     GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed=13500/1000 -x \
-                    GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000");
+                    GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000"
+        );
     }
 
     /// Tests that the camera is not already recording.

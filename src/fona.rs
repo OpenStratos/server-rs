@@ -86,7 +86,8 @@ impl Fona {
 
     /// Sends an SMS with the given text to the given phone number.
     pub fn send_sms<M>(&mut self, message: M) -> Result<()>
-        where M: AsRef<str>
+    where
+        M: AsRef<str>,
     {
         unimplemented!();
     }
@@ -118,7 +119,8 @@ impl Fona {
 
     /// Sends a command to the FONA module and reads the response.
     fn send_command_read<C>(&mut self, command: C) -> Result<String>
-        where C: AsRef<str>
+    where
+        C: AsRef<str>,
     {
         unimplemented!()
     }
@@ -138,10 +140,14 @@ impl Drop for Fona {
             }
             Ok(false) => {}
             Err(e) => {
-                error!("{}",
-                       generate_error_string(&e,
-                                             "Could not check if FONA was on when dropping the \
-                                              FONA object"));
+                error!(
+                    "{}",
+                    generate_error_string(
+                        &e,
+                        "Could not check if FONA was on when dropping the \
+                                              FONA object",
+                    )
+                );
             }
         }
     }

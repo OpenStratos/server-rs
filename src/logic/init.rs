@@ -29,31 +29,34 @@ impl StateMachine for OpenStratos<Init> {
     fn execute(self) -> Result<Self::Next> {
 
         let disk_space = get_available_disk_space()?;
-        info!("Available disk space: {:.2} GiB",
-              disk_space as f32 / 1024_f32 / 1024_f32 / 1024_f32);
+        info!(
+            "Available disk space: {:.2} GiB",
+            disk_space as f32 / 1024_f32 / 1024_f32 / 1024_f32
+        );
 
         #[cfg(feature = "raspicam")]
-        info!("Disk space enough for about {} minutes of fullHD video.",
-              CONFIG.video().bitrate() / (8 * 60));
+        info!(
+            "Disk space enough for about {} minutes of fullHD video.",
+            CONFIG.video().bitrate() / (8 * 60)
+        );
 
         if {
-               #[cfg(feature = "raspicam")]
-               {
-                   // 1.2 times the length of the flight, just in case.
-                   disk_space <
-                   CONFIG.flight().length() as u64 * 6 * 60 * CONFIG.video().bitrate() as u64 /
-                   (8 * 5)
-               }
-               #[cfg(not(feature = "raspicam"))]
-               {
-                   disk_space < 2 * 1024 * 1024 * 1024 // 2 GiB
-               }
-           } {
+            #[cfg(feature = "raspicam")]
+            {
+                // 1.2 times the length of the flight, just in case.
+                disk_space <
+                    CONFIG.flight().length() as u64 * 6 * 60 * CONFIG.video().bitrate() as u64 /
+                        (8 * 5)
+            }
+            #[cfg(not(feature = "raspicam"))]
+            {
+                disk_space < 2 * 1024 * 1024 * 1024 // 2 GiB
+            }
+        }
+        {
             error!("Not enough disk space.");
-            #[cfg(not(feature = "no_power_off"))]
-            power_off();
-            #[cfg(feature = "no_power_off")]
-            process::exit(1);
+            #[cfg(not(feature = "no_power_off"))] power_off();
+            #[cfg(feature = "no_power_off")] process::exit(1);
         }
 
         #[cfg(feature = "gps")]
@@ -63,10 +66,9 @@ impl StateMachine for OpenStratos<Init> {
                 Ok(mut gps) => gps.initialize().chain_err(|| ErrorKind::GPSInit)?,
                 Err(poisoned) => {
                     error!("The GPS mutex was poisoned.");
-                    poisoned
-                        .into_inner()
-                        .initialize()
-                        .chain_err(|| ErrorKind::GPSInit)?
+                    poisoned.into_inner().initialize().chain_err(
+                        || ErrorKind::GPSInit,
+                    )?
                 }
             }
             info!("GPS initialized.");
@@ -79,10 +81,9 @@ impl StateMachine for OpenStratos<Init> {
                 Ok(mut fona) => fona.initialize().chain_err(|| ErrorKind::FonaInit)?,
                 Err(poisoned) => {
                     error!("The FONA mutex was poisoned.");
-                    poisoned
-                        .into_inner()
-                        .initialize()
-                        .chain_err(|| ErrorKind::FonaInit)?
+                    poisoned.into_inner().initialize().chain_err(
+                        || ErrorKind::FonaInit,
+                    )?
                 }
             }
             info!("Adafruit FONA GSM module initialized.");
@@ -167,16 +168,17 @@ impl StateMachine for OpenStratos<Init> {
 
             info!("Waiting for GSM connectivity…");
             while {
-                      // TODO
-                      // match GSM.lock() {
-                      //     Ok(gsm) => gsm.has_connectivity()?,
-                      //     Err(poisoned) => {
-                      //         error!("The GSM mutex was poisoned.");
-                      //         poisoned.into_inner().has_connectivity()?
-                      //     }
-                      // }
-                      false
-                  } {
+                // TODO
+                // match GSM.lock() {
+                //     Ok(gsm) => gsm.has_connectivity()?,
+                //     Err(poisoned) => {
+                //         error!("The GSM mutex was poisoned.");
+                //         poisoned.into_inner().has_connectivity()?
+                //     }
+                // }
+                false
+            }
+            {
                 thread::sleep(Duration::from_secs(1));
             }
             info!("GSM connected.");
@@ -208,8 +210,9 @@ impl StateMachine for OpenStratos<Init> {
             if video_path.exists() {
                 info!("Camera test OK.");
                 info!("Removing test file…");
-                remove_file(&video_path)
-                    .chain_err(|| ErrorKind::CameraTestRemove(video_path.clone()))?;
+                remove_file(&video_path).chain_err(|| {
+                    ErrorKind::CameraTestRemove(video_path.clone())
+                })?;
                 info!("Test file removed.");
             } else {
                 error!("Camera test file was not created.");
@@ -226,10 +229,8 @@ impl StateMachine for OpenStratos<Init> {
                 // else
                 // 	logger.log("Error turning GPS off.");
 
-                #[cfg(not(feature = "no_power_off"))]
-                power_off();
-                #[cfg(feature = "no_power_off")]
-                process::exit(1);
+                #[cfg(not(feature = "no_power_off"))] power_off();
+                #[cfg(feature = "no_power_off")] process::exit(1);
             }
         }
 
