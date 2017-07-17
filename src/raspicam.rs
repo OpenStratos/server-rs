@@ -6,7 +6,7 @@ use std::time::Duration;
 use std::process::{Command, Stdio, Child};
 use std::sync::{Arc, Mutex};
 
-use chrono::{DateTime, UTC};
+use chrono::{DateTime, Utc};
 
 use error::*;
 use generate_error_string;

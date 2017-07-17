@@ -154,9 +154,9 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
     use log4rs::filter::threshold::ThresholdFilter;
     use log4rs::encode::pattern::PatternEncoder;
     use log4rs::config::{Appender, Config, Logger, Root};
-    use chrono::UTC;
+    use chrono::Utc;
 
-    let now = UTC::now().format("%Y-%m-%d-%H-%M-%S");
+    let now = Utc::now().format("%Y-%m-%d-%H-%M-%S");
     let pattern_exact = "[{d(%Y-%m-%d %H:%M:%S%.3f %Z)(utc)}][{l}] - {m}{n}";
     let pattern_naive = "[{d(%Y-%m-%d %H:%M:%S %Z)(utc)}][{l}] - {m}{n}";
 

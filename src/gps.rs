@@ -5,7 +5,7 @@ use std::str::FromStr;
 use std::sync::Mutex;
 use std::time::Duration;
 
-use chrono::{DateTime, UTC};
+use chrono::{DateTime, Utc};
 use sysfs_gpio::{Direction, Pin};
 
 use error::*;
@@ -15,7 +15,7 @@ use generate_error_string;
 lazy_static! {
     /// GPS data for concurrent check.
     pub static ref GPS: Mutex<Gps> = Mutex::new(Gps {
-        fix_time: UTC::now(),
+        fix_time: Utc::now(),
         status: GPSStatus::Void,
         satellites: 0,
         latitude: 0_f32,
@@ -33,7 +33,7 @@ lazy_static! {
 #[derive(Debug)]
 pub struct Gps {
     /// Time of the current fix.
-    fix_time: DateTime<UTC>,
+    fix_time: DateTime<Utc>,
     /// GPS fix status.
     status: GPSStatus,
     /// Number of satellites connected.
@@ -100,7 +100,7 @@ impl Gps {
     }
 
     /// Gets the time of the current fix.
-    pub fn fix_time(&self) -> DateTime<UTC> {
+    pub fn fix_time(&self) -> DateTime<Utc> {
         self.fix_time
     }
 
