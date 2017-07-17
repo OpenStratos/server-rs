@@ -11,6 +11,7 @@ dependencies = [
  "log4rs 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serialport 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "sysfs_gpio 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "tokio-serial 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -41,7 +41,8 @@ use std::ffi::OsStr;
 
 use toml;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
-use tokio_serial::BaudRate;
+use tokio_serial;
+use serialport;
 use sysfs_gpio::Pin;
 use colored::Colorize;
 
@@ -80,7 +81,10 @@ pub struct Config {
     /// FONA module configuration.
     #[cfg(feature = "fona")]
     fona: Fona,
-    /// Flight information
+    ///Telemetry configuration.
+    #[cfg(feature = "telemetry")]
+    telemetry: Telemetry,
+    /// Flight information.
     flight: Flight,
     /// The data directory.
     data_dir: PathBuf,
@@ -376,6 +380,12 @@ impl Config {
     #[cfg(feature = "fona")]
     pub fn fona(&self) -> &Fona {
         &self.fona
+    }
+
+    /// Gets the telemetry configuration.
+    #[cfg(feature = "telemetry")]
+    pub fn telemetry(&self) -> &Telemetry {
+        &self.telemetry
     }
 
     /// Gets the flight information.
@@ -697,8 +707,8 @@ pub struct Gps {
     ///
     /// **Note:** it will only accept baud rates from 1 to `u32::MAX` (`usize` in Raspberry Pi is
     /// `u32`).
-    #[serde(deserialize_with = "deserialize_baudrate")]
-    baud_rate: BaudRate,
+    #[serde(deserialize_with = "deserialize_tokio_baudrate")]
+    baud_rate: tokio_serial::BaudRate,
     /// Power GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -712,7 +722,7 @@ impl Gps {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> BaudRate {
+    pub fn baud_rate(&self) -> tokio_serial::BaudRate {
         self.baud_rate
     }
 
@@ -729,8 +739,8 @@ pub struct Fona {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    #[serde(deserialize_with = "deserialize_baudrate")]
-    baud_rate: BaudRate,
+    #[serde(deserialize_with = "deserialize_serialport_baudrate")]
+    baud_rate: serialport::BaudRate,
     /// Power control GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -751,7 +761,7 @@ impl Fona {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> BaudRate {
+    pub fn baud_rate(&self) -> serialport::BaudRate {
         self.baud_rate
     }
 
@@ -814,16 +824,42 @@ impl<'de> Deserialize<'de> for PhoneNumber {
     }
 }
 
-/// Deserializes a serial baud rate.
-#[cfg(any(feature = "gps", feature = "fona"))]
-fn deserialize_baudrate<'de, D>(deserializer: D) -> StdResult<BaudRate, D::Error>
+/// Telemetry configuration structure.
+#[cfg(feature = "telemetry")]
+#[derive(Debug, Deserialize)]
+pub struct Telemetry {
+    /// UART serial console path.
+    uart: PathBuf,
+    /// Serial console baud rate.
+    #[serde(deserialize_with = "deserialize_tokio_baudrate")]
+    baud_rate: tokio_serial::BaudRate,
+}
+
+#[cfg(feature = "telemetry")]
+impl Telemetry {
+    /// Gets the UART serial console path.
+    pub fn uart(&self) -> &Path {
+        &self.uart
+    }
+
+    /// Gets the serial console baud rate.
+    pub fn baud_rate(&self) -> tokio_serial::BaudRate {
+        self.baud_rate
+    }
+}
+
+/// Deserializes a Tokio serial baud rate.
+#[cfg(any(feature = "gps", feature = "telemetry"))]
+fn deserialize_tokio_baudrate<'de, D>(
+    deserializer: D,
+) -> StdResult<tokio_serial::BaudRate, D::Error>
 where
     D: Deserializer<'de>,
 {
     /// Visitor for baud rate.
-    struct BaudRateVisitor;
-    impl<'dev> Visitor<'dev> for BaudRateVisitor {
-        type Value = BaudRate;
+    struct TokioBaudRateVisitor;
+    impl<'dev> Visitor<'dev> for TokioBaudRateVisitor {
+        type Value = tokio_serial::BaudRate;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             use std::u32;
@@ -831,21 +867,57 @@ where
         }
 
         #[allow(absurd_extreme_comparisons)]
-        fn visit_i64<E>(self, value: i64) -> StdResult<BaudRate, E>
+        fn visit_i64<E>(self, value: i64) -> StdResult<tokio_serial::BaudRate, E>
         where
             E: de::Error,
         {
             use std::{u32, usize};
 
             if value > 0 && u32::MAX as i64 >= value {
-                Ok(BaudRate::from_speed(value as usize))
+                Ok(tokio_serial::BaudRate::from_speed(value as usize))
             } else {
                 Err(E::custom(format!("baud rate out of range: {}", value)))
             }
         }
     }
 
-    deserializer.deserialize_u32(BaudRateVisitor)
+    deserializer.deserialize_u32(TokioBaudRateVisitor)
+}
+
+/// Deserializes a `serialport` serial baud rate.
+#[cfg(any(feature = "fona"))]
+fn deserialize_serialport_baudrate<'de, D>(
+    deserializer: D,
+) -> StdResult<serialport::BaudRate, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    /// Visitor for baud rate.
+    struct SerialportBaudRateVisitor;
+    impl<'dev> Visitor<'dev> for SerialportBaudRateVisitor {
+        type Value = tokio_serial::BaudRate;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            use std::u32;
+            write!(formatter, "an integer between 1 and {}", u32::MAX)
+        }
+
+        #[allow(absurd_extreme_comparisons)]
+        fn visit_i64<E>(self, value: i64) -> StdResult<serialport::BaudRate, E>
+        where
+            E: de::Error,
+        {
+            use std::{u32, usize};
+
+            if value > 0 && u32::MAX as i64 >= value {
+                Ok(serialport::BaudRate::from_speed(value as usize))
+            } else {
+                Err(E::custom(format!("baud rate out of range: {}", value)))
+            }
+        }
+    }
+
+    deserializer.deserialize_u32(SerialportBaudRateVisitor)
 }
 
 /// Deserializes a Raspberry Pi pin number into a `Pin` structure.
@@ -986,11 +1058,17 @@ mod tests {
         #[cfg(feature = "fona")]
         let fona = Fona {
             uart: PathBuf::from("/dev/ttyUSB0"),
-            baud_rate: BaudRate::Baud9600,
+            baud_rate: serialport::BaudRate::Baud9600,
             power_gpio: Pin::new(7),
             status_gpio: Pin::new(21),
             sms_phone: PhoneNumber(String::new()),
             location_service: "gprs-service.com".to_owned(),
+        };
+
+        #[cfg(feature = "telemetry")]
+        let telemetry = Telemetry {
+            uart: PathBuf::from("/dev/ttyUSB0"),
+            baud_rate: tokio_serial::BaudRate::BaudOther(230400),
         };
 
         #[cfg(feature = "gps")]
@@ -1000,7 +1078,20 @@ mod tests {
             power_gpio: Pin::new(3),
         };
 
-        #[cfg(all(feature = "gps", feature = "fona"))]
+        #[cfg(all(feature = "gps", feature = "fona", feature = "telemetry"))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
+            camera_rotation: Some(180),
+            gps,
+            fona,
+            telemetry,
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(feature = "gps", feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             picture,
@@ -1012,7 +1103,19 @@ mod tests {
             data_dir: PathBuf::from("data"),
         };
 
-        #[cfg(all(feature = "gps", not(feature = "fona")))]
+        #[cfg(all(feature = "gps", not(feature = "fona"), feature = "telemetry"))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
+            camera_rotation: Some(180),
+            gps,
+            telemetry,
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(feature = "gps", not(feature = "fona"), not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             picture,
@@ -1023,7 +1126,19 @@ mod tests {
             data_dir: PathBuf::from("data"),
         };
 
-        #[cfg(all(not(feature = "gps"), feature = "fona"))]
+        #[cfg(all(not(feature = "gps"), feature = "fona", feature = "telemetry"))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
+            fona,
+            telemetry,
+            camera_rotation: Some(180),
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(not(feature = "gps"), feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             picture,
@@ -1034,7 +1149,18 @@ mod tests {
             data_dir: PathBuf::from("data"),
         };
 
-        #[cfg(all(not(feature = "gps"), not(feature = "fona")))]
+        #[cfg(all(not(feature = "gps"), not(feature = "fona"), feature = "telemetry"))]
+        let config = Config {
+            debug: None,
+            picture,
+            video,
+            telemetry,
+            camera_rotation: Some(180),
+            flight: Flight { length: 300 },
+            data_dir: PathBuf::from("data"),
+        };
+
+        #[cfg(all(not(feature = "gps"), not(feature = "fona"), not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             picture,

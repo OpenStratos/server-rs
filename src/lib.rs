@@ -75,6 +75,7 @@ extern crate chrono;
 extern crate libc;
 extern crate sysfs_gpio;
 extern crate tokio_serial;
+extern crate serialport;
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";

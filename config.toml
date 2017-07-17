@@ -96,4 +96,10 @@ sms_phone = ""
 # Operator GSM location service domain.
 location_service = "gprs-service.com"
 
-# TODO pins, phone number and so on.
+[telemetry]
+# Telemetry UART serial console path.
+uart = "/dev/ttyUSB0"
+# Telemetry serial baud rate.
+baud_rate = 230400
+
+# TODO
