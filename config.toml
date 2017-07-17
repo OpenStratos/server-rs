@@ -98,7 +98,7 @@ location_service = "gprs-service.com"
 
 [telemetry]
 # Telemetry UART serial console path.
-uart = "/dev/ttyUSB0"
+uart = "/dev/ttyUSB1"
 # Telemetry serial baud rate.
 baud_rate = 230400
 
