@@ -14,6 +14,7 @@ error_chain!{
         FromUTF8(::std::string::FromUtf8Error) #[doc = "Error creating a String from UTF-8 data."];
         NulError(::std::ffi::NulError) #[doc = "A nul byte was found in the vector provided."];
         GPIO(::sysfs_gpio::Error) #[doc = "A GPIO library error."];
+        SerialPort(::serialport::Error) #[doc = "Serial port error"];
     }
 
     errors {
@@ -134,6 +135,34 @@ error_chain!{
         FonaInitNoPowerOn {
             description("FONA could not be turned on")
             display("FONA did not turn on after doing the turn on process")
+        }
+
+        /// No FONA when trying to send command.
+        #[cfg(feature = "fona")]
+        FonaNoSerial {
+            description("no open serial connection when sending command to FONA")
+            display("there was no open serial connection when trying to send command to FONA")
+        }
+
+        /// FONA serial found EOF.
+        #[cfg(feature = "fona")]
+        FonaSerialEnd {
+            description("FONA serial found EOF")
+            display("EOF was found when reading the FONA serial")
+        }
+
+        /// FONA serial found EOF.
+        #[cfg(feature = "fona")]
+        FonaPartialResponse (res: String){
+            description("FONA returned partial response")
+            display("FONA returned a partial response: `{}`", res)
+        }
+
+        /// Error sending command to FONA.
+        #[cfg(feature = "fona")]
+        FonaCommand {
+            description("error sending command to FONA")
+            display("there was a I/O error when trying to send a command to the FONA module")
         }
 
         /// Camera was already recording.

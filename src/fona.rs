@@ -5,6 +5,9 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use sysfs_gpio::Pin;
+use serialport::prelude::*;
+use serialport::SerialPort;
+use serialport::posix::TTYPort;
 
 use error::*;
 use config::CONFIG;
@@ -12,19 +15,19 @@ use generate_error_string;
 
 lazy_static! {
     /// The FONA module control structure.
-    pub static ref FONA: Mutex<Fona> = Mutex::new(Fona {});
+    pub static ref FONA: Mutex<Fona> = Mutex::new(Fona {serial: None});
 }
 
 /// Adafruit FONA control structure.
 pub struct Fona {
-    // TODO
+    serial: Option<TTYPort>,
 }
 
 impl Fona {
     /// Initializes the Adafruit FONA module.
     pub fn initialize(&mut self) -> Result<()> {
         if self.is_on()? {
-            info!("FONA module is on, rebooting for stability");
+            info!("FONA module is on, rebooting for stability.");
             self.turn_off()?;
             info!("Module is off, sleeping 3 seconds before turning it on…");
             thread::sleep(Duration::from_secs(3));
@@ -36,7 +39,31 @@ impl Fona {
             return Err(Error::from(ErrorKind::FonaInitNoPowerOn));
         }
 
-        unimplemented!()
+        info!("Starting serial connection.");
+        let mut settings = SerialPortSettings::default();
+        settings.baud_rate = CONFIG.fona().baud_rate();
+
+        let mut serial = TTYPort::open(CONFIG.fona().uart(), &settings)?;
+        serial.set_timeout(Duration::from_secs(5));
+        self.serial = Some(serial);
+        info!("Serial connection started.");
+
+        info!("Checking OK initialization (3 times).");
+        for _ in 0..2 {
+            if self.send_command_read("AT")? != "OK" {
+                info!("Not initialized.");
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+
+        if self.send_command_read("AT")? != "OK" {
+            error!("Initialization error.");
+            Err(ErrorKind::FonaInit.into())
+        } else {
+            thread::sleep(Duration::from_millis(100));
+            info!("Initialization OK.");
+            Ok(())
+        }
     }
 
     /// Checks if the FONA module is on.
@@ -114,7 +141,8 @@ impl Fona {
 
     /// Checks if the FONA module has GSM connectivity.
     pub fn has_connectivity(&mut self) -> Result<bool> {
-        unimplemented!()
+        let response = self.send_command_read("AT+CREG?")?;
+        Ok(response == "+CREG: 0,1" || response == "+CREG: 0,5")
     }
 
     /// Sends a command to the FONA module and reads the response.
@@ -122,14 +150,64 @@ impl Fona {
     where
         C: AsRef<str>,
     {
-        unimplemented!()
+        use std::io::Write;
+
+        if let Some(ref mut serial) = self.serial {
+            debug!("Sent: `{}`", command.as_ref());
+            serial.write_all(command.as_ref().as_bytes()).chain_err(
+                || {
+                    Error::from(ErrorKind::FonaCommand)
+                },
+            )?;
+        } else {
+            error!(
+                "No serial when trying to send command `{}`",
+                command.as_ref()
+            );
+            return Err(ErrorKind::FonaNoSerial.into());
+        }
+
+        self.read_line()?; // Read the command back (or a new line if echo is disabled).
+        self.read_line()
+    }
+
+    /// Reads a line from the serial.
+    fn read_line(&mut self) -> Result<String> {
+        use std::io::{ErrorKind as IOErrKind, Read};
+
+        if let Some(ref mut serial) = self.serial {
+            let mut response = Vec::new();
+            for res in serial.bytes() {
+                match res {
+                    Ok(b'\r') => {}
+                    Ok(b'\n') => {
+                        return Ok(String::from_utf8(response)?);
+                    }
+                    Ok(b) => {
+                        response.push(b);
+                    }
+                    Err(e) => {
+                        return Err(match e.kind() {
+                            IOErrKind::TimedOut => {
+                                let partial = String::from_utf8(response)?;
+                                ErrorKind::FonaPartialResponse(partial).into()
+                            }
+                            _ => e.into(),
+                        });
+                    }
+                }
+            }
+
+            Err(ErrorKind::FonaSerialEnd.into())
+        } else {
+            error!("No serial when trying to read response");
+            Err(ErrorKind::FonaNoSerial.into())
+        }
     }
 }
 
 impl Drop for Fona {
     fn drop(&mut self) {
-        // TODO close serial.
-
         match self.is_on() {
             Ok(true) => {
                 info!("Turning off FONA…");
