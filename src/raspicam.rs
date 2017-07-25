@@ -12,7 +12,7 @@ use error::*;
 use generate_error_string;
 use config::CONFIG;
 #[cfg(feature = "gps")]
-use gps::{GPS, GPSStatus};
+use gps::{GPS, FixStatus};
 
 /// Video directory inside data directory.
 pub const VIDEO_DIR: &str = "video";
@@ -382,7 +382,7 @@ pub struct ExifData {
     /// Number of GPS satellites.
     gps_satellites: u8,
     /// GPS fix status.
-    gps_status: GPSStatus,
+    gps_status: FixStatus,
     /// GPS position dillution of precission.
     gps_dop: f32,
     /// GPS speed.
@@ -557,7 +557,7 @@ mod tests {
             // gps_timestamp:
             //     DateTime::<UTC>::from_utc(NaiveDateTime::from_timestamp(1490443906, 0), UTC),
             gps_satellites: 7,
-            gps_status: GPSStatus::Active,
+            gps_status: FixStatus::Active,
             gps_dop: 3.21,
             gps_speed: 13.5,
             gps_track: 1.65,

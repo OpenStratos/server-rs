@@ -16,7 +16,7 @@ lazy_static! {
     /// GPS data for concurrent check.
     pub static ref GPS: Mutex<Gps> = Mutex::new(Gps {
         fix_time: Utc::now(),
-        status: GPSStatus::Void,
+        status: FixStatus::Void,
         satellites: 0,
         latitude: 0_f32,
         longitude: 0_f32,
@@ -35,7 +35,7 @@ pub struct Gps {
     /// Time of the current fix.
     fix_time: DateTime<Utc>,
     /// GPS fix status.
-    status: GPSStatus,
+    status: FixStatus,
     /// Number of satellites connected.
     satellites: u8,
     /// Latitude of the GPS antenna, in *°* (degrees).
@@ -105,7 +105,7 @@ impl Gps {
     }
 
     /// Gets the GPS fix status.
-    pub fn status(&self) -> GPSStatus {
+    pub fn status(&self) -> FixStatus {
         self.status
     }
 
@@ -184,32 +184,32 @@ impl Drop for Gps {
 
 /// GPS fix status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GPSStatus {
+pub enum FixStatus {
     /// GPS fix active.
     Active,
     /// GPS fix not valid.
     Void,
 }
 
-impl FromStr for GPSStatus {
+impl FromStr for FixStatus {
     type Err = Error;
-    fn from_str(s: &str) -> Result<GPSStatus> {
+    fn from_str(s: &str) -> Result<FixStatus> {
         match s {
-            "A" => Ok(GPSStatus::Active),
-            "V" => Ok(GPSStatus::Void),
+            "A" => Ok(FixStatus::Active),
+            "V" => Ok(FixStatus::Void),
             _ => Err(ErrorKind::GPSInvalidStatus(s.to_owned()).into()),
         }
     }
 }
 
-impl fmt::Display for GPSStatus {
+impl fmt::Display for FixStatus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
             "{}",
             match *self {
-                GPSStatus::Active => "A",
-                GPSStatus::Void => "V",
+                FixStatus::Active => "A",
+                FixStatus::Void => "V",
             }
         )
     }
@@ -222,21 +222,21 @@ mod tests {
     /// Checks the GPS status from string conversion.
     #[test]
     fn gps_status_from_str() {
-        assert_eq!("A".parse::<GPSStatus>().unwrap(), GPSStatus::Active);
-        assert_eq!("V".parse::<GPSStatus>().unwrap(), GPSStatus::Void);
+        assert_eq!("A".parse::<FixStatus>().unwrap(), FixStatus::Active);
+        assert_eq!("V".parse::<FixStatus>().unwrap(), FixStatus::Void);
 
         // Check errors.
-        assert!("".parse::<GPSStatus>().is_err());
-        assert!("sadfsa".parse::<GPSStatus>().is_err());
-        assert!("a".parse::<GPSStatus>().is_err());
-        assert!("Ab".parse::<GPSStatus>().is_err());
+        assert!("".parse::<FixStatus>().is_err());
+        assert!("sadfsa".parse::<FixStatus>().is_err());
+        assert!("a".parse::<FixStatus>().is_err());
+        assert!("Ab".parse::<FixStatus>().is_err());
     }
 
     /// Checks the GPS status to string conversion.
     #[test]
     fn gps_status_display() {
-        assert_eq!(format!("{}", GPSStatus::Active), "A");
-        assert_eq!(format!("{}", GPSStatus::Void), "V");
+        assert_eq!(format!("{}", FixStatus::Active), "A");
+        assert_eq!(format!("{}", FixStatus::Void), "V");
     }
 
     /// Checks the GPS initialization.

@@ -62,7 +62,16 @@ impl Fona {
         } else {
             thread::sleep(Duration::from_millis(100));
             info!("Initialization OK.");
-            Ok(())
+
+            // Turn off echo.
+            self.send_command_read("ATE0")?;
+            thread::sleep(Duration::from_millis(100));
+
+            if self.send_command_read("ATE0")? == "OK" {
+                Ok(())
+            } else {
+                Err(ErrorKind::FonaNoEchoOff.into())
+            }
         }
     }
 
@@ -116,7 +125,43 @@ impl Fona {
     where
         M: AsRef<str>,
     {
-        unimplemented!();
+        let character_count = message.as_ref().chars().count();
+        info!(
+            "Sending SMS: `{}` ({} characters) to number {}",
+            message.as_ref(),
+            character_count, CONFIG.fona().sms_phone().as_str(),
+        );
+
+        #[cfg(not(feature = "no_sms"))]
+        {
+            if character_count > 160 {
+                return Err(ErrorKind::FonaLongSms.into());
+            }
+
+            if self.send_command_read("AT+CMGF=1")? != "OK" {
+                error!("Error sending SMS on `AT+CMGD=1` response.");
+                return Err(ErrorKind::FonaSmsAtCmgd.into());
+            }
+
+            if self.send_command_read_limit(
+                format!(
+                    "AT+CMGS=\"{}\"",
+                    CONFIG.fona().sms_phone().as_str()
+                ),
+                2,
+            )? != "> "
+            {
+                error!("Error sending SMS on 'AT+CMGS' response.");
+                return Err(ErrorKind::FonaSmsAtCmgd.into());
+            }
+            unimplemented!();
+        }
+
+        #[cfg(feature = "no_sms")]
+        {
+            thread::sleep(Duration::from_secs(5));
+            Ok(())
+        }
     }
 
     /// Gets the current location using GPRS.
@@ -148,27 +193,72 @@ impl Fona {
     /// Sends a command to the FONA module and reads the response.
     fn send_command_read<C>(&mut self, command: C) -> Result<String>
     where
-        C: AsRef<str>,
+        C: AsRef<[u8]>,
+    {
+        use std::io::Write;
+        use bytecount::count;
+
+        self.send_command(command.as_ref())?;
+        for _ in 0..count(command.as_ref(), b'\n') {
+            self.read_line()?; // Read the command back (or a new line if echo is disabled).
+        }
+        self.read_line()
+    }
+
+    /// Sends a command and reads a limited amount of characters.
+    fn send_command_read_limit<C>(&mut self, command: C, count: usize) -> Result<String>
+    where
+        C: AsRef<[u8]>,
+    {
+        use std::io::{self, Read};
+
+        self.send_command(command)?;
+
+        if let Some(ref mut serial) = self.serial {
+            let mut response = Vec::with_capacity(count);
+            for (i, res) in serial.bytes().enumerate() {
+                match res {
+                    Ok(b) => {
+                        response.push(b);
+                    }
+                    Err(e) => {
+                        match e.kind() {
+                            io::ErrorKind::TimedOut => {}
+                            _ => return Err(e.into()),
+                        }
+                    }
+                }
+            }
+
+            Err(ErrorKind::FonaSerialEnd.into())
+        } else {
+            error!("No serial when trying to read response");
+            Err(ErrorKind::FonaNoSerial.into())
+        }
+    }
+
+    /// Sends a command to the FONA serial.
+    fn send_command<C>(&mut self, command: C) -> Result<()>
+    where
+        C: AsRef<[u8]>,
     {
         use std::io::Write;
 
         if let Some(ref mut serial) = self.serial {
-            debug!("Sent: `{}`", command.as_ref());
-            serial.write_all(command.as_ref().as_bytes()).chain_err(
-                || {
-                    Error::from(ErrorKind::FonaCommand)
-                },
-            )?;
+            debug!("Sent: `{}`", String::from_utf8_lossy(command.as_ref()));
+            serial.write_all(command.as_ref()).chain_err(|| {
+                Error::from(ErrorKind::FonaCommand)
+            })?;
+            serial.write_all(b"\r\n").chain_err(|| {
+                Error::from(ErrorKind::FonaCommand)
+            })
         } else {
             error!(
                 "No serial when trying to send command `{}`",
-                command.as_ref()
+                String::from_utf8_lossy(command.as_ref())
             );
-            return Err(ErrorKind::FonaNoSerial.into());
+            Err(ErrorKind::FonaNoSerial.into())
         }
-
-        self.read_line()?; // Read the command back (or a new line if echo is disabled).
-        self.read_line()
     }
 
     /// Reads a line from the serial.

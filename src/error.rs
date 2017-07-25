@@ -130,6 +130,13 @@ error_chain!{
             display("FONA module initialization error")
         }
 
+        /// Error turning FONA echo off.
+        #[cfg(feature = "fona")]
+        FonaNoEchoOff {
+            description("error turning FONA echo off")
+            display("there was an error turning FONA echo off")
+        }
+
         /// FONA could not be turned on.
         #[cfg(feature = "fona")]
         FonaInitNoPowerOn {
@@ -149,6 +156,20 @@ error_chain!{
         FonaSerialEnd {
             description("FONA serial found EOF")
             display("EOF was found when reading the FONA serial")
+        }
+
+        /// SMS was too long to be sent.
+        #[cfg(feature = "fona")]
+        FonaLongSms {
+            description("SMS was too long")
+            display("SMS was longer than the 160 character limit")
+        }
+
+        /// Error sending SMS on 'AT+CMGD=1' response.
+        #[cfg(feature = "fona")]
+        FonaSmsAtCmgd {
+            description("error sending SMS on `AT+CMGD=1` response")
+            display("error sending SMS on `AT+CMGD=1` response")
         }
 
         /// FONA serial found EOF.
