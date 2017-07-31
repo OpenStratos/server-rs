@@ -1,8 +1,11 @@
 //! Adafruit FONA GSM module.
 
+// TODO: timeouts
+
 use std::thread;
 use std::sync::Mutex;
 use std::time::Duration;
+use std::io::{Write, Read};
 
 use sysfs_gpio::Pin;
 use serialport::prelude::*;
@@ -44,7 +47,7 @@ impl Fona {
         settings.baud_rate = CONFIG.fona().baud_rate();
 
         let mut serial = TTYPort::open(CONFIG.fona().uart(), &settings)?;
-        serial.set_timeout(Duration::from_secs(5));
+        // serial.set_timeout(Duration::from_secs(5));
         self.serial = Some(serial);
         info!("Serial connection started.");
 
@@ -154,7 +157,64 @@ impl Fona {
                 error!("Error sending SMS on 'AT+CMGS' response.");
                 return Err(ErrorKind::FonaSmsAtCmgd.into());
             }
-            unimplemented!();
+
+            if let Some(ref mut serial) = self.serial {
+                debug!("Sent: `{}`", message.as_ref());
+
+                // Write message
+                serial.write_all(message.as_ref().as_bytes()).chain_err(
+                    || {
+                        Error::from(ErrorKind::FonaCommand)
+                    },
+                )?;
+
+                // Write Ctrl+Z
+                serial.write_all(&[0x1A]).chain_err(|| {
+                    Error::from(ErrorKind::FonaCommand)
+                });
+            } else {
+                error!(
+                    "No serial when trying to send message `{}`",
+                    message.as_ref()
+                );
+                return Err(ErrorKind::FonaNoSerial.into());
+            }
+
+            let new_line = self.read_line()?;
+            if !new_line.is_empty() {
+                warn!(
+                    "There was some non-flushed output after sending the messsage: `{}`",
+                    new_line
+                );
+            }
+
+            let response = self.read_line()?;
+            if !response.starts_with("+CMGS: ") {
+                error!(
+                    "Error reading +CMGS response to the message, read `{}`",
+                    response
+                );
+                return Err(ErrorKind::FonaSmsCmgs.into());
+            }
+
+            let new_line = self.read_line()?;
+            if !new_line.is_empty() {
+                warn!(
+                    "There was some non-flushed output after sending the messsage: `{}`",
+                    new_line
+                );
+            }
+
+            // TODO read the number of characters and check it.
+
+            let ok = self.read_line()?;
+            if ok != "OK" {
+                error!("No OK received after sending SMS, received: `{}`", ok);
+                return Err(ErrorKind::FonaSmsOk.into());
+            }
+
+            info!("SMS Sent.");
+            Ok(())
         }
 
         #[cfg(feature = "no_sms")]
@@ -199,9 +259,6 @@ impl Fona {
         use bytecount::count;
 
         self.send_command(command.as_ref())?;
-        for _ in 0..count(command.as_ref(), b'\n') {
-            self.read_line()?; // Read the command back (or a new line if echo is disabled).
-        }
         self.read_line()
     }
 
@@ -216,17 +273,12 @@ impl Fona {
 
         if let Some(ref mut serial) = self.serial {
             let mut response = Vec::with_capacity(count);
-            for (i, res) in serial.bytes().enumerate() {
-                match res {
-                    Ok(b) => {
-                        response.push(b);
-                    }
-                    Err(e) => {
-                        match e.kind() {
-                            io::ErrorKind::TimedOut => {}
-                            _ => return Err(e.into()),
-                        }
-                    }
+            for res in serial.bytes() {
+                response.push(res?);
+
+                // We read enough bytes.
+                if response.len() == count {
+                    return Ok(String::from_utf8(response)?);
                 }
             }
 
@@ -242,22 +294,30 @@ impl Fona {
     where
         C: AsRef<[u8]>,
     {
-        use std::io::Write;
-
         if let Some(ref mut serial) = self.serial {
             debug!("Sent: `{}`", String::from_utf8_lossy(command.as_ref()));
+
             serial.write_all(command.as_ref()).chain_err(|| {
                 Error::from(ErrorKind::FonaCommand)
             })?;
             serial.write_all(b"\r\n").chain_err(|| {
                 Error::from(ErrorKind::FonaCommand)
-            })
+            })?;
         } else {
             error!(
                 "No serial when trying to send command `{}`",
                 String::from_utf8_lossy(command.as_ref())
             );
-            Err(ErrorKind::FonaNoSerial.into())
+            return Err(ErrorKind::FonaNoSerial.into());
+        }
+
+        if !self.read_line()
+            .chain_err(|| Error::from(ErrorKind::FonaSendCommandCrlf))?
+            .is_empty()
+        {
+            Err(Error::from(ErrorKind::FonaSendCommandCrlf))
+        } else {
+            Ok(())
         }
     }
 

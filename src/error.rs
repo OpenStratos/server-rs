@@ -172,6 +172,28 @@ error_chain!{
             display("error sending SMS on `AT+CMGD=1` response")
         }
 
+        /// Error reading +CMGS response.
+        #[cfg(feature = "fona")]
+        FonaSmsCmgs {
+            description("error reading +CMGS response")
+            display("error reading +CMGS response after sending SMS")
+        }
+
+        /// No OK received after sending SMS.
+        #[cfg(feature = "fona")]
+        FonaSmsOk {
+            description("no OK received after sending SMS")
+            display("no OK received after sending SMS")
+        }
+
+        /// Error reading CRLF (*\r\n*) after sendin command to FONA.
+        #[cfg(feature = "fona")]
+        FonaSendCommandCrlf {
+            description("could not read CRLF after sending command to FONA")
+            display("an error occurred when trying to read CRLF (\\r\\n) after sending command to \
+                     FONA")
+        }
+
         /// FONA serial found EOF.
         #[cfg(feature = "fona")]
         FonaPartialResponse (res: String){
