@@ -241,7 +241,22 @@ impl Fona {
 
     /// Checks the ADC (Analog-Digital converter) voltage of the FONA.
     pub fn adc_voltage(&mut self) -> Result<f32> {
-        unimplemented!()
+        let response = self.send_command_read("AT+CADC?")?;
+        let mut tokens = response.split(",");
+        
+        if tokens.next() == Some("+CADC=1") {
+            match tokens.next() {
+                Some(val) => { 
+                    match val.parse::<f32>() {
+                        Ok(parsed) => Ok(parsed/1_000_f32),
+                        Err(e) => return Err(Error::from(ErrorKind::FonaCADCUnusableResponse)),
+                    }
+                },
+                None => Err(Error::from(ErrorKind::FonaCADCPartialResponse)),
+            }
+        } else {
+            return Err(Error::from(ErrorKind::FonaCADCEmptyResponse));
+        }
     }
 
     /// Checks if the FONA module has GSM connectivity.
