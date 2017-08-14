@@ -243,19 +243,20 @@ impl Fona {
     pub fn adc_voltage(&mut self) -> Result<f32> {
         let response = self.send_command_read("AT+CADC?")?;
         let mut tokens = response.split(",");
-        
+
         if tokens.next() == Some("+CADC=1") {
             match tokens.next() {
-                Some(val) => { 
-                    match val.parse::<f32>() {
-                        Ok(parsed) => Ok(parsed/1_000_f32),
-                        Err(e) => return Err(Error::from(ErrorKind::FonaCADCUnusableResponse)),
-                    }
-                },
-                None => Err(Error::from(ErrorKind::FonaCADCPartialResponse)),
+                Some(val) => {
+                    Ok(
+                        val.parse::<f32>().chain_err(|| {
+                            Error::from(ErrorKind::FonaCADCInvalidResponse)
+                        })? / 1_000_f32,
+                    )
+                }
+                None => Err(ErrorKind::FonaCADCInvalidResponse.into()),
             }
         } else {
-            return Err(Error::from(ErrorKind::FonaCADCEmptyResponse));
+            Err(ErrorKind::FonaCADCInvalidResponse.into())
         }
     }
 
@@ -293,7 +294,12 @@ impl Fona {
 
                 // We read enough bytes.
                 if response.len() == count {
-                    return Ok(String::from_utf8(response)?);
+                    let res = String::from_utf8(response)?;
+                    debug!(
+                        "Received: `{}`",
+                        res.replace('\r', "\\r").replace('\n', "\\n")
+                    );
+                    return Ok(res);
                 }
             }
 
@@ -309,12 +315,23 @@ impl Fona {
     where
         C: AsRef<[u8]>,
     {
+        use std::borrow::Cow;
+
         if let Some(ref mut serial) = self.serial {
-            debug!("Sent: `{}`", String::from_utf8_lossy(command.as_ref()));
+            debug!(
+                "Sent: `{}\\r\\n`", // TODO Do we need the CRLF when sending Ctrl+Z?
+                if command.as_ref() == &[0x1A] {
+                    Cow::from("Ctrl+Z")
+                } else {
+                    String::from_utf8_lossy(command.as_ref())
+                }
+            );
 
             serial.write_all(command.as_ref()).chain_err(|| {
                 Error::from(ErrorKind::FonaCommand)
             })?;
+
+            // TODO do we need the CRLF when sending Ctrl+Z?
             serial.write_all(b"\r\n").chain_err(|| {
                 Error::from(ErrorKind::FonaCommand)
             })?;
@@ -346,7 +363,9 @@ impl Fona {
                 match res {
                     Ok(b'\r') => {}
                     Ok(b'\n') => {
-                        return Ok(String::from_utf8(response)?);
+                        let res = String::from_utf8(response)?;
+                        debug!("Received: `{}\r\n`", res);
+                        return Ok(res);
                     }
                     Ok(b) => {
                         response.push(b);
@@ -355,6 +374,7 @@ impl Fona {
                         return Err(match e.kind() {
                             IOErrKind::TimedOut => {
                                 let partial = String::from_utf8(response)?;
+                                debug!("Received (partial): `{}`", partial);
                                 ErrorKind::FonaPartialResponse(partial).into()
                             }
                             _ => e.into(),

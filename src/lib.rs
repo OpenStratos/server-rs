@@ -150,13 +150,38 @@ pub fn generate_error_string<S: AsRef<str>>(error: &Error, main_error: S) -> Str
 
 /// Initializes all loggers.
 pub fn init_loggers() -> Result<log4rs::Handle> {
-    use log::LogLevelFilter;
+    use log::{LogLevelFilter, LogRecord};
     use log4rs::append::console::ConsoleAppender;
     use log4rs::append::file::FileAppender;
+    use log4rs::filter::{Filter, Response};
     use log4rs::filter::threshold::ThresholdFilter;
     use log4rs::encode::pattern::PatternEncoder;
     use log4rs::config::{Appender, Config, Logger, Root};
     use chrono::Utc;
+
+    #[derive(Debug)]
+    struct DebugFilter;
+    impl Filter for DebugFilter {
+        fn filter(&self, record: &LogRecord) -> Response {
+            if record.level() != LogLevelFilter::Debug {
+                Response::Reject
+            } else {
+                Response::Neutral
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    struct TraceFilter;
+    impl Filter for TraceFilter {
+        fn filter(&self, record: &LogRecord) -> Response {
+            if record.level() != LogLevelFilter::Trace {
+                Response::Reject
+            } else {
+                Response::Neutral
+            }
+        }
+    }
 
     let now = Utc::now().format("%Y-%m-%d-%H-%M-%S");
     let pattern_exact = "[{d(%Y-%m-%d %H:%M:%S%.3f %Z)(utc)}][{l}] - {m}{n}";
@@ -199,7 +224,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         config
             .appender(Appender::builder().build("camera", Box::new(camera)))
             .logger(Logger::builder().appender("camera").additive(false).build(
-                "camera",
+                "os_balloon::camera",
                 LogLevelFilter::Info,
             ))
     };
@@ -209,11 +234,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let gps = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_naive)))
             .build(format!("data/logs/gps-{}.log", now))
-            .chain_err(|| ErrorKind::LogAppender("gps"))?;
+            .chain_err(|| ErrorKind::LogAppender("os_balloon::gps"))?;
         let gps_frames = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_exact)))
             .build(format!("data/logs/gps_frames-{}.log", now))
-            .chain_err(|| ErrorKind::LogAppender("gps_frames"))?;
+            .chain_err(|| ErrorKind::LogAppender("os_balloon::gps_frames"))?;
         let gps_logger = {
             let mut builder = Logger::builder()
                 .appender("gps")
@@ -222,7 +247,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             if CONFIG.debug() {
                 builder = builder.appender("gps_serial");
             }
-            builder.build("gps", log_level)
+            builder.build("os_balloon::gps", log_level)
         };
 
         let config = config
@@ -231,11 +256,12 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                     .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
                     .build("gps", Box::new(gps)),
             )
-            .appender(
-                Appender::builder()
-                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                    .build("gps_frames", Box::new(gps_frames)),
-            )
+            .appender(Appender::builder().filter(Box::new(DebugFilter)).build(
+                "gps_frames",
+                Box::new(
+                    gps_frames,
+                ),
+            ))
             .logger(gps_logger);
 
         if CONFIG.debug() {
@@ -243,9 +269,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/gps_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("gps_serial"))?;
-            config.appender(Appender::builder().build(
+            config.appender(Appender::builder().filter(Box::new(TraceFilter)).build(
                 "gps_serial",
-                Box::new(gps_serial),
+                Box::new(
+                    gps_serial,
+                ),
             ))
         } else {
             config
@@ -257,11 +285,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
         let fona = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_naive)))
             .build(format!("data/logs/fona-{}.log", now))
-            .chain_err(|| ErrorKind::LogAppender("fona"))?;
+            .chain_err(|| ErrorKind::LogAppender("os_balloon::fona"))?;
         let fona_frames = FileAppender::builder()
             .encoder(Box::new(PatternEncoder::new(pattern_exact)))
             .build(format!("data/logs/fona_frames-{}.log", now))
-            .chain_err(|| ErrorKind::LogAppender("fona_frames"))?;
+            .chain_err(|| ErrorKind::LogAppender("os_balloon::fona_frames"))?;
         let fona_logger = {
             let mut builder = Logger::builder()
                 .appender("fona")
@@ -270,7 +298,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             if CONFIG.debug() {
                 builder = builder.appender("fona_serial");
             }
-            builder.build("fona", log_level)
+            builder.build("os_balloon::fona", log_level)
         };
         let config = config
             .appender(
@@ -278,11 +306,12 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                     .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
                     .build("fona", Box::new(fona)),
             )
-            .appender(
-                Appender::builder()
-                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                    .build("fona_frames", Box::new(fona_frames)),
-            )
+            .appender(Appender::builder().filter(Box::new(DebugFilter)).build(
+                "fona_frames",
+                Box::new(
+                    fona_frames,
+                ),
+            ))
             .logger(fona_logger);
 
         if CONFIG.debug() {
@@ -290,9 +319,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .encoder(Box::new(PatternEncoder::new(pattern_exact)))
                 .build(format!("data/logs/fona_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("fona_serial"))?;
-            config.appender(Appender::builder().build(
+            config.appender(Appender::builder().filter(Box::new(TraceFilter)).build(
                 "fona_serial",
-                Box::new(gsm_serial),
+                Box::new(
+                    gsm_serial,
+                ),
             ))
         } else {
             config
@@ -318,7 +349,7 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
             if CONFIG.debug() {
                 builder = builder.appender("telemetry_serial");
             }
-            builder.build("telemetry", log_level)
+            builder.build("os_balloon::telemetry", log_level)
         };
 
         let config = config
@@ -327,11 +358,12 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                     .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Info)))
                     .build("telemetry", Box::new(telemetry)),
             )
-            .appender(
-                Appender::builder()
-                    .filter(Box::new(ThresholdFilter::new(LogLevelFilter::Debug)))
-                    .build("telemetry_frames", Box::new(telemetry_frames)),
-            )
+            .appender(Appender::builder().filter(Box::new(DebugFilter)).build(
+                "telemetry_frames",
+                Box::new(
+                    telemetry_frames,
+                ),
+            ))
             .logger(telemetry_logger);
 
         if CONFIG.debug() {
@@ -340,9 +372,11 @@ pub fn init_loggers() -> Result<log4rs::Handle> {
                 .build(format!("data/logs/telemetry_serial-{}.log", now))
                 .chain_err(|| ErrorKind::LogAppender("telemetry_serial"))?;
 
-            config.appender(Appender::builder().build(
+            config.appender(Appender::builder().filter(Box::new(TraceFilter)).build(
                 "telemetry_serial",
-                Box::new(telemetry_serial),
+                Box::new(
+                    telemetry_serial,
+                ),
             ))
         } else {
             config

@@ -59,44 +59,10 @@ pub struct Gps {
 impl Gps {
     /// Initializes the GPS.
     pub fn initialize(&mut self) -> Result<()> {
-        CONFIG.gps().power_gpio().set_direction(Direction::Out)?;
-
-        if self.is_on()? {
-            info!("GPS is on, turning off for 2 seconds for stability.");
-            self.turn_off()?;
-            thread::sleep(Duration::from_secs(2));
-        }
-
-        info!("Turning GPS on…");
-        self.turn_on()?;
+        info!("Initializing GPS…");
 
         // TODO start serial and so on.
         unimplemented!()
-    }
-
-    /// Turns the GPS on.
-    pub fn turn_on(&mut self) -> Result<()> {
-        if self.is_on()? {
-            warn!("Turning on GPS but GPS was already on.");
-        } else {
-            CONFIG.gps().power_gpio().set_value(1)?;
-        }
-        Ok(())
-    }
-
-    /// Turns the GPS off.
-    pub fn turn_off(&mut self) -> Result<()> {
-        if self.is_on()? {
-            CONFIG.gps().power_gpio().set_value(0)?;
-        } else {
-            warn!("Turning off GPS but GPS was already off.");
-        }
-        Ok(())
-    }
-
-    /// Checks if the GPS is on.
-    pub fn is_on(&self) -> Result<bool> {
-        Ok(CONFIG.gps().power_gpio().get_value()? == 1)
     }
 
     /// Gets the time of the current fix.
@@ -158,27 +124,6 @@ impl Gps {
 impl Drop for Gps {
     fn drop(&mut self) {
         // TODO stop serial.
-
-        match self.is_on() {
-            Ok(true) => {
-                info!("Turning off GPS…");
-                if let Err(e) = self.turn_off() {
-                    error!("{}", generate_error_string(&e, "Error turning GPS off"));
-                }
-                info!("GPS off.");
-            }
-            Ok(false) => {}
-            Err(e) => {
-                error!(
-                    "{}",
-                    generate_error_string(
-                        &e,
-                        "Could not check if GPS was on when dropping the GPS \
-                                              object",
-                    )
-                );
-            }
-        }
     }
 }
 

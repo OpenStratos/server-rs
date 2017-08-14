@@ -208,25 +208,11 @@ error_chain!{
             display("there was a I/O error when trying to send a command to the FONA module")
         }
 
-        /// Empty response to AT+CADC? (read ADC) command
-	#[cfg(feature = "fona")]
-        FonaCADCEmptyResponse {
-            description("FONA returned an unexpected or empty response to AT+CADC?")
-            display("FONA returned an unexpected or empty response to AT+CADC?")
-        }
-
-        /// Partial response to AT+CADC? where CADC=1, is not follwed by anything
-        #[cfg(feature = "fona")]
-        FonaCADCPartialResponse {
-            description("FONA returned a truncated response to AT+CADC? that does not include the ADC reading")
-            display("FONA returned a truncated response to AT+CADC? that does not include the ADC reading")
-        }
-
-        /// Unusable response to AT+CADC? where CADC=1, is follwed by a string that cannot be parsed into a floating point number
-        #[cfg(feature = "fona")]
-        FonaCADCUnusableResponse {
-            description("FONA returned a response to AT+CADC? that includes a voltage reading that cannot be parsed into a numeral")
-            display("FONA returned a response to AT+CADC? that includes a voltage reading that cannot be parsed into a numeral")
+        /// Invalid response to AT+CADC? (read ADC) command.
+	    #[cfg(feature = "fona")]
+        FonaCADCInvalidResponse {
+            description("FONA returned an invalid response to AT+CADC?")
+            display("FONA returned an invalid response to AT+CADC?")
         }
 
         /// Camera was already recording.
