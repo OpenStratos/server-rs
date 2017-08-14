@@ -190,21 +190,5 @@ mod tests {
     fn gps_initialize() {
         let mut gps = GPS.lock().unwrap();
         gps.initialize().unwrap();
-        assert!(gps.is_on().unwrap());
-    }
-
-    /// Checks the GPS on/off behaviour.
-    #[test]
-    #[ignore]
-    fn gps_on_off() {
-        let mut gps = GPS.lock().unwrap();
-        gps.initialize().unwrap();
-        assert!(gps.is_on().unwrap());
-
-        gps.turn_off().unwrap();
-        assert!(!gps.is_on().unwrap());
-
-        gps.turn_on();
-        assert!(gps.is_on().unwrap());
     }
 }
