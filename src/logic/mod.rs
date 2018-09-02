@@ -1,32 +1,36 @@
 //! Logic module.
 
-mod init;
 #[cfg(feature = "gps")]
 mod acquiring_fix;
+#[cfg(not(feature = "gps"))]
+mod eternal_loop;
 #[cfg(feature = "gps")]
 mod fix_acquired;
 #[cfg(feature = "gps")]
-mod waiting_launch;
-#[cfg(feature = "gps")]
-mod going_up;
-#[cfg(feature = "gps")]
 mod going_down;
 #[cfg(feature = "gps")]
+mod going_up;
+mod init;
+#[cfg(feature = "gps")]
 mod landed;
-mod shut_down;
-#[cfg(not(feature = "gps"))]
-mod eternal_loop;
 mod safe_mode;
+mod shut_down;
+#[cfg(feature = "gps")]
+mod waiting_launch;
 
-use std::str::FromStr;
-use std::sync::{Arc, Mutex};
-use std::path::Path;
-use std::fs::{OpenOptions, File};
-use std::io::{Read, Write};
+use std::{
+    fmt,
+    fs::{File, OpenOptions},
+    io::{Read, Write},
+    str::FromStr,
+    sync::Mutex,
+};
 
-use error::*;
-use STATE_FILE;
+use failure::{Error, ResultExt};
+
 use config::CONFIG;
+use error;
+use STATE_FILE;
 
 lazy_static! {
     static ref CURRENT_STATE: Mutex<State> = Mutex::new(State::Init);
@@ -38,7 +42,7 @@ pub trait StateMachine {
     type Next: MainLogic;
 
     /// Executes this state and returns the next one.
-    fn execute(self) -> Result<Self::Next>;
+    fn execute(self) -> Result<Self::Next, Error>;
 }
 
 /// Trait to get the current state in the `State` enum for the current state in the state machine.
@@ -50,14 +54,14 @@ pub trait GetState {
 /// Trait implementing the main logic of the program.
 pub trait MainLogic: GetState {
     /// Performs the main logic of the state.
-    fn main_logic(self) -> Result<()>;
+    fn main_logic(self) -> Result<(), Error>;
 }
 
 impl<S> MainLogic for S
 where
     S: StateMachine + GetState,
 {
-    fn main_logic(self) -> Result<()> {
+    fn main_logic(self) -> Result<(), Error> {
         let new_state = self.execute()?;
         {
             let mut current_state = match CURRENT_STATE.lock() {
@@ -77,14 +81,14 @@ where
 }
 
 /// Saves the current state into the state file.
-fn save_current_state() -> Result<()> {
+fn save_current_state() -> Result<(), Error> {
     let path = CONFIG.data_dir().join(STATE_FILE);
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
         .open(path)
-        .chain_err(|| ErrorKind::LastStateFileOpen)?;
+        .context(error::LastState::FileOpen)?;
     {
         let current_state = match CURRENT_STATE.lock() {
             Ok(guard) => guard,
@@ -94,20 +98,21 @@ fn save_current_state() -> Result<()> {
             }
         };
         file.write_all(current_state.as_str().as_bytes())
-            .chain_err(|| ErrorKind::LastStateFileWrite)?;
+            .context(error::LastState::FileWrite)?;
     }
     Ok(())
 }
 
 /// Main OpenStratos state machine
-pub struct OpenStratos<S: GetState> {
+#[derive(Debug, Clone, Copy)]
+pub struct OpenStratos<S: GetState + fmt::Debug + Clone + Copy> {
     /// State of the logic item, only for compile time checks, no actual memory layout.
     state: S,
 }
 
 impl<S> GetState for OpenStratos<S>
 where
-    S: GetState,
+    S: GetState + fmt::Debug + Clone + Copy,
 {
     fn get_state(&self) -> State {
         self.state.get_state()
@@ -115,7 +120,7 @@ where
 }
 
 /// Initializes a new state machine.
-pub fn init() -> Result<OpenStratos<Init>> {
+pub fn init() -> Result<OpenStratos<Init>, Error> {
     save_current_state()?;
     Ok(OpenStratos { state: Init })
 }
@@ -154,16 +159,16 @@ pub enum State {
 
 impl State {
     /// Gets the last state of the application if there is one.
-    pub fn get_last() -> Result<Option<State>> {
+    pub fn get_last() -> Result<Option<State>, Error> {
         let path = CONFIG.data_dir().join(STATE_FILE);
         if !path.exists() {
             return Ok(None);
         }
-        let mut file = File::open(path).chain_err(|| ErrorKind::LastStateFileOpen)?;
+        let mut file = File::open(path).context(error::LastState::FileOpen)?;
         let mut state = String::new();
-        file.read_to_string(&mut state).chain_err(|| {
-            ErrorKind::LastStateFileRead
-        })?;
+        let _ = file
+            .read_to_string(&mut state)
+            .context(error::LastState::FileRead)?;
 
         if state.is_empty() {
             Ok(None)
@@ -197,9 +202,9 @@ impl State {
 }
 
 impl FromStr for State {
-    type Err = Error;
+    type Err = error::LastState;
 
-    fn from_str(s: &str) -> Result<State> {
+    fn from_str(s: &str) -> Result<State, Self::Err> {
         match s {
             "INITIALIZING" => Ok(State::Init),
             #[cfg(feature = "gps")]
@@ -218,12 +223,15 @@ impl FromStr for State {
             "SAFE_MODE" => Ok(State::SafeMode),
             #[cfg(not(feature = "gps"))]
             "ETERNAL_LOOP" => Ok(State::EternalLoop),
-            _ => Err(ErrorKind::InvalidState(s.to_owned()).into()),
+            _ => Err(error::LastState::Invalid {
+                state: s.to_owned(),
+            }),
         }
     }
 }
 
 /// Initialization state.
+#[derive(Debug, Clone, Copy)]
 pub struct Init;
 
 impl GetState for Init {
@@ -234,6 +242,7 @@ impl GetState for Init {
 
 /// Acquiring fix state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct AcquiringFix;
 
 #[cfg(feature = "gps")]
@@ -245,6 +254,7 @@ impl GetState for AcquiringFix {
 
 /// Fix acquired state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct FixAcquired;
 
 #[cfg(feature = "gps")]
@@ -256,6 +266,7 @@ impl GetState for FixAcquired {
 
 /// Waiting launch state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct WaitingLaunch;
 
 #[cfg(feature = "gps")]
@@ -267,6 +278,7 @@ impl GetState for WaitingLaunch {
 
 /// Going up state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct GoingUp;
 
 #[cfg(feature = "gps")]
@@ -278,6 +290,7 @@ impl GetState for GoingUp {
 
 /// Going down state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct GoingDown;
 
 #[cfg(feature = "gps")]
@@ -289,6 +302,7 @@ impl GetState for GoingDown {
 
 /// Landed state.
 #[cfg(feature = "gps")]
+#[derive(Debug, Clone, Copy)]
 pub struct Landed;
 
 #[cfg(feature = "gps")]
@@ -299,6 +313,7 @@ impl GetState for Landed {
 }
 
 /// Shut down state.
+#[derive(Debug, Clone, Copy)]
 pub struct ShutDown;
 
 impl GetState for ShutDown {
@@ -308,6 +323,7 @@ impl GetState for ShutDown {
 }
 
 /// Safe mode state.
+#[derive(Debug, Clone, Copy)]
 pub struct SafeMode;
 
 impl GetState for SafeMode {
@@ -318,6 +334,7 @@ impl GetState for SafeMode {
 
 /// Eternal loop state, if no GPS is enabled.
 #[cfg(not(feature = "gps"))]
+#[derive(Debug, Clone, Copy)]
 pub struct EternalLoop;
 
 #[cfg(not(feature = "gps"))]
@@ -604,7 +621,7 @@ mod tests {
     #[should_panic]
     #[cfg(feature = "gps")]
     fn it_from_str_eternal_loop() {
-        "ETERNAL_LOOP".parse::<State>().unwrap();;
+        let _ = "ETERNAL_LOOP".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::EternalLoop` is translated to *ETERNAL_LOOP* as a string.

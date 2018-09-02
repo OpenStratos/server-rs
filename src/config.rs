@@ -32,29 +32,31 @@
 //! You can also check the [`Config`](struct.Config.html) structure for further implementation
 //! details.
 
-use std::{fmt, u8, i8, u16};
-use std::result::Result as StdResult;
-use std::path::{Path, PathBuf};
-use std::fs::File;
-use std::io::{Read, BufRead, BufReader};
+#![allow(missing_debug_implementations)]
+
 use std::ffi::OsStr;
+use std::fs::File;
+use std::io::{BufReader, Read};
+use std::path::{Path, PathBuf};
+use std::result::Result;
+use std::{fmt, i8, u16, u8};
 
-use toml;
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use tokio_serial;
-use serialport;
-use sysfs_gpio::Pin;
 use colored::Colorize;
+use failure::{Error, ResultExt};
+use serde::de::{self, Deserialize, Deserializer, Visitor};
+use sysfs_gpio::Pin;
+use tokio_serial::BaudRate;
+use toml;
 
-use error::*;
-use CONFIG_FILE;
+use error;
 use generate_error_string;
+use CONFIG_FILE;
 
 lazy_static! {
     /// Configuration object.
     pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
         Err(e) => {
-            println!("{}", generate_error_string(&e, "Error loading configuration").red());
+            println!("{}", generate_error_string(e, "error loading configuration").red());
             panic!();
         },
         Ok(c) => c,
@@ -92,23 +94,25 @@ pub struct Config {
 
 impl Config {
     /// Creates a new configuration object from a path.
-    fn from_file<P: AsRef<Path>>(path: P) -> Result<Config> {
-        let file = File::open(path.as_ref()).chain_err(|| {
-            ErrorKind::ConfigOpen(path.as_ref().to_owned())
+    fn from_file<P: AsRef<Path>>(path: P) -> Result<Config, Error> {
+        let file = File::open(path.as_ref()).context(error::Config::Open {
+            path: path.as_ref().to_owned(),
         })?;
         let mut reader = BufReader::new(file);
         let mut contents = String::new();
 
-        reader.read_to_string(&mut contents).chain_err(|| {
-            ErrorKind::ConfigRead(path.as_ref().to_owned())
-        })?;
+        let _ = reader
+            .read_to_string(&mut contents)
+            .context(error::Config::Read {
+                path: path.as_ref().to_owned(),
+            })?;
 
-        let config: Config = toml::from_str(&contents).chain_err(|| {
-            ErrorKind::ConfigInvalidToml(path.as_ref().to_owned())
+        let config: Config = toml::from_str(&contents).context(error::Config::InvalidToml {
+            path: path.as_ref().to_owned(),
         })?;
 
         if let (false, errors) = config.verify() {
-            Err(ErrorKind::ConfigInvalid(errors).into())
+            Err(error::Config::Invalid { errors }.into())
         } else {
             Ok(config)
         }
@@ -125,8 +129,7 @@ impl Config {
             if self.picture.width > 3280 {
                 ok = false;
                 errors.push_str(&format!(
-                    "picture width must be below or equal to 3280px, found \
-                                          {}px\n",
+                    "picture width must be below or equal to 3280px, found {}px\n",
                     self.picture.width
                 ));
             }
@@ -155,12 +158,10 @@ impl Config {
             }
 
             match self.picture.contrast {
-                Some(c @ i8::MIN...-101) |
-                Some(c @ 101...i8::MAX) => {
+                Some(c @ i8::MIN...-101) | Some(c @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture contrast must be between -100 and 100, found \
-                                            {}\n",
+                        "picture contrast must be between -100 and 100, found {}\n",
                         c
                     ));
                 }
@@ -168,12 +169,10 @@ impl Config {
             }
 
             match self.picture.sharpness {
-                Some(s @ i8::MIN...-101) |
-                Some(s @ 101...i8::MAX) => {
+                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture sharpness must be between -100 and 100, \
-                                              found {}\n",
+                        "picture sharpness must be between -100 and 100, found {}\n",
                         s
                     ));
                 }
@@ -181,12 +180,10 @@ impl Config {
             }
 
             match self.picture.saturation {
-                Some(s @ i8::MIN...-101) |
-                Some(s @ 101...i8::MAX) => {
+                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture saturation must be between -100 and 100, \
-                                              found {}\n",
+                        "picture saturation must be between -100 and 100, found {}\n",
                         s
                     ));
                 }
@@ -194,8 +191,7 @@ impl Config {
             }
 
             match self.picture.iso {
-                Some(i @ 0...99) |
-                Some(i @ 801...u16::MAX) => {
+                Some(i @ 0...99) | Some(i @ 801...u16::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
                         "picture ISO must be between 100 and 800, found {}\n",
@@ -206,12 +202,10 @@ impl Config {
             }
 
             match self.picture.ev {
-                Some(e @ i8::MIN...-11) |
-                Some(e @ 11...i8::MAX) => {
+                Some(e @ i8::MIN...-11) | Some(e @ 11...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture EV compensation must be between -10 and 10, \
-                                              found {}\n",
+                        "picture EV compensation must be between -10 and 10, found {}\n",
                         e
                     ));
                 }
@@ -222,16 +216,14 @@ impl Config {
             if self.video.width > 2592 {
                 ok = false;
                 errors.push_str(&format!(
-                    "video width must be below or equal to 2592px, found \
-                                          {}px\n",
+                    "video width must be below or equal to 2592px, found {}px\n",
                     self.video.width
                 ));
             }
             if self.video.height > 1944 {
                 ok = false;
                 errors.push_str(&format!(
-                    "video height must be below or equal to 1944px, found \
-                                          {}px\n",
+                    "video height must be below or equal to 1944px, found {}px\n",
                     self.video.height
                 ));
             }
@@ -245,26 +237,25 @@ impl Config {
 
             // Video modes.
             match (self.video.width, self.video.height, self.video.fps) {
-                (2592, 1944, 1...15) |
-                (1920, 1080, 1...30) |
-                (1296, 972, 1...42) |
-                (1296, 730, 1...49) |
-                (640, 480, 1...90) => {}
+                (2592, 1944, 1...15)
+                | (1920, 1080, 1...30)
+                | (1296, 972, 1...42)
+                | (1296, 730, 1...49)
+                | (640, 480, 1...90) => {}
                 (w, h, f) => {
                     ok = false;
-                    errors.push_str(
-                        &format!("video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, \
-                                  1296×972 1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} \
-                                  {}fps\n",
-                                 w, h, f));
+                    errors.push_str(&format!(
+                        "video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
+                         1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} {}fps\n",
+                        w, h, f
+                    ));
                 }
             }
 
             if let Some(r @ 360...u16::MAX) = self.camera_rotation {
                 ok = false;
                 errors.push_str(&format!(
-                    "camera rotation must be between 0 and 359 degrees, found {} \
-                              degrees\n",
+                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
                     r
                 ));
             }
@@ -278,12 +269,10 @@ impl Config {
             }
 
             match self.video.contrast {
-                Some(c @ i8::MIN...-101) |
-                Some(c @ 101...i8::MAX) => {
+                Some(c @ i8::MIN...-101) | Some(c @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "video contrast must be between -100 and 100, found \
-                                              {}\n",
+                        "video contrast must be between -100 and 100, found {}\n",
                         c
                     ));
                 }
@@ -291,12 +280,11 @@ impl Config {
             }
 
             match self.video.sharpness {
-                Some(s @ i8::MIN...-101) |
-                Some(s @ 101...i8::MAX) => {
+                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
                         "video sharpness must be between -100 and 100, found \
-                                              {}\n",
+                         {}\n",
                         s
                     ));
                 }
@@ -304,12 +292,10 @@ impl Config {
             }
 
             match self.video.saturation {
-                Some(s @ i8::MIN...-101) |
-                Some(s @ 101...i8::MAX) => {
+                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "video saturation must be between -100 and 100, found \
-                                            {}\n",
+                        "video saturation must be between -100 and 100, found {}\n",
                         s
                     ));
                 }
@@ -317,8 +303,7 @@ impl Config {
             }
 
             match self.video.iso {
-                Some(i @ 0...99) |
-                Some(i @ 801...u16::MAX) => {
+                Some(i @ 0...99) | Some(i @ 801...u16::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
                         "video ISO must be between 100 and 800, found {}\n",
@@ -329,12 +314,10 @@ impl Config {
             }
 
             match self.video.ev {
-                Some(e @ i8::MIN...-11) |
-                Some(e @ 11...i8::MAX) => {
+                Some(e @ i8::MIN...-11) | Some(e @ 11...i8::MAX) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "video EV compensation must be between -10 and 10, \
-                                              found {}\n",
+                        "video EV compensation must be between -10 and 10, found {}\n",
                         e
                     ));
                 }
@@ -401,7 +384,7 @@ impl Config {
 
 /// Video configuration structure.
 #[cfg(feature = "raspicam")]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct Video {
     /// Height of the video, in px.
     height: u16,
@@ -501,7 +484,7 @@ impl Video {
 
 /// Picture configuration structure.
 #[cfg(feature = "raspicam")]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct Picture {
     /// Height of the picture, in px.
     height: u16,
@@ -707,8 +690,8 @@ pub struct Gps {
     ///
     /// **Note:** it will only accept baud rates from 1 to `u32::MAX` (`usize` in Raspberry Pi is
     /// `u32`).
-    #[serde(deserialize_with = "deserialize_tokio_baudrate")]
-    baud_rate: tokio_serial::BaudRate,
+    #[serde(deserialize_with = "deserialize_baudrate")]
+    baud_rate: BaudRate,
     /// Power GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -722,7 +705,7 @@ impl Gps {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> tokio_serial::BaudRate {
+    pub fn baud_rate(&self) -> BaudRate {
         self.baud_rate
     }
 
@@ -739,8 +722,8 @@ pub struct Fona {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    #[serde(deserialize_with = "deserialize_serialport_baudrate")]
-    baud_rate: serialport::BaudRate,
+    #[serde(deserialize_with = "deserialize_baudrate")]
+    baud_rate: BaudRate,
     /// Power control GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -761,7 +744,7 @@ impl Fona {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> serialport::BaudRate {
+    pub fn baud_rate(&self) -> BaudRate {
         self.baud_rate
     }
 
@@ -796,7 +779,7 @@ impl PhoneNumber {
 
 #[cfg(feature = "fona")]
 impl<'de> Deserialize<'de> for PhoneNumber {
-    fn deserialize<D>(deserializer: D) -> StdResult<PhoneNumber, D::Error>
+    fn deserialize<D>(deserializer: D) -> Result<PhoneNumber, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -811,8 +794,7 @@ impl<'de> Deserialize<'de> for PhoneNumber {
                 formatter.write_str("a valid phone number")
             }
 
-            #[allow(absurd_extreme_comparisons)]
-            fn visit_str<E>(self, value: &str) -> StdResult<PhoneNumber, E>
+            fn visit_str<E>(self, value: &str) -> Result<PhoneNumber, E>
             where
                 E: de::Error,
             {
@@ -831,8 +813,8 @@ pub struct Telemetry {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    #[serde(deserialize_with = "deserialize_tokio_baudrate")]
-    baud_rate: tokio_serial::BaudRate,
+    #[serde(deserialize_with = "deserialize_baudrate")]
+    baud_rate: BaudRate,
 }
 
 #[cfg(feature = "telemetry")]
@@ -843,88 +825,51 @@ impl Telemetry {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> tokio_serial::BaudRate {
+    pub fn baud_rate(&self) -> BaudRate {
         self.baud_rate
     }
 }
 
 /// Deserializes a Tokio serial baud rate.
 #[cfg(any(feature = "gps", feature = "telemetry"))]
-fn deserialize_tokio_baudrate<'de, D>(
-    deserializer: D,
-) -> StdResult<tokio_serial::BaudRate, D::Error>
+fn deserialize_baudrate<'de, D>(deserializer: D) -> Result<BaudRate, D::Error>
 where
     D: Deserializer<'de>,
 {
     /// Visitor for baud rate.
     struct TokioBaudRateVisitor;
     impl<'dev> Visitor<'dev> for TokioBaudRateVisitor {
-        type Value = tokio_serial::BaudRate;
+        type Value = BaudRate;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             use std::u32;
             write!(formatter, "an integer between 1 and {}", u32::MAX)
         }
 
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_i64<E>(self, value: i64) -> StdResult<tokio_serial::BaudRate, E>
+        fn visit_i64<E>(self, value: i64) -> Result<BaudRate, E>
         where
             E: de::Error,
         {
-            use std::{u32, usize};
+            use std::u32;
 
             if value > 0 && u32::MAX as i64 >= value {
-                Ok(tokio_serial::BaudRate::from_speed(value as usize))
+                Ok(BaudRate::from(value as u32))
             } else {
                 Err(E::custom(format!("baud rate out of range: {}", value)))
             }
         }
+
+        // TODO: create more visitors, to make it future proof with other deserializers.
     }
 
     deserializer.deserialize_u32(TokioBaudRateVisitor)
-}
-
-/// Deserializes a `serialport` serial baud rate.
-#[cfg(any(feature = "fona"))]
-fn deserialize_serialport_baudrate<'de, D>(
-    deserializer: D,
-) -> StdResult<serialport::BaudRate, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    /// Visitor for baud rate.
-    struct SerialportBaudRateVisitor;
-    impl<'dev> Visitor<'dev> for SerialportBaudRateVisitor {
-        type Value = tokio_serial::BaudRate;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            use std::u32;
-            write!(formatter, "an integer between 1 and {}", u32::MAX)
-        }
-
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_i64<E>(self, value: i64) -> StdResult<serialport::BaudRate, E>
-        where
-            E: de::Error,
-        {
-            use std::{u32, usize};
-
-            if value > 0 && u32::MAX as i64 >= value {
-                Ok(serialport::BaudRate::from_speed(value as usize))
-            } else {
-                Err(E::custom(format!("baud rate out of range: {}", value)))
-            }
-        }
-    }
-
-    deserializer.deserialize_u32(SerialportBaudRateVisitor)
 }
 
 /// Deserializes a Raspberry Pi pin number into a `Pin` structure.
 ///
 /// Note: it will make sure it deserializes a Pin between 2 and 28 (pin numbers for Raspberry Pi).
 #[cfg(any(feature = "gps", feature = "fona"))]
-fn deserialize_pin<'de, D>(deserializer: D) -> StdResult<Pin, D::Error>
+fn deserialize_pin<'de, D>(deserializer: D) -> Result<Pin, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -934,12 +879,11 @@ where
         type Value = Pin;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            use std::u32;
             formatter.write_str("an integer between 2 and 28")
         }
 
-        #[allow(absurd_extreme_comparisons)]
-        fn visit_i64<E>(self, value: i64) -> StdResult<Pin, E>
+        #[cfg_attr(feature = "cargo-clippy", allow(absurd_extreme_comparisons))]
+        fn visit_i64<E>(self, value: i64) -> Result<Pin, E>
         where
             E: de::Error,
         {
@@ -955,7 +899,7 @@ where
 }
 
 /// Flight information structure.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct Flight {
     /// Expected length of the flight, in minutes.
     length: u32,
@@ -970,8 +914,8 @@ impl Flight {
 
 #[cfg(test)]
 mod tests {
-    use tokio_serial::BaudRate;
     use sysfs_gpio::Pin;
+    use tokio_serial::BaudRate;
 
     use super::*;
 
@@ -1058,7 +1002,7 @@ mod tests {
         #[cfg(feature = "fona")]
         let fona = Fona {
             uart: PathBuf::from("/dev/ttyUSB0"),
-            baud_rate: serialport::BaudRate::Baud9600,
+            baud_rate: BaudRate::Baud9600,
             power_gpio: Pin::new(7),
             status_gpio: Pin::new(21),
             sms_phone: PhoneNumber(String::new()),
@@ -1068,7 +1012,7 @@ mod tests {
         #[cfg(feature = "telemetry")]
         let telemetry = Telemetry {
             uart: PathBuf::from("/dev/ttyUSB0"),
-            baud_rate: tokio_serial::BaudRate::BaudOther(230400),
+            baud_rate: BaudRate::BaudOther(230400),
         };
 
         #[cfg(feature = "gps")]
@@ -1176,11 +1120,11 @@ mod tests {
         assert_eq!(
             errors,
             "picture width must be below or equal to 3280px, found 5246px\npicture height \
-                    must be below or equal to 2464px, found 10345px\nvideo width must be below or \
-                    equal to 2592px, found 5648px\nvideo height must be below or equal to 1944px, \
-                    found 12546px\nvideo framerate must be below or equal to 90fps, found 92fps\n\
-                    video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
-                    1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n"
+             must be below or equal to 2464px, found 10345px\nvideo width must be below or \
+             equal to 2592px, found 5648px\nvideo height must be below or equal to 1944px, \
+             found 12546px\nvideo framerate must be below or equal to 90fps, found 92fps\n\
+             video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
+             1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n"
         );
     }
 

@@ -1,16 +1,15 @@
 //! GPS module.
 
-use std::{fmt, thread};
+#![allow(missing_debug_implementations)]
+
+use std::fmt;
 use std::str::FromStr;
 use std::sync::Mutex;
-use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use sysfs_gpio::{Direction, Pin};
+use failure::Error;
 
-use error::*;
-use config::CONFIG;
-use generate_error_string;
+use error;
 
 lazy_static! {
     /// GPS data for concurrent check.
@@ -58,7 +57,7 @@ pub struct Gps {
 
 impl Gps {
     /// Initializes the GPS.
-    pub fn initialize(&mut self) -> Result<()> {
+    pub fn initialize(&mut self) -> Result<(), Error> {
         info!("Initializing GPS…");
 
         // TODO start serial and so on.
@@ -137,12 +136,15 @@ pub enum FixStatus {
 }
 
 impl FromStr for FixStatus {
-    type Err = Error;
-    fn from_str(s: &str) -> Result<FixStatus> {
+    type Err = error::Gps;
+
+    fn from_str(s: &str) -> Result<FixStatus, Self::Err> {
         match s {
             "A" => Ok(FixStatus::Active),
             "V" => Ok(FixStatus::Void),
-            _ => Err(ErrorKind::GPSInvalidStatus(s.to_owned()).into()),
+            _ => Err(error::Gps::InvalidStatus {
+                status: s.to_owned(),
+            }),
         }
     }
 }

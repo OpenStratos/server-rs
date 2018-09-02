@@ -1,34 +1,47 @@
 //! Adafruit FONA GSM module.
 
+#![allow(missing_debug_implementations)]
+
 // TODO: timeouts
 
-use std::thread;
-use std::sync::Mutex;
-use std::time::Duration;
-use std::io::{Write, Read};
+use std::{fmt, io::Write, sync::Mutex, thread, time::Duration};
 
-use sysfs_gpio::Pin;
-use serialport::prelude::*;
-use serialport::SerialPort;
-use serialport::posix::TTYPort;
+use failure::{Error, ResultExt};
+use tokio_serial::{Serial, SerialPortSettings};
 
-use error::*;
 use config::CONFIG;
+use error;
 use generate_error_string;
 
 lazy_static! {
     /// The FONA module control structure.
-    pub static ref FONA: Mutex<Fona> = Mutex::new(Fona {serial: None});
+    pub static ref FONA: Mutex<Fona> = Mutex::new(Fona { serial: None });
 }
 
 /// Adafruit FONA control structure.
 pub struct Fona {
-    serial: Option<TTYPort>,
+    serial: Option<Serial>,
+}
+
+impl fmt::Debug for Fona {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use tokio_serial::SerialPort;
+
+        write!(
+            f,
+            "Fona {{ serial: {:?} }}",
+            if let Some(ref serial) = &self.serial {
+                serial.port_name()
+            } else {
+                None
+            }
+        )
+    }
 }
 
 impl Fona {
     /// Initializes the Adafruit FONA module.
-    pub fn initialize(&mut self) -> Result<()> {
+    pub fn initialize(&mut self) -> Result<(), Error> {
         if self.is_on()? {
             info!("FONA module is on, rebooting for stability.");
             self.turn_off()?;
@@ -39,14 +52,14 @@ impl Fona {
         self.turn_on()?;
         if !self.is_on()? {
             error!("The module is still off. Finishing initialization.");
-            return Err(Error::from(ErrorKind::FonaInitNoPowerOn));
+            bail!(error::Fona::PowerOn);
         }
 
         info!("Starting serial connection.");
         let mut settings = SerialPortSettings::default();
         settings.baud_rate = CONFIG.fona().baud_rate();
 
-        let mut serial = TTYPort::open(CONFIG.fona().uart(), &settings)?;
+        let mut serial = Serial::from_path(CONFIG.fona().uart(), &settings)?;
         // serial.set_timeout(Duration::from_secs(5));
         self.serial = Some(serial);
         info!("Serial connection started.");
@@ -61,30 +74,30 @@ impl Fona {
 
         if self.send_command_read("AT")? != "OK" {
             error!("Initialization error.");
-            Err(ErrorKind::FonaInit.into())
+            Err(error::Fona::Init.into())
         } else {
             thread::sleep(Duration::from_millis(100));
             info!("Initialization OK.");
 
             // Turn off echo.
-            self.send_command_read("ATE0")?;
+            let _ = self.send_command_read("ATE0")?;
             thread::sleep(Duration::from_millis(100));
 
             if self.send_command_read("ATE0")? == "OK" {
                 Ok(())
             } else {
-                Err(ErrorKind::FonaNoEchoOff.into())
+                Err(error::Fona::EchoOff.into())
             }
         }
     }
 
     /// Checks if the FONA module is on.
-    pub fn is_on(&self) -> Result<bool> {
+    pub fn is_on(&self) -> Result<bool, Error> {
         Ok(CONFIG.fona().status_gpio().get_value()? == 1)
     }
 
     /// Turns on the FONA module.
-    pub fn turn_on(&mut self) -> Result<()> {
+    pub fn turn_on(&mut self) -> Result<(), Error> {
         if self.is_on()? {
             warn!("Trying to turn FONA on but it was already on.");
             Ok(())
@@ -104,7 +117,7 @@ impl Fona {
     }
 
     /// Tuns off the FONA module.
-    pub fn turn_off(&mut self) -> Result<()> {
+    pub fn turn_off(&mut self) -> Result<(), Error> {
         if self.is_on()? {
             info!("Turning FONA off…");
 
@@ -124,7 +137,7 @@ impl Fona {
     }
 
     /// Sends an SMS with the given text to the given phone number.
-    pub fn send_sms<M>(&mut self, message: M) -> Result<()>
+    pub fn send_sms<M>(&mut self, message: M) -> Result<(), Error>
     where
         M: AsRef<str>,
     {
@@ -132,52 +145,46 @@ impl Fona {
         info!(
             "Sending SMS: `{}` ({} characters) to number {}",
             message.as_ref(),
-            character_count, CONFIG.fona().sms_phone().as_str(),
+            character_count,
+            CONFIG.fona().sms_phone().as_str(),
         );
 
         #[cfg(not(feature = "no_sms"))]
         {
             if character_count > 160 {
-                return Err(ErrorKind::FonaLongSms.into());
+                return Err(error::Fona::LongSms.into());
             }
 
             if self.send_command_read("AT+CMGF=1")? != "OK" {
                 error!("Error sending SMS on `AT+CMGD=1` response.");
-                return Err(ErrorKind::FonaSmsAtCmgd.into());
+                return Err(error::Fona::SmsAtCmgd.into());
             }
 
             if self.send_command_read_limit(
-                format!(
-                    "AT+CMGS=\"{}\"",
-                    CONFIG.fona().sms_phone().as_str()
-                ),
+                format!("AT+CMGS=\"{}\"", CONFIG.fona().sms_phone().as_str()),
                 2,
             )? != "> "
             {
                 error!("Error sending SMS on 'AT+CMGS' response.");
-                return Err(ErrorKind::FonaSmsAtCmgd.into());
+                return Err(error::Fona::SmsAtCmgd.into());
             }
 
             if let Some(ref mut serial) = self.serial {
                 debug!("Sent: `{}`", message.as_ref());
 
                 // Write message
-                serial.write_all(message.as_ref().as_bytes()).chain_err(
-                    || {
-                        Error::from(ErrorKind::FonaCommand)
-                    },
-                )?;
+                serial
+                    .write_all(message.as_ref().as_bytes())
+                    .context(error::Fona::Command)?;
 
                 // Write Ctrl+Z
-                serial.write_all(&[0x1A]).chain_err(|| {
-                    Error::from(ErrorKind::FonaCommand)
-                });
+                serial.write_all(&[0x1A]).context(error::Fona::Command)?;
             } else {
                 error!(
                     "No serial when trying to send message `{}`",
                     message.as_ref()
                 );
-                return Err(ErrorKind::FonaNoSerial.into());
+                return Err(error::Fona::NoSerial.into());
             }
 
             let new_line = self.read_line()?;
@@ -194,7 +201,7 @@ impl Fona {
                     "Error reading +CMGS response to the message, read `{}`",
                     response
                 );
-                return Err(ErrorKind::FonaSmsCmgs.into());
+                return Err(error::Fona::SmsCmgs.into());
             }
 
             let new_line = self.read_line()?;
@@ -210,7 +217,7 @@ impl Fona {
             let ok = self.read_line()?;
             if ok != "OK" {
                 error!("No OK received after sending SMS, received: `{}`", ok);
-                return Err(ErrorKind::FonaSmsOk.into());
+                return Err(error::Fona::SmsOk.into());
             }
 
             info!("SMS Sent.");
@@ -225,65 +232,59 @@ impl Fona {
     }
 
     /// Gets the current location using GPRS.
-    pub fn get_location(&mut self) -> Result<Location> {
+    pub fn get_location(&mut self) -> Result<Location, Error> {
         unimplemented!()
     }
 
     /// Checks the FONA battery level, in percentage.
-    pub fn battery_percent(&mut self) -> Result<f32> {
+    pub fn battery_percent(&mut self) -> Result<f32, Error> {
         unimplemented!()
     }
 
     /// Checks the FONA battery level, in voltage.
-    pub fn battery_voltage(&mut self) -> Result<f32> {
+    pub fn battery_voltage(&mut self) -> Result<f32, Error> {
         unimplemented!()
     }
 
     /// Checks the ADC (Analog-Digital converter) voltage of the FONA.
-    pub fn adc_voltage(&mut self) -> Result<f32> {
+    pub fn adc_voltage(&mut self) -> Result<f32, Error> {
         let response = self.send_command_read("AT+CADC?")?;
         let mut tokens = response.split(",");
 
         if tokens.next() == Some("+CADC=1") {
             match tokens.next() {
-                Some(val) => {
-                    Ok(
-                        val.parse::<f32>().chain_err(|| {
-                            Error::from(ErrorKind::FonaCADCInvalidResponse)
-                        })? / 1_000_f32,
-                    )
-                }
-                None => Err(ErrorKind::FonaCADCInvalidResponse.into()),
+                Some(val) => Ok(val
+                    .parse::<f32>()
+                    .context(error::Fona::CADCInvalidResponse)?
+                    / 1_000_f32),
+                None => Err(error::Fona::CADCInvalidResponse.into()),
             }
         } else {
-            Err(ErrorKind::FonaCADCInvalidResponse.into())
+            Err(error::Fona::CADCInvalidResponse.into())
         }
     }
 
     /// Checks if the FONA module has GSM connectivity.
-    pub fn has_connectivity(&mut self) -> Result<bool> {
+    pub fn has_connectivity(&mut self) -> Result<bool, Error> {
         let response = self.send_command_read("AT+CREG?")?;
         Ok(response == "+CREG: 0,1" || response == "+CREG: 0,5")
     }
 
     /// Sends a command to the FONA module and reads the response.
-    fn send_command_read<C>(&mut self, command: C) -> Result<String>
+    fn send_command_read<C>(&mut self, command: C) -> Result<String, Error>
     where
         C: AsRef<[u8]>,
     {
-        use std::io::Write;
-        use bytecount::count;
-
         self.send_command(command.as_ref())?;
         self.read_line()
     }
 
     /// Sends a command and reads a limited amount of characters.
-    fn send_command_read_limit<C>(&mut self, command: C, count: usize) -> Result<String>
+    fn send_command_read_limit<C>(&mut self, command: C, count: usize) -> Result<String, Error>
     where
         C: AsRef<[u8]>,
     {
-        use std::io::{self, Read};
+        use std::io::Read;
 
         self.send_command(command)?;
 
@@ -303,15 +304,15 @@ impl Fona {
                 }
             }
 
-            Err(ErrorKind::FonaSerialEnd.into())
+            Err(error::Fona::SerialEnd.into())
         } else {
             error!("No serial when trying to read response");
-            Err(ErrorKind::FonaNoSerial.into())
+            Err(error::Fona::NoSerial.into())
         }
     }
 
     /// Sends a command to the FONA serial.
-    fn send_command<C>(&mut self, command: C) -> Result<()>
+    fn send_command<C>(&mut self, command: C) -> Result<(), Error>
     where
         C: AsRef<[u8]>,
     {
@@ -327,35 +328,34 @@ impl Fona {
                 }
             );
 
-            serial.write_all(command.as_ref()).chain_err(|| {
-                Error::from(ErrorKind::FonaCommand)
-            })?;
+            serial
+                .write_all(command.as_ref())
+                .context(error::Fona::Command)?;
 
             // TODO do we need the CRLF when sending Ctrl+Z?
-            serial.write_all(b"\r\n").chain_err(|| {
-                Error::from(ErrorKind::FonaCommand)
-            })?;
+            serial.write_all(b"\r\n").context(error::Fona::Command)?;
         } else {
             error!(
                 "No serial when trying to send command `{}`",
                 String::from_utf8_lossy(command.as_ref())
             );
-            return Err(ErrorKind::FonaNoSerial.into());
+            return Err(error::Fona::NoSerial.into());
         }
 
-        if !self.read_line()
-            .chain_err(|| Error::from(ErrorKind::FonaSendCommandCrlf))?
+        if !self
+            .read_line()
+            .context(error::Fona::SendCommandCrlf)?
             .is_empty()
         {
-            Err(Error::from(ErrorKind::FonaSendCommandCrlf))
+            Err(error::Fona::SendCommandCrlf.into())
         } else {
             Ok(())
         }
     }
 
     /// Reads a line from the serial.
-    fn read_line(&mut self) -> Result<String> {
-        use std::io::{ErrorKind as IOErrKind, Read};
+    fn read_line(&mut self) -> Result<String, Error> {
+        use std::io::{ErrorKind, Read};
 
         if let Some(ref mut serial) = self.serial {
             let mut response = Vec::new();
@@ -372,10 +372,10 @@ impl Fona {
                     }
                     Err(e) => {
                         return Err(match e.kind() {
-                            IOErrKind::TimedOut => {
+                            ErrorKind::TimedOut => {
                                 let partial = String::from_utf8(response)?;
                                 debug!("Received (partial): `{}`", partial);
-                                ErrorKind::FonaPartialResponse(partial).into()
+                                error::Fona::PartialResponse { response: partial }.into()
                             }
                             _ => e.into(),
                         });
@@ -383,10 +383,10 @@ impl Fona {
                 }
             }
 
-            Err(ErrorKind::FonaSerialEnd.into())
+            Err(error::Fona::SerialEnd.into())
         } else {
             error!("No serial when trying to read response");
-            Err(ErrorKind::FonaNoSerial.into())
+            Err(error::Fona::NoSerial.into())
         }
     }
 }
@@ -397,7 +397,7 @@ impl Drop for Fona {
             Ok(true) => {
                 info!("Turning off FONA…");
                 if let Err(e) = self.turn_off() {
-                    error!("{}", generate_error_string(&e, "Error turning FONA off"));
+                    error!("{}", generate_error_string(e, "Error turning FONA off"));
                 }
                 info!("FONA off.");
             }
@@ -406,9 +406,8 @@ impl Drop for Fona {
                 error!(
                     "{}",
                     generate_error_string(
-                        &e,
-                        "Could not check if FONA was on when dropping the \
-                                              FONA object",
+                        e,
+                        "Could not check if FONA was on when dropping the FONA object",
                     )
                 );
             }
@@ -417,6 +416,7 @@ impl Drop for Fona {
 }
 
 /// Structure representing the location of the probe as obtained by the FONA module.
+#[derive(Debug, Clone, Copy)]
 pub struct Location {
     /// Latitude of the location, in degrees (°).
     latitude: f32,

@@ -1,6 +1,8 @@
-#![doc(html_logo_url = "https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png",
-       html_favicon_url = "https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png",
-html_root_url = "https://openstratos.github.io/server-rs/")]
+#![doc(
+    html_logo_url = "https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png",
+    html_favicon_url = "https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png",
+    html_root_url = "https://openstratos.github.io/server-rs/"
+)]
 
 //! Balloon software launcher.
 //!
@@ -142,9 +144,18 @@ html_root_url = "https://openstratos.github.io/server-rs/")]
 //!
 //! *In development…*
 
+#![cfg_attr(feature = "cargo-clippy", deny(clippy))]
+#![forbid(anonymous_parameters)]
+//#![cfg_attr(feature = "cargo-clippy", warn(clippy_pedantic))]
+#![deny(
+    variant_size_differences, unused_results, unused_qualifications, unused_import_braces,
+    unsafe_code, trivial_numeric_casts, trivial_casts, missing_docs, missing_debug_implementations,
+    missing_copy_implementations, box_pointers, unused_extern_crates
+)]
+
+extern crate colored;
 #[macro_use]
 extern crate log;
-extern crate colored;
 extern crate os_balloon;
 
 use colored::Colorize;
@@ -163,14 +174,14 @@ pub fn main() {
     if let Err(e) = init_loggers() {
         println!(
             "{}",
-            generate_error_string(&e, "Error initializing loggers").red()
+            generate_error_string(e, "Error initializing loggers").red()
         );
         panic!();
     }
     info!("OpenStratos {} starting", env!("CARGO_PKG_VERSION"));
 
     if let Err(e) = run() {
-        let error = generate_error_string(&e, "Error running OpenStratos");
+        let error = generate_error_string(e, "Error running OpenStratos");
         error!("{}", error);
         println!("{}", error.red());
 

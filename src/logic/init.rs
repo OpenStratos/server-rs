@@ -1,18 +1,15 @@
 //! Initialization logic.
 
-use std::{io, thread, process};
 use std::time::Duration;
-
-use libc::c_ulong;
+use std::{io, thread};
 
 use super::*;
-use error::*;
+#[cfg(feature = "fona")]
+use fona::FONA;
 #[cfg(feature = "gps")]
 use gps::GPS;
 #[cfg(feature = "raspicam")]
 use raspicam::VIDEO_DIR;
-#[cfg(feature = "fona")]
-use fona::FONA;
 
 /// Test video file.
 #[cfg(feature = "raspicam")]
@@ -25,9 +22,8 @@ impl StateMachine for OpenStratos<Init> {
     #[cfg(not(feature = "gps"))]
     type Next = OpenStratos<EternalLoop>;
 
-    #[allow(block_in_if_condition_expr)]
-    fn execute(self) -> Result<Self::Next> {
-
+    #[cfg_attr(feature = "cargo-clippy", allow(block_in_if_condition_expr))]
+    fn execute(self) -> Result<Self::Next, Error> {
         let disk_space = get_available_disk_space()?;
         info!(
             "Available disk space: {:.2} GiB",
@@ -44,31 +40,33 @@ impl StateMachine for OpenStratos<Init> {
             #[cfg(feature = "raspicam")]
             {
                 // 1.2 times the length of the flight, just in case.
-                disk_space <
-                    CONFIG.flight().length() as u64 * 6 * 60 * CONFIG.video().bitrate() as u64 /
-                        (8 * 5)
+                disk_space
+                    < CONFIG.flight().length() as u64 * 6 * 60 * CONFIG.video().bitrate() as u64
+                        / (8 * 5)
             }
             #[cfg(not(feature = "raspicam"))]
             {
                 disk_space < 2 * 1024 * 1024 * 1024 // 2 GiB
             }
-        }
-        {
+        } {
             error!("Not enough disk space.");
-            #[cfg(not(feature = "no_power_off"))] power_off();
-            #[cfg(feature = "no_power_off")] process::exit(1);
+            #[cfg(not(feature = "no_power_off"))]
+            power_off()?;
+            #[cfg(feature = "no_power_off")]
+            process::exit(1);
         }
 
         #[cfg(feature = "gps")]
         {
             info!("Initializing GPS…");
             match GPS.lock() {
-                Ok(mut gps) => gps.initialize().chain_err(|| ErrorKind::GPSInit)?,
+                Ok(mut gps) => gps.initialize().context(error::Gps::Init)?,
                 Err(poisoned) => {
                     error!("The GPS mutex was poisoned.");
-                    poisoned.into_inner().initialize().chain_err(
-                        || ErrorKind::GPSInit,
-                    )?
+                    poisoned
+                        .into_inner()
+                        .initialize()
+                        .context(error::Gps::Init)?
                 }
             }
             info!("GPS initialized.");
@@ -78,12 +76,13 @@ impl StateMachine for OpenStratos<Init> {
         {
             info!("Initializing Adafruit FONA GSM module…");
             match FONA.lock() {
-                Ok(mut fona) => fona.initialize().chain_err(|| ErrorKind::FonaInit)?,
+                Ok(mut fona) => fona.initialize().context(error::Fona::Init)?,
                 Err(poisoned) => {
                     error!("The FONA mutex was poisoned.");
-                    poisoned.into_inner().initialize().chain_err(
-                        || ErrorKind::FonaInit,
-                    )?
+                    poisoned
+                        .into_inner()
+                        .initialize()
+                        .context(error::Fona::Init)?
                 }
             }
             info!("Adafruit FONA GSM module initialized.");
@@ -177,8 +176,7 @@ impl StateMachine for OpenStratos<Init> {
                 //     }
                 // }
                 false
-            }
-            {
+            } {
                 thread::sleep(Duration::from_secs(1));
             }
             info!("GSM connected.");
@@ -193,16 +191,15 @@ impl StateMachine for OpenStratos<Init> {
             info!("Testing camera recording…");
             info!("Recording 10 seconds as test…");
             match CAMERA.lock() {
-                Ok(mut cam) => {
-                    cam.record(Duration::from_secs(10), TEST_VIDEO_FILE)
-                        .chain_err(|| ErrorKind::CameraTest)?
-                }
+                Ok(mut cam) => cam
+                    .record(Duration::from_secs(10), TEST_VIDEO_FILE)
+                    .context(error::Raspicam::Test)?,
                 Err(poisoned) => {
                     error!("The CAMERA mutex was poisoned.");
                     poisoned
                         .into_inner()
                         .record(Duration::from_secs(10), TEST_VIDEO_FILE)
-                        .chain_err(|| ErrorKind::CameraTest)?
+                        .context(error::Raspicam::Test)?
                 }
             }
 
@@ -210,8 +207,8 @@ impl StateMachine for OpenStratos<Init> {
             if video_path.exists() {
                 info!("Camera test OK.");
                 info!("Removing test file…");
-                remove_file(&video_path).chain_err(|| {
-                    ErrorKind::CameraTestRemove(video_path.clone())
+                remove_file(&video_path).context(error::Raspicam::TestRemove {
+                    test_file: video_path.clone(),
                 })?;
                 info!("Test file removed.");
             } else {
@@ -229,16 +226,19 @@ impl StateMachine for OpenStratos<Init> {
                 // else
                 // 	logger.log("Error turning GPS off.");
 
-                #[cfg(not(feature = "no_power_off"))] power_off();
-                #[cfg(feature = "no_power_off")] process::exit(1);
+                #[cfg(not(feature = "no_power_off"))]
+                power_off()?;
+                #[cfg(feature = "no_power_off")]
+                process::exit(1);
             }
         }
 
         #[cfg(feature = "gps")]
         {
-            Ok(OpenStratos { state: AcquiringFix })
+            Ok(OpenStratos {
+                state: AcquiringFix,
+            })
         }
-
 
         #[cfg(not(feature = "gps"))]
         {
@@ -248,24 +248,26 @@ impl StateMachine for OpenStratos<Init> {
 }
 
 /// Gets the available disk space for OpenStratos.
-fn get_available_disk_space() -> Result<u64> {
-    use libc;
-    use std::ffi::{CString, OsStr};
-    use std::os::unix::ffi::OsStrExt;
+fn get_available_disk_space() -> Result<u64, Error> {
+    use std::ffi::CString;
     use std::mem;
+    use std::os::unix::ffi::OsStrExt;
+
+    use libc;
 
     let dir = CString::new(CONFIG.data_dir().as_os_str().as_bytes())?;
 
     let mut stats: libc::statvfs;
+    // TODO: Why is it safe?
     let res = unsafe {
         stats = mem::uninitialized();
         libc::statvfs(dir.as_ptr(), &mut stats)
     };
 
     if res == 0 {
-        Ok(stats.f_bsize as u64 * stats.f_bavail as u64)
+        Ok(u64::from(stats.f_bsize) * u64::from(stats.f_bavail))
     } else {
-        Err(Error::from(io::Error::last_os_error()))
+        Err(io::Error::last_os_error().into())
     }
 }
 
@@ -273,16 +275,17 @@ fn get_available_disk_space() -> Result<u64> {
 ///
 /// It takes care of disk synchronization.
 #[cfg(not(feature = "no_power_off"))]
-fn power_off() -> Result<()> {
-    use libc::{sync, reboot, RB_POWER_OFF};
+fn power_off() -> Result<(), io::Error> {
+    use libc::{reboot, sync, RB_POWER_OFF};
 
     // Safe because `sync()` is always successful.
     unsafe {
         sync();
     }
 
+    // TODO: Why is it safe?
     if unsafe { reboot(RB_POWER_OFF) } == -1 {
-        Err(Error::from(io::Error::last_os_error()))
+        Err(io::Error::last_os_error())
     } else {
         Ok(())
     }
