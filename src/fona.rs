@@ -243,7 +243,20 @@ impl Fona {
 
     /// Checks the FONA battery level, in voltage.
     pub fn battery_voltage(&mut self) -> Result<f32, Error> {
-        unimplemented!()
+        let response = self.send_command_read("AT+CBC")?;
+        let mut tokens = response.split(',');
+
+        // TODO: check beginning of real response.
+        if tokens.next() == Some("+CBC:") {
+            match tokens.next() {
+                Some(val) => {
+                    Ok(val.parse::<f32>().context(error::Fona::CBCInvalidResponse)? / 1_000_f32)
+                }
+                None => Err(error::Fona::CBCInvalidResponse.into()),
+            }
+        } else {
+            Err(error::Fona::CBCInvalidResponse.into())
+        }
     }
 
     /// Checks the ADC (Analog-Digital converter) voltage of the FONA.

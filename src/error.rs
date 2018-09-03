@@ -201,6 +201,9 @@ pub enum Fona {
     /// Error sending command to FONA.
     #[fail(display = "there was a I/O error when trying to send a command to the FONA module")]
     Command,
+    /// Invalid response to AT+CBC (battery charge) command.
+    #[fail(display = "FONA returned an invalid response to AT+CBC")]
+    CBCInvalidResponse,
     /// Invalid response to AT+CADC? (read ADC) command.
     #[fail(display = "FONA returned an invalid response to AT+CADC?")]
     CADCInvalidResponse,
