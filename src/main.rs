@@ -174,14 +174,14 @@ pub fn main() {
     if let Err(e) = init_loggers() {
         println!(
             "{}",
-            generate_error_string(e, "Error initializing loggers").red()
+            generate_error_string(&e, "Error initializing loggers").red()
         );
         panic!();
     }
     info!("OpenStratos {} starting", env!("CARGO_PKG_VERSION"));
 
     if let Err(e) = run() {
-        let error = generate_error_string(e, "Error running OpenStratos");
+        let error = generate_error_string(&e, "Error running OpenStratos");
         error!("{}", error);
         println!("{}", error.red());
 

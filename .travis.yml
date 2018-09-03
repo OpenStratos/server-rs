@@ -23,10 +23,6 @@ rust:
   - stable
   - 1.26.0
 
-matrix:
-  allow_failures:
-  - rust: nightly
-
 # Update distribution packages before anything else.
 before_install:
 - sudo apt-get update
@@ -38,7 +34,7 @@ before_script:
         rustup component add rustfmt-preview
       fi
   - |
-      if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
+      if [[ "$TRAVIS_RUST_VERSION" == "nightly-2018-08-17" ]]; then
         rustup component add clippy-preview
       fi
   - export PATH=$PATH:~/.cargo/bin
@@ -73,7 +69,7 @@ script:
   # Overall final test (and for coverage report)
   - cargo test
   - |
-      if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
+      if [[ "$TRAVIS_RUST_VERSION" == "nightly-2018-08-17" ]]; then
         cargo clippy
       fi
   - |

@@ -249,7 +249,7 @@ impl Fona {
     /// Checks the ADC (Analog-Digital converter) voltage of the FONA.
     pub fn adc_voltage(&mut self) -> Result<f32, Error> {
         let response = self.send_command_read("AT+CADC?")?;
-        let mut tokens = response.split(",");
+        let mut tokens = response.split(',');
 
         if tokens.next() == Some("+CADC=1") {
             match tokens.next() {
@@ -321,7 +321,7 @@ impl Fona {
         if let Some(ref mut serial) = self.serial {
             debug!(
                 "Sent: `{}\\r\\n`", // TODO Do we need the CRLF when sending Ctrl+Z?
-                if command.as_ref() == &[0x1A] {
+                if command.as_ref() == [0x1A] {
                     Cow::from("Ctrl+Z")
                 } else {
                     String::from_utf8_lossy(command.as_ref())
@@ -397,7 +397,7 @@ impl Drop for Fona {
             Ok(true) => {
                 info!("Turning off FONA…");
                 if let Err(e) = self.turn_off() {
-                    error!("{}", generate_error_string(e, "Error turning FONA off"));
+                    error!("{}", generate_error_string(&e, "Error turning FONA off"));
                 }
                 info!("FONA off.");
             }
@@ -406,7 +406,7 @@ impl Drop for Fona {
                 error!(
                     "{}",
                     generate_error_string(
-                        e,
+                        &e,
                         "Could not check if FONA was on when dropping the FONA object",
                     )
                 );
@@ -426,12 +426,12 @@ pub struct Location {
 
 impl Location {
     /// Gets the latitude of the location, in degrees (°).
-    pub fn latitude(&self) -> f32 {
+    pub fn latitude(self) -> f32 {
         self.latitude
     }
 
     /// Gets the longitude of the location, in degrees (°).
-    pub fn longitude(&self) -> f32 {
+    pub fn longitude(self) -> f32 {
         self.longitude
     }
 }

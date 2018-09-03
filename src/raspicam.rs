@@ -156,7 +156,7 @@ impl Camera {
         if let Some(time) = time {
             let _ = command.arg("-t").arg(format!(
                 "{}",
-                time.as_secs() * 1_000 + time.subsec_nanos() as u64 / 1_000_000
+                time.as_secs() * 1_000 + u64::from(time.subsec_nanos()) / 1_000_000
             ));
         }
         if let Some(rot) = CONFIG.camera_rotation() {
@@ -204,7 +204,7 @@ impl Camera {
                 }
                 Err(e) => {
                     error!("Something had already stopped the video when trying to stop it.");
-                    return Err(e.into());
+                    return Err(e);
                 }
             }
         } else {
@@ -361,7 +361,7 @@ impl Drop for Camera {
                 }
                 Err(e) => error!(
                     "{}",
-                    generate_error_string(e.into(), "Error stopping video recording")
+                    generate_error_string(&e.into(), "Error stopping video recording")
                 ),
             }
         }

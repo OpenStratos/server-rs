@@ -76,7 +76,7 @@ lazy_static! {
     /// Configuration object.
     pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
         Err(e) => {
-            println!("{}", generate_error_string(e, "error loading configuration").red());
+            println!("{}", generate_error_string(&e, "error loading configuration").red());
             panic!();
         },
         Ok(c) => c,
@@ -884,7 +884,7 @@ where
         {
             use std::u32;
 
-            if value > 0 && u32::MAX as i64 >= value {
+            if value > 0 && i64::from(u32::MAX) >= value {
                 Ok(BaudRate::from(value as u32))
             } else {
                 Err(E::custom(format!("baud rate out of range: {}", value)))
@@ -939,7 +939,7 @@ pub struct Flight {
 
 impl Flight {
     /// Gets the expected length for the flight.
-    pub fn length(&self) -> u32 {
+    pub fn length(self) -> u32 {
         self.length
     }
 }
