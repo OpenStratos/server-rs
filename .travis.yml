@@ -21,18 +21,11 @@ rust:
   - nightly
   - beta
   - stable
-  - 1.28.0
-  - 1.27.0
   - 1.26.0
-  - 1.25.0
-  - 1.24.0
-  - 1.23.0
-  - 1.22.0
-  - 1.21.0
-  - 1.20.0
-  - 1.19.0
-  - 1.18.0
-  - 1.17.0
+
+matrix:
+  allow_failures:
+  - rust: nightly
 
 # Update distribution packages before anything else.
 before_install:
@@ -41,8 +34,8 @@ before_install:
 # Add rustfmt and clippy
 before_script:
   - |
-      if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" ]]; then
-        ( cargo install rustfmt --force || true );
+      if [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
+        rustup component add rustfmt-preview
       fi
   - |
       if [[ "$TRAVIS_RUST_VERSION" == "nightly" ]]; then
@@ -85,7 +78,7 @@ script:
       fi
   - |
       if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_RUST_VERSION" == "stable" ]]; then
-          cargo fmt -- --write-mode=diff
+          cargo fmt -- --check
       fi
 
 # Send coverage reports and upload docs
