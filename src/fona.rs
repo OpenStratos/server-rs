@@ -59,7 +59,7 @@ impl Fona {
         let mut settings = SerialPortSettings::default();
         settings.baud_rate = CONFIG.fona().baud_rate();
 
-        let mut serial = Serial::from_path(CONFIG.fona().uart(), &settings)?;
+        let serial = Serial::from_path(CONFIG.fona().uart(), &settings)?;
         // serial.set_timeout(Duration::from_secs(5));
         self.serial = Some(serial);
         info!("Serial connection started.");

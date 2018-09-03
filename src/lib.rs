@@ -49,7 +49,8 @@
 
 extern crate chrono;
 extern crate colored;
-#[macro_use]
+// Macros only required for FONA or Raspicam
+#[cfg_attr(any(feature = "fona", feature = "raspicam"), macro_use)]
 extern crate failure;
 #[macro_use]
 extern crate failure_derive;
@@ -59,12 +60,19 @@ extern crate libc;
 #[macro_use]
 extern crate log;
 extern crate log4rs;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate sysfs_gpio;
-extern crate tokio_serial;
 extern crate toml;
+
+// Only required for GPS, FONA or telemetry
+#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+extern crate serde;
+#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+extern crate tokio_serial;
+
+// Only required for GPS or FONA
+#[cfg(any(feature = "gps", feature = "fona"))]
+extern crate sysfs_gpio;
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";
@@ -95,6 +103,7 @@ pub fn run() -> Result<(), Error> {
     initialize_data_filesystem().context(error::Fs::DataInit)?;
 
     if let Some(state) = State::get_last().context(error::LastState::Read)? {
+        // TODO recover from last state and continue
         unimplemented!()
     } else {
         logic::init().context(error::Logic::Init)?.main_logic()
@@ -133,16 +142,23 @@ where
 /// Initializes all loggers.
 pub fn init_loggers() -> Result<log4rs::Handle, Error> {
     use chrono::Utc;
-    use log::{LevelFilter, Record};
+    use log::LevelFilter;
     use log4rs::{
         append::{console::ConsoleAppender, file::FileAppender},
         config::{Appender, Config, Logger, Root},
         encode::pattern::PatternEncoder,
-        filter::{threshold::ThresholdFilter, Filter, Response},
     };
+    // Only required for GPS, FONA or telemetry
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    use log::Record;
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    use log4rs::filter::{threshold::ThresholdFilter, Filter, Response};
 
-    #[derive(Debug)]
+    /// Filter that filters all but debug records.
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    #[derive(Debug, Clone, Copy)]
     struct DebugFilter;
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
     impl Filter for DebugFilter {
         fn filter(&self, record: &Record) -> Response {
             if record.level() != LevelFilter::Debug {
@@ -153,8 +169,11 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
         }
     }
 
-    #[derive(Debug)]
+    /// Filter that filters all but trace records.
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    #[derive(Debug, Clone, Copy)]
     struct TraceFilter;
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
     impl Filter for TraceFilter {
         fn filter(&self, record: &Record) -> Response {
             if record.level() != LevelFilter::Trace {
@@ -166,8 +185,11 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
     }
 
     let now = Utc::now().format("%Y-%m-%d-%H-%M-%S");
-    let pattern_exact = "[{d(%Y-%m-%d %H:%M:%S%.3f %Z)(utc)}][{l}] - {m}{n}";
     let pattern_naive = "[{d(%Y-%m-%d %H:%M:%S %Z)(utc)}][{l}] - {m}{n}";
+
+    // Only required for GPS, FONA or telemetry
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    let pattern_exact = "[{d(%Y-%m-%d %H:%M:%S%.3f %Z)(utc)}][{l}] - {m}{n}";
 
     let stdout = ConsoleAppender::builder().build();
     let main = FileAppender::builder()
@@ -179,6 +201,8 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
         .build(format!("data/logs/system-{}.log", now))
         .context(error::Log::Appender { name: "system" })?;
 
+    // Only required for GPS, FONA or telemetry
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
     let log_level = if CONFIG.debug() {
         LevelFilter::Trace
     } else {

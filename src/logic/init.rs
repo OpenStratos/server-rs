@@ -1,7 +1,18 @@
 //! Initialization logic.
 
+use std::io;
+
+// Only required for FONA or Raspicam
+#[cfg(any(feature = "fona", feature = "raspicam"))]
 use std::time::Duration;
-use std::{io, thread};
+
+// Only required for FONA
+#[cfg(feature = "fona")]
+use std::thread;
+
+// Only required when no powering off
+#[cfg(feature = "no_power_off")]
+use std::process;
 
 use super::*;
 #[cfg(feature = "fona")]

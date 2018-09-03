@@ -392,7 +392,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_acquiring_fix() {
-        "ACQUIRING_FIX".parse::<State>().unwrap();
+        let _ = "ACQUIRING_FIX".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::AcquiringFix` is translated to *ACQUIRING_FIX* as a string.
@@ -423,7 +423,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_fix_acquired() {
-        "FIX_ACQUIRED".parse::<State>().unwrap();
+        let _ = "FIX_ACQUIRED".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::FixAcquired` is translated to *FIX_ACQUIRED* as a string.
@@ -457,7 +457,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_waiting_launch() {
-        "WAITING_LAUNCH".parse::<State>().unwrap();
+        let _ = "WAITING_LAUNCH".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::WaitingLaunch` is translated to *WAITIN_LAUNCH* as a string.
@@ -488,7 +488,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_going_up() {
-        "GOING_UP".parse::<State>().unwrap();
+        let _ = "GOING_UP".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::GoingUp` is translated to *GOING_UP* as a string.
@@ -519,7 +519,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_going_down() {
-        "GOING_DOWN".parse::<State>().unwrap();
+        let _ = "GOING_DOWN".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::GoingDown` is translated to *GOING_DOWN* as a string.
@@ -550,7 +550,7 @@ mod tests {
     #[should_panic]
     #[cfg(not(feature = "gps"))]
     fn it_from_str_landed() {
-        "LANDED".parse::<State>().unwrap();
+        let _ = "LANDED".parse::<State>().unwrap();
     }
 
     /// Tests that the `State::Landed` is translated to *LANDED* as a string.

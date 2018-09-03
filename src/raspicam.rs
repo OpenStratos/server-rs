@@ -3,13 +3,16 @@
 #![allow(missing_debug_implementations)]
 
 use std::{
-    fmt, fs, io, mem,
+    fs, io, mem,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::Mutex,
     thread,
     time::Duration,
 };
+// Only required for GPS
+#[cfg(feature = "gps")]
+use std::fmt;
 
 use failure::Error;
 

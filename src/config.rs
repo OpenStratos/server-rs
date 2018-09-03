@@ -34,19 +34,39 @@
 
 #![allow(missing_debug_implementations)]
 
-use std::ffi::OsStr;
-use std::fs::File;
-use std::io::{BufReader, Read};
-use std::path::{Path, PathBuf};
-use std::result::Result;
-use std::{fmt, i8, u16, u8};
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+    result::Result,
+    u8,
+};
+
+// Only required for raspicam
+#[cfg(feature = "raspicam")]
+use std::{ffi::OsStr, i8, u16};
+
+// Only required for GPS, FONA or telemetry
+#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+use std::fmt;
 
 use colored::Colorize;
 use failure::{Error, ResultExt};
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use sysfs_gpio::Pin;
-use tokio_serial::BaudRate;
 use toml;
+
+// Only required for GPS, FONA or telemetry
+#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+use serde::de::{self, Deserializer, Visitor};
+#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+use tokio_serial::BaudRate;
+
+// Only required for FONA
+#[cfg(feature = "fona")]
+use serde::de::Deserialize;
+
+// Only required for GPS or FONA
+#[cfg(any(feature = "gps", feature = "fona"))]
+use sysfs_gpio::Pin;
 
 use error;
 use generate_error_string;
@@ -120,7 +140,10 @@ impl Config {
 
     /// Verify the correctness of the configuration, and return a list of errors if invalid.
     fn verify(&self) -> (bool, String) {
+        // Only required for Raspicam
+        #[cfg(feature = "raspicam")]
         let mut errors = String::new();
+        #[cfg(feature = "raspicam")]
         let mut ok = true;
 
         #[cfg(feature = "raspicam")]
@@ -327,7 +350,16 @@ impl Config {
 
         // TODO check GPS configuration
 
-        (ok, errors)
+        // Only required for Raspicam
+        #[cfg(feature = "raspicam")]
+        {
+            (ok, errors)
+        }
+
+        #[cfg(not(feature = "raspicam"))]
+        {
+            (true, String::new())
+        }
     }
 
     /// Gets wether OpenStratos should run in debug mode.
@@ -831,7 +863,7 @@ impl Telemetry {
 }
 
 /// Deserializes a Tokio serial baud rate.
-#[cfg(any(feature = "gps", feature = "telemetry"))]
+#[cfg(any(feature = "gps", feature = "telemetry", feature = "fona"))]
 fn deserialize_baudrate<'de, D>(deserializer: D) -> Result<BaudRate, D::Error>
 where
     D: Deserializer<'de>,
@@ -914,9 +946,6 @@ impl Flight {
 
 #[cfg(test)]
 mod tests {
-    use sysfs_gpio::Pin;
-    use tokio_serial::BaudRate;
-
     use super::*;
 
     /// Loads the default configuration and checks it.

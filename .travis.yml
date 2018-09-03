@@ -21,6 +21,17 @@ rust:
   - nightly
   - beta
   - stable
+  - 1.28.0
+  - 1.27.0
+  - 1.26.0
+  - 1.25.0
+  - 1.24.0
+  - 1.23.0
+  - 1.22.0
+  - 1.21.0
+  - 1.20.0
+  - 1.19.0
+  - 1.18.0
   - 1.17.0
 
 # Update distribution packages before anything else.
@@ -46,7 +57,6 @@ script:
       if [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
         cargo package
       fi
-  - cargo test
   - cargo test --features="no_power_off"
   - cargo test --no-default-features
   - cargo test --no-default-features --features="no_power_off"

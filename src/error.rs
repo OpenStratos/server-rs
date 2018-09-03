@@ -226,6 +226,7 @@ pub enum Raspicam {
     },
 }
 
+#[cfg(feature = "raspicam")]
 impl fmt::Display for Raspicam {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -244,18 +245,3 @@ impl fmt::Display for Raspicam {
         }
     }
 }
-
-// error_chain!{
-//     foreign_links {
-//         Io(::std::io::Error) #[doc = "Standard library I/O error."];
-//         Toml(::toml::de::Error) #[doc = "TOML deserializing error."];
-//         Log(::log4rs::Error) #[doc = "Log error."];
-//         LogSet(::log::SetLoggerError) #[doc = "Error setting up logger."];
-//         LogConfig(::log4rs::config::Errors) #[doc = "Logger configuration error."];
-//         FromUTF8(::std::string::FromUtf8Error) #[doc = "Error creating a String from UTF-8 \
-//     data."];
-//         NulError(::std::ffi::NulError) #[doc = "A nul byte was found in the vector provided."];
-//         GPIO(::sysfs_gpio::Error) #[doc = "A GPIO library error."];
-//         SerialPort(::serialport::Error) #[doc = "Serial port error"];
-//     }
-// }
