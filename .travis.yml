@@ -31,6 +31,7 @@ before_install:
 before_script:
   - |
       if [[ "$TRAVIS_RUST_VERSION" == "stable" ]]; then
+        cargo uninstall rustfmt &&
         rustup component add rustfmt-preview
       fi
   - |
