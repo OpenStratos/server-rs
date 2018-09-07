@@ -6,7 +6,7 @@
 
 use std::{fmt, io::Write, sync::Mutex, thread, time::Duration};
 
-use failure::{Error, ResultExt};
+use failure::{Error, Fail, ResultExt};
 use tokio_serial::{Serial, SerialPortSettings};
 
 use config::CONFIG;
@@ -17,6 +17,16 @@ lazy_static! {
     /// The FONA module control structure.
     pub static ref FONA: Mutex<Fona> = Mutex::new(Fona { serial: None });
 }
+
+/// Minimum battery voltage for the FONA battery.
+///
+/// In a 1S LiPo battery, it should be 3.7 volts.
+pub const BAT_FONA_MIN_V: f32 = 3.7;
+
+/// Maximum battery voltage for the FONA battery.
+///
+/// In a 1S LiPo battery, it should be 4.2 volts.
+pub const BAT_FONA_MAX_V: f32 = 4.2;
 
 /// Adafruit FONA control structure.
 pub struct Fona {
@@ -156,8 +166,8 @@ impl Fona {
             }
 
             if self.send_command_read("AT+CMGF=1")? != "OK" {
-                error!("Error sending SMS on `AT+CMGD=1` response.");
-                return Err(error::Fona::SmsAtCmgd.into());
+                error!("Error sending SMS on `AT+CMGF=1` response.");
+                return Err(error::Fona::SmsAtCmgf.into());
             }
 
             if self.send_command_read_limit(
@@ -166,7 +176,7 @@ impl Fona {
             )? != "> "
             {
                 error!("Error sending SMS on 'AT+CMGS' response.");
-                return Err(error::Fona::SmsAtCmgd.into());
+                return Err(error::Fona::SmsAtCmgs.into());
             }
 
             if let Some(ref mut serial) = self.serial {
@@ -232,13 +242,141 @@ impl Fona {
     }
 
     /// Gets the current location using GPRS.
-    pub fn get_location(&mut self) -> Result<Location, Error> {
+    pub fn location(&mut self) -> Result<Location, Error> {
+        if self.send_command_read("AT+CMGF=1")? != "OK" {
+            error!("Error getting location on `AT+CMGF=1` response.");
+            return Err(error::Fona::LocAtCmgf.into());
+        }
+
+        if self.send_command_read("AT+CGATT=1")? != "OK" {
+            error!("Error getting location on `AT+CGATT=1` response.");
+
+            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+                error!("Error turning GPRS down.");
+
+                return Err(error::Fona::LocAtGprsDown
+                    .context(error::Fona::LocAtCgatt)
+                    .into());
+            } else {
+                return Err(error::Fona::LocAtCgatt.into());
+            }
+        }
+
+        // if (this->send_command_read("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"") != "OK")
+        // {
+        //     this->logger->log("Error getting location on 'AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"' response.");
+        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
+        //     {
+        //         this->logger->log("Error turning GPRS down.");
+        //     }
+        //     else
+        //     {
+        //         this->logger->log("GPRS off.");
+        //     }
+
+        //     this->occupied = false;
+        //     return false;
+        // }
+
+        // if (this->send_command_read("AT+SAPBR=3,1,\"APN\",\""+string(GSM_LOC_SERV)+"\"") != "OK")
+        // {
+        //     this->logger->log("Error getting location on 'AT+SAPBR=3,1,\"APN\",\""+string(GSM_LOC_SERV)+"\"' response.");
+        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
+        //     {
+        //         this->logger->log("Error turning GPRS down.");
+        //     }
+        //     else
+        //     {
+        //         this->logger->log("GPRS off.");
+        //     }
+
+        //     this->occupied = false;
+        //     return false;
+        // }
+
+        // this->serial->println("AT+SAPBR=1,1");
+        // this->command_logger->log("Sent: 'AT+SAPBR=1,1'");
+        // this->serial->read_line(2); // Eat message echo
+
+        // string response = this->serial->read_line();
+        // this->command_logger->log("Received: '"+ response +"'");
+
+        // if (response != "OK")
+        // {
+        //     this->logger->log("Error getting location on 'AT+SAPBR=1,1' response.");
+        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
+        //     {
+        //         this->logger->log("Error turning GPRS down.");
+        //     }
+        //     else
+        //     {
+        //         this->logger->log("GPRS off.");
+        //     }
+
+        //     this->occupied = false;
+        //     return false;
+        // }
+
+        // this->serial->println("AT+CIPGSMLOC=1,1");
+        // this->serial->read_line(10); // Eat message echo
+        // response = this->serial->read_line();
+        // this->command_logger->log("Received: '"+ response +"'");
+
+        // stringstream ss(response);
+        // string data;
+        // vector<string> s_data;
+
+        // // We put all fields in a vector
+        // while(getline(ss, data, ','))
+        // {
+        //     s_data.push_back(data);
+        // }
+
+        // latitude = stod(s_data[2]);
+        // longitude = stod(s_data[1]);
+
+        // this->serial->read_line(); // Eat new line
+        // response = this->serial->read_line();
+        // this->command_logger->log("Received: '"+ response +"'");
+        // if (response != "OK")
+        // {
+        //     this->logger->log("Error getting location on 'AT+CIPGSMLOC=1,1' response.");
+        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
+        //     {
+        //         this->logger->log("Error turning GPRS down.");
+        //     }
+        //     else
+        //     {
+        //         this->logger->log("GPRS off.");
+        //     }
+
+        //     this->occupied = false;
+        //     return false;
+        // }
+
+        // this->serial->println("AT+SAPBR=0,1");
+        // this->serial->read_line(2); // Eat message echo
+        // response = this->serial->read_line();
+        // this->command_logger->log("Received: '"+ response +"'");
+        // if (response != "OK")
+        // {
+        //     this->logger->log("Error turning GPRS down.");
+        // }
+        // else
+        // {
+        //     this->logger->log("GPRS off.");
+        // }
+
+        // this->occupied = false;
+        // return true;
+
         unimplemented!()
     }
 
     /// Checks the FONA battery level, in percentage.
     pub fn battery_percent(&mut self) -> Result<f32, Error> {
-        unimplemented!()
+        let bat_voltage = self.battery_voltage()?;
+        Ok((bat_voltage / 1000.0 - BAT_FONA_MIN_V) / (BAT_FONA_MAX_V - BAT_FONA_MIN_V))
     }
 
     /// Checks the FONA battery level, in voltage.

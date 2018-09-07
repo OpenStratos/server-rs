@@ -177,15 +177,27 @@ pub enum Fona {
     /// SMS was too long to be sent.
     #[fail(display = "SMS was longer than the 160 character limit")]
     LongSms,
-    /// Error sending SMS on 'AT+CMGD=1' response.
-    #[fail(display = "error sending SMS on `AT+CMGD=1` response")]
-    SmsAtCmgd,
-    /// Error reading +CMGS response.
-    #[fail(display = "error reading +CMGS response after sending SMS")]
+    /// Error sending SMS on 'AT+CMGF=1' response.
+    #[fail(display = "error sending SMS on `AT+CMGF=1` response")]
+    SmsAtCmgf,
+    /// Error sending AT+CMGS message when sending an SMS.
+    #[fail(display = "error sending AT+CMGS message sending SMS")]
+    SmsAtCmgs,
+    /// Error reading +CMGS response sending SMS.
+    #[fail(display = "error reading +CMGS response sending SMS")]
     SmsCmgs,
     /// No OK received after sending SMS.
     #[fail(display = "no OK received after sending SMS")]
     SmsOk,
+    /// Error getting location on 'AT+CMGF=1' response.
+    #[fail(display = "error getting location on `AT+CMGF=1` response")]
+    LocAtCmgf,
+    /// Error getting location on 'AT+CGATT=1' response.
+    #[fail(display = "error getting location on `AT+CGATT=1` response")]
+    LocAtCgatt,
+    /// Error turning GPRS down.
+    #[fail(display = "error turning GPRS down")]
+    LocAtGprsDown,
     /// Error reading CRLF (*\r\n*) after sending command to FONA.
     #[fail(
         display = "an error occurred when trying to read CRLF (\\r\\n) after sending command to \
