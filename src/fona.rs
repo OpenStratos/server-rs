@@ -590,4 +590,11 @@ mod tests {
             .send_sms("OpenStratos test SMS")
             .unwrap();
     }
+
+    #[test]
+    #[ignore]
+    fn it_location() {
+        FONA.lock().unwrap().initialize().unwrap();
+        let _ = FONA.lock().unwrap().location().unwrap();
+    }
 }
