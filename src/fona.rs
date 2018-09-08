@@ -585,6 +585,9 @@ mod tests {
     #[ignore]
     fn it_send_sms() {
         FONA.lock().unwrap().initialize().unwrap();
-        FONA.lock().unwrap().send_sms("TEST SMS").unwrap();
+        FONA.lock()
+            .unwrap()
+            .send_sms("OpenStratos test SMS")
+            .unwrap();
     }
 }
