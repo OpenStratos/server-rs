@@ -572,10 +572,19 @@ impl Location {
 
 #[cfg(test)]
 mod tests {
+    use super::FONA;
 
     /// Tests FONA initialization.
     #[test]
+    #[ignore]
     fn it_initialize() {
-        // FONA.lock().unwrap().initialize().unwrap();
+        FONA.lock().unwrap().initialize().unwrap();
+    }
+
+    #[test]
+    #[ignore]
+    fn it_send_sms() {
+        FONA.lock().unwrap().initialize().unwrap();
+        FONA.lock().unwrap().send_sms("TEST SMS").unwrap();
     }
 }
