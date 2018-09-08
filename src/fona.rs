@@ -166,29 +166,30 @@ impl Fona {
             }
 
             if self.send_command_read("AT+CMGF=1")? != "OK" {
-                error!("Error sending SMS on `AT+CMGF=1` response.");
+                error!("Error sending SMS on `AT+CMGF=1` command.");
                 return Err(error::Fona::SmsAtCmgf.into());
             }
 
-            if self.send_command_read_limit(
-                format!("AT+CMGS=\"{}\"", CONFIG.fona().sms_phone().as_str()),
-                2,
-            )? != "> "
-            {
-                error!("Error sending SMS on 'AT+CMGS' response.");
+            let cmgs_command = format!(r#"AT+CMGS="{}""#, CONFIG.fona().sms_phone().as_str());
+            if self.send_command_read_limit(&cmgs_command, 2)? != "> " {
+                error!("Error sending SMS on `{}` command.", cmgs_command);
                 return Err(error::Fona::SmsAtCmgs.into());
             }
 
             if let Some(ref mut serial) = self.serial {
-                debug!("Sent: `{}`", message.as_ref());
+                debug!("Sending message…");
 
                 // Write message
                 serial
                     .write_all(message.as_ref().as_bytes())
                     .context(error::Fona::Command)?;
 
+                debug!("Sent: `{}`", message.as_ref());
+
                 // Write Ctrl+Z
                 serial.write_all(&[0x1A]).context(error::Fona::Command)?;
+
+                debug!("Sent Ctrl+Z");
             } else {
                 error!(
                     "No serial when trying to send message `{}`",
@@ -258,119 +259,101 @@ impl Fona {
                     .context(error::Fona::LocAtCgatt)
                     .into());
             } else {
+                info!("GPRS off.");
                 return Err(error::Fona::LocAtCgatt.into());
             }
         }
 
-        // if (this->send_command_read("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"") != "OK")
-        // {
-        //     this->logger->log("Error getting location on 'AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"' response.");
-        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
-        //     {
-        //         this->logger->log("Error turning GPRS down.");
-        //     }
-        //     else
-        //     {
-        //         this->logger->log("GPRS off.");
-        //     }
+        if self.send_command_read(r#"AT+SAPBR=3,1,"CONTYPE","GPRS""#)? != "OK" {
+            error!(r#"Error getting location on `AT+SAPBR=3,1,"CONTYPE","GPRS"` response."#);
 
-        //     this->occupied = false;
-        //     return false;
-        // }
+            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+                error!("Error turning GPRS down.");
 
-        // if (this->send_command_read("AT+SAPBR=3,1,\"APN\",\""+string(GSM_LOC_SERV)+"\"") != "OK")
-        // {
-        //     this->logger->log("Error getting location on 'AT+SAPBR=3,1,\"APN\",\""+string(GSM_LOC_SERV)+"\"' response.");
-        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
-        //     {
-        //         this->logger->log("Error turning GPRS down.");
-        //     }
-        //     else
-        //     {
-        //         this->logger->log("GPRS off.");
-        //     }
+                return Err(error::Fona::LocAtGprsDown
+                    .context(error::Fona::LocAtSapbrContype)
+                    .into());
+            } else {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbrContype.into());
+            }
+        }
 
-        //     this->occupied = false;
-        //     return false;
-        // }
+        let apn_message = format!(
+            r#"AT+SAPBR=3,1,"APN","{}""#,
+            CONFIG.fona().location_service()
+        );
+        if self.send_command_read(&apn_message)? != "OK" {
+            error!("Error getting location on `{}` response.", apn_message);
 
-        // this->serial->println("AT+SAPBR=1,1");
-        // this->command_logger->log("Sent: 'AT+SAPBR=1,1'");
-        // this->serial->read_line(2); // Eat message echo
+            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+                error!("Error turning GPRS down.");
 
-        // string response = this->serial->read_line();
-        // this->command_logger->log("Received: '"+ response +"'");
+                return Err(error::Fona::LocAtGprsDown
+                    .context(error::Fona::LocAtSapbrApn)
+                    .into());
+            } else {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbrApn.into());
+            }
+        }
 
-        // if (response != "OK")
-        // {
-        //     this->logger->log("Error getting location on 'AT+SAPBR=1,1' response.");
-        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
-        //     {
-        //         this->logger->log("Error turning GPRS down.");
-        //     }
-        //     else
-        //     {
-        //         this->logger->log("GPRS off.");
-        //     }
+        if self.send_command_read("AT+SAPBR=1,1")? != "OK" {
+            error!("Error getting location on `AT+SAPBR=1,1` response.");
 
-        //     this->occupied = false;
-        //     return false;
-        // }
+            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+                error!("Error turning GPRS down.");
 
-        // this->serial->println("AT+CIPGSMLOC=1,1");
-        // this->serial->read_line(10); // Eat message echo
-        // response = this->serial->read_line();
-        // this->command_logger->log("Received: '"+ response +"'");
+                return Err(error::Fona::LocAtGprsDown
+                    .context(error::Fona::LocAtSapbr)
+                    .into());
+            } else {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbr.into());
+            }
+        }
 
-        // stringstream ss(response);
-        // string data;
-        // vector<string> s_data;
+        let location_response = self.send_command_read("AT+CIPGSMLOC=1,1")?;
+        let mut location_response_iter = location_response.split(',');
+        // TODO: response could not be valid
+        let longitude = location_response_iter
+            .nth(1)
+            .ok_or(error::Fona::LocLon)?
+            .parse::<f32>()
+            .context(error::Fona::LocLon)?;
+        let latitude = location_response_iter
+            .next()
+            .ok_or(error::Fona::LocLat)?
+            .parse::<f32>()
+            .context(error::Fona::LocLat)?;
 
-        // // We put all fields in a vector
-        // while(getline(ss, data, ','))
-        // {
-        //     s_data.push_back(data);
-        // }
+        if self.read_line()? != "OK" {
+            error!("Error getting location on `AT+CIPGSMLOC=1,1` response.");
 
-        // latitude = stod(s_data[2]);
-        // longitude = stod(s_data[1]);
+            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+                error!("Error turning GPRS down.");
 
-        // this->serial->read_line(); // Eat new line
-        // response = this->serial->read_line();
-        // this->command_logger->log("Received: '"+ response +"'");
-        // if (response != "OK")
-        // {
-        //     this->logger->log("Error getting location on 'AT+CIPGSMLOC=1,1' response.");
-        //     if (this->send_command_read("AT+SAPBR=0,1") != "OK")
-        //     {
-        //         this->logger->log("Error turning GPRS down.");
-        //     }
-        //     else
-        //     {
-        //         this->logger->log("GPRS off.");
-        //     }
+                return Err(error::Fona::LocAtGprsDown
+                    .context(error::Fona::LocAtCipgsmloc)
+                    .into());
+            } else {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtCipgsmloc.into());
+            }
+        }
 
-        //     this->occupied = false;
-        //     return false;
-        // }
+        if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            error!("Error turning GPRS down.");
 
-        // this->serial->println("AT+SAPBR=0,1");
-        // this->serial->read_line(2); // Eat message echo
-        // response = this->serial->read_line();
-        // this->command_logger->log("Received: '"+ response +"'");
-        // if (response != "OK")
-        // {
-        //     this->logger->log("Error turning GPRS down.");
-        // }
-        // else
-        // {
-        //     this->logger->log("GPRS off.");
-        // }
+            return Err(error::Fona::LocAtGprsDown.into());
+        } else {
+            info!("GPRS off.");
+        }
 
-        // this->occupied = false;
-        // return true;
-
-        unimplemented!()
+        Ok(Location {
+            latitude,
+            longitude,
+        })
     }
 
     /// Checks the FONA battery level, in percentage.
@@ -471,7 +454,7 @@ impl Fona {
 
         if let Some(ref mut serial) = self.serial {
             debug!(
-                "Sent: `{}\\r\\n`", // TODO Do we need the CRLF when sending Ctrl+Z?
+                "Sent command: `{}\\r\\n`", // TODO do we need the CRLF when sending Ctrl+Z?
                 if command.as_ref() == [0x1A] {
                     Cow::from("Ctrl+Z")
                 } else {
@@ -546,7 +529,7 @@ impl Drop for Fona {
     fn drop(&mut self) {
         match self.is_on() {
             Ok(true) => {
-                info!("Turning off FONA…");
+                info!("Turning FONA off…");
                 if let Err(e) = self.turn_off() {
                     error!("{}", generate_error_string(&e, "Error turning FONA off"));
                 }

@@ -76,8 +76,7 @@ lazy_static! {
     /// Configuration object.
     pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
         Err(e) => {
-            println!("{}", generate_error_string(&e, "error loading configuration").red());
-            panic!();
+            panic!("{}", generate_error_string(&e, "error loading configuration").red());
         },
         Ok(c) => c,
     };
@@ -793,6 +792,11 @@ impl Fona {
     /// Gets the phone number for SMSs.
     pub fn sms_phone(&self) -> &PhoneNumber {
         &self.sms_phone
+    }
+
+    /// Gets the location service for GSM location retrieval.
+    pub fn location_service(&self) -> &str {
+        &self.location_service
     }
 }
 

@@ -177,27 +177,47 @@ pub enum Fona {
     /// SMS was too long to be sent.
     #[fail(display = "SMS was longer than the 160 character limit")]
     LongSms,
-    /// Error sending SMS on 'AT+CMGF=1' response.
+    /// Error sending SMS on `AT+CMGF=1` response.
     #[fail(display = "error sending SMS on `AT+CMGF=1` response")]
     SmsAtCmgf,
-    /// Error sending AT+CMGS message when sending an SMS.
+    /// Error sending `AT+CMGS` message when sending an SMS.
     #[fail(display = "error sending AT+CMGS message sending SMS")]
     SmsAtCmgs,
-    /// Error reading +CMGS response sending SMS.
+    /// Error reading `+CMGS` response sending SMS.
     #[fail(display = "error reading +CMGS response sending SMS")]
     SmsCmgs,
     /// No OK received after sending SMS.
     #[fail(display = "no OK received after sending SMS")]
     SmsOk,
-    /// Error getting location on 'AT+CMGF=1' response.
+    /// Error getting location on `AT+CMGF=1` response.
     #[fail(display = "error getting location on `AT+CMGF=1` response")]
     LocAtCmgf,
-    /// Error getting location on 'AT+CGATT=1' response.
+    /// Error getting location on `AT+CGATT=1` response.
     #[fail(display = "error getting location on `AT+CGATT=1` response")]
     LocAtCgatt,
+    /// Error getting location on `AT+SAPBR=1,1` response.
+    #[fail(display = "Error getting location on `AT+SAPBR=1,1` response.")]
+    LocAtSapbr,
+    /// Error getting location on `AT+SAPBR=3,1,"CONTYPE","GPRS"` response.
+    #[fail(display = "Error getting location on `AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"` response.")]
+    LocAtSapbrContype,
+    /// Error getting location on `AT+SAPBR=3,1,"APN","{fona.location_service}"` response.
+    #[fail(
+        display = "Error getting location on `AT+SAPBR=3,1,\"APN\",\"{{fona.location_service}}\"` response."
+    )]
+    LocAtSapbrApn,
+    /// Error getting location on `AT+CIPGSMLOC=1,1` response.
+    #[fail(display = "Error getting location on `AT+CIPGSMLOC=1,1` response.")]
+    LocAtCipgsmloc,
     /// Error turning GPRS down.
     #[fail(display = "error turning GPRS down")]
     LocAtGprsDown,
+    /// Error getting longitude via GPRS.
+    #[fail(display = "error getting longitude via GPRS")]
+    LocLon,
+    /// Error getting latitude via GPRS.
+    #[fail(display = "error getting latitude via GPRS")]
+    LocLat,
     /// Error reading CRLF (*\r\n*) after sending command to FONA.
     #[fail(
         display = "an error occurred when trying to read CRLF (\\r\\n) after sending command to \
