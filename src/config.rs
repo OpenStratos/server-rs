@@ -1233,6 +1233,7 @@ mod tests {
         let config = Config {
             debug: None,
             flight,
+            battery,
             data_dir: PathBuf::from("data"),
             picture,
             video,
@@ -1244,6 +1245,7 @@ mod tests {
         let config = Config {
             debug: None,
             flight,
+            battery,
             data_dir: PathBuf::from("data"),
             picture,
             video,
