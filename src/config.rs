@@ -87,15 +87,19 @@ lazy_static! {
 pub struct Config {
     /// Wether the application should run in debug mode or not.
     debug: Option<bool>,
+    /// The data directory.
+    data_dir: PathBuf,
+    /// Flight configuration.
+    flight: Flight,
+    /// Battery configuration.
+    #[cfg(feature = "fona")]
+    battery: Battery,
     /// Video configuration.
     #[cfg(feature = "raspicam")]
     video: Video,
     /// Picture configuration.
     #[cfg(feature = "raspicam")]
     picture: Picture,
-    /// The rotation of the camera.
-    #[cfg(feature = "raspicam")]
-    camera_rotation: Option<u16>,
     /// GPS configuration.
     #[cfg(feature = "gps")]
     gps: Gps,
@@ -105,10 +109,6 @@ pub struct Config {
     ///Telemetry configuration.
     #[cfg(feature = "telemetry")]
     telemetry: Telemetry,
-    /// Flight information.
-    flight: Flight,
-    /// The data directory.
-    data_dir: PathBuf,
 }
 
 impl Config {
@@ -160,6 +160,14 @@ impl Config {
                 errors.push_str(&format!(
                     "picture height must be below or equal to 2464px, found {}px\n",
                     self.picture.height
+                ));
+            }
+
+            if let Some(r @ 360...u16::MAX) = self.picture.rotation {
+                ok = false;
+                errors.push_str(&format!(
+                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
+                    r
                 ));
             }
 
@@ -249,36 +257,20 @@ impl Config {
                     self.video.height
                 ));
             }
+
+            if let Some(r @ 360...u16::MAX) = self.video.rotation {
+                ok = false;
+                errors.push_str(&format!(
+                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
+                    r
+                ));
+            }
+
             if self.video.fps > 90 {
                 ok = false;
                 errors.push_str(&format!(
                     "video framerate must be below or equal to 90fps, found {}fps\n",
                     self.video.fps
-                ));
-            }
-
-            // Video modes.
-            match (self.video.width, self.video.height, self.video.fps) {
-                (2592, 1944, 1...15)
-                | (1920, 1080, 1...30)
-                | (1296, 972, 1...42)
-                | (1296, 730, 1...49)
-                | (640, 480, 1...90) => {}
-                (w, h, f) => {
-                    ok = false;
-                    errors.push_str(&format!(
-                        "video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
-                         1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} {}fps\n",
-                        w, h, f
-                    ));
-                }
-            }
-
-            if let Some(r @ 360...u16::MAX) = self.camera_rotation {
-                ok = false;
-                errors.push_str(&format!(
-                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
-                    r
                 ));
             }
 
@@ -345,6 +337,23 @@ impl Config {
                 }
                 _ => {}
             }
+
+            // Video modes.
+            match (self.video.width, self.video.height, self.video.fps) {
+                (2592, 1944, 1...15)
+                | (1920, 1080, 1...30)
+                | (1296, 972, 1...42)
+                | (1296, 730, 1...49)
+                | (640, 480, 1...90) => {}
+                (w, h, f) => {
+                    ok = false;
+                    errors.push_str(&format!(
+                        "video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
+                         1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} {}fps\n",
+                        w, h, f
+                    ));
+                }
+            }
         }
 
         // TODO check GPS configuration
@@ -366,6 +375,16 @@ impl Config {
         self.debug == Some(true)
     }
 
+    /// Gets battery configuration
+    pub fn battery(&self) -> Battery {
+        self.battery
+    }
+
+    /// Gets the flight information.
+    pub fn flight(&self) -> Flight {
+        self.flight
+    }
+
     /// Gets the configuration for video.
     #[cfg(feature = "raspicam")]
     pub fn video(&self) -> &Video {
@@ -376,12 +395,6 @@ impl Config {
     #[cfg(feature = "raspicam")]
     pub fn picture(&self) -> &Picture {
         &self.picture
-    }
-
-    /// Gets the configured camera rotation.
-    #[cfg(feature = "raspicam")]
-    pub fn camera_rotation(&self) -> Option<u16> {
-        self.camera_rotation
     }
 
     /// Gets the GPS configuration.
@@ -402,14 +415,81 @@ impl Config {
         &self.telemetry
     }
 
-    /// Gets the flight information.
-    pub fn flight(&self) -> &Flight {
-        &self.flight
-    }
-
     /// Gets the configured data directory.
     pub fn data_dir(&self) -> &Path {
         self.data_dir.as_path()
+    }
+}
+
+/// Flight configuration structure.
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct Flight {
+    /// Approximate expected flight length, in minutes.
+    length: u32,
+    /// Approximate expected maximum height, in meters.
+    expected_max_height: u32,
+}
+
+impl Flight {
+    /// Gets the approximate expected flight length, in minutes.
+    pub fn length(self) -> u32 {
+        self.length
+    }
+
+    /// Gets the approximate expected maximum height, in meters.
+    pub fn expected_max_height(self) -> u32 {
+        self.expected_max_height
+    }
+}
+
+/// Battery configuration structure.
+#[cfg(feature = "fona")]
+#[derive(Debug, Clone, Copy, Deserialize)]
+pub struct Battery {
+    /// Minimum voltage for the main battery when empty, at 0%, in volts (`V`).
+    main_min: f32,
+    /// Maximum voltage for the main battery when full, at 100%, in volts (`V`).
+    main_max: f32,
+    /// Minimum voltage for the FONA battery when empty, at 0%, in volts (`V`).
+    fona_min: f32,
+    /// Maximum voltage for the FONA battery when full, at 100%, in volts (`V`).
+    fona_max: f32,
+    /// Minimum admisible percentage for main battery for the launch.
+    main_min_percent: f32,
+    /// Minimum admisible percentage for FONA battery for the launch.
+    fona_min_percent: f32,
+}
+
+#[cfg(feature = "fona")]
+impl Battery {
+    /// Gets the minimum voltage for the main battery when empty, at 0%, in volts (`V`).
+    pub fn main_min(self) -> f32 {
+        self.main_min
+    }
+
+    /// Gets the maximum voltage for the main battery when full, at 100%, in volts (`V`).
+    pub fn main_max(self) -> f32 {
+        self.main_max
+    }
+
+    /// Gets the minimum voltage for the FONA battery when empty, at 0%, in volts (`V`).
+    pub fn fona_min(self) -> f32 {
+        self.fona_min
+    }
+
+    /// Gets the maximum voltage for the FONA battery when full, at 0%, in volts (`V`).
+    pub fn fona_max(self) -> f32 {
+        self.fona_min
+    }
+
+    /// Gets the minimum admisible percentage for main battery for the launch.
+    pub fn main_min_percent(self) -> f32 {
+        self.main_min_percent
+    }
+
+    /// Gets the minimum admisible percentage for FONA battery for the launch.
+    pub fn fona_min_percent(self) -> f32 {
+        self.fona_min_percent
     }
 }
 
@@ -421,6 +501,8 @@ pub struct Video {
     height: u16,
     /// Width of the video, in px.
     width: u16,
+    /// Rotation of the camera, in degrees (°).
+    rotation: Option<u16>,
     /// Frames per second (FPS) for the video.
     fps: u8,
     /// Bit rate for the video, in bps (bits per second).
@@ -448,67 +530,72 @@ pub struct Video {
 #[cfg(feature = "raspicam")]
 impl Video {
     /// Gets the configured video height for the camera, in pixels.
-    pub fn height(&self) -> u16 {
+    pub fn height(self) -> u16 {
         self.height
     }
 
     /// Gets the configured video width for the camera, in pixels.
-    pub fn width(&self) -> u16 {
+    pub fn width(self) -> u16 {
         self.width
     }
 
+    /// Gets the configured picture rotation for the camera, in degrees (°).
+    pub fn rotation(self) -> Option<u16> {
+        self.rotation
+    }
+
     /// Gets the configured video framerate for the camera, in frames per second.
-    pub fn fps(&self) -> u8 {
+    pub fn fps(self) -> u8 {
         self.fps
     }
 
     /// Gets the configured bitrate for videos.
-    pub fn bitrate(&self) -> u32 {
+    pub fn bitrate(self) -> u32 {
         self.bitrate
     }
 
     /// Gets the configured exposure for videos.
-    pub fn exposure(&self) -> Option<Exposure> {
+    pub fn exposure(self) -> Option<Exposure> {
         self.exposure
     }
 
     /// Gets the configured brightness for videos.
-    pub fn brightness(&self) -> Option<u8> {
+    pub fn brightness(self) -> Option<u8> {
         self.brightness
     }
 
     /// Gets the configured contrast for videos.
-    pub fn contrast(&self) -> Option<i8> {
+    pub fn contrast(self) -> Option<i8> {
         self.contrast
     }
 
     /// Gets the configured sharpness for videos.
-    pub fn sharpness(&self) -> Option<i8> {
+    pub fn sharpness(self) -> Option<i8> {
         self.sharpness
     }
 
     /// Gets the configured saturation for videos.
-    pub fn saturation(&self) -> Option<i8> {
+    pub fn saturation(self) -> Option<i8> {
         self.saturation
     }
 
     /// Gets the configured ISO for videos.
-    pub fn iso(&self) -> Option<u16> {
+    pub fn iso(self) -> Option<u16> {
         self.iso
     }
 
     /// Gets if video stabilization needs to be turned on.
-    pub fn stabilization(&self) -> bool {
+    pub fn stabilization(self) -> bool {
         self.stabilization == Some(true)
     }
 
     /// Gets the configured EV compensation for videos.
-    pub fn ev(&self) -> Option<i8> {
+    pub fn ev(self) -> Option<i8> {
         self.ev
     }
 
     /// Gets the configured automatic white balance for videos.
-    pub fn white_balance(&self) -> Option<WhiteBalance> {
+    pub fn white_balance(self) -> Option<WhiteBalance> {
         self.white_balance
     }
 }
@@ -521,6 +608,8 @@ pub struct Picture {
     height: u16,
     /// Width of the picture, in px.
     width: u16,
+    /// Rotation of the camera, in degrees (°).
+    rotation: Option<u16>,
     /// Quality of the picture, in px.
     quality: u8,
     /// Wether to add EXIF data to pictures or not.
@@ -544,74 +633,102 @@ pub struct Picture {
     ev: Option<i8>,
     /// White balance configuration.
     white_balance: Option<WhiteBalance>,
+    /// Interval between pictures during flight.
+    interval: u32,
+    /// Repeat each picture after these seconds (for issues with probe movement).
+    repeat: Option<u32>,
+    /// Timeout for first picture after launch, in seconds.
+    first_timeout: u32,
 }
 
 #[cfg(feature = "raspicam")]
 impl Picture {
     /// Gets the configured picture height for the camera, in pixels.
-    pub fn height(&self) -> u16 {
+    pub fn height(self) -> u16 {
         self.height
     }
 
     /// Gets the configured picture width for the camera, in pixels.
-    pub fn width(&self) -> u16 {
+    pub fn width(self) -> u16 {
         self.width
     }
 
-    /// Gets the configured picture quality for the camera, in pixels.
-    pub fn quality(&self) -> u8 {
+    /// Gets the configured picture rotation for the camera, in degrees (°).
+    pub fn rotation(self) -> Option<u16> {
+        self.rotation
+    }
+
+    /// Gets the configured picture quality for the camera.
+    pub fn quality(self) -> u8 {
         self.quality
     }
 
     /// Gets wether the camera should add available EXIF information to pictures.
     #[cfg(feature = "gps")]
-    pub fn exif(&self) -> bool {
+    pub fn exif(self) -> bool {
         self.exif == Some(true)
     }
 
     /// Gets wether the camera should add raw sensor data to pictures as JPEG metadata.
-    pub fn raw(&self) -> bool {
+    pub fn raw(self) -> bool {
         self.raw == Some(true)
     }
 
     /// Gets the configured exposure for pictures.
-    pub fn exposure(&self) -> Option<Exposure> {
+    pub fn exposure(self) -> Option<Exposure> {
         self.exposure
     }
 
     /// Gets the configured brightness for pictures.
-    pub fn brightness(&self) -> Option<u8> {
+    pub fn brightness(self) -> Option<u8> {
         self.brightness
     }
 
     /// Gets the configured contrast for pictures.
-    pub fn contrast(&self) -> Option<i8> {
+    pub fn contrast(self) -> Option<i8> {
         self.contrast
     }
 
     /// Gets the configured sharpness for pictures.
-    pub fn sharpness(&self) -> Option<i8> {
+    pub fn sharpness(self) -> Option<i8> {
         self.sharpness
     }
 
     /// Gets the configured saturation for pictures.
-    pub fn saturation(&self) -> Option<i8> {
+    pub fn saturation(self) -> Option<i8> {
         self.saturation
     }
 
     /// Gets the configured ISO for pictures.
-    pub fn iso(&self) -> Option<u16> {
+    pub fn iso(self) -> Option<u16> {
         self.iso
     }
 
     /// Gets the configured EV compensation for pictures.
-    pub fn ev(&self) -> Option<i8> {
+    pub fn ev(self) -> Option<i8> {
         self.ev
     }
 
     /// Gets the configured automatic white balance for pictures.
-    pub fn white_balance(&self) -> Option<WhiteBalance> {
+    pub fn white_balance(self) -> Option<WhiteBalance> {
         self.white_balance
+    }
+
+    /// Gets the interval between pictures during flight.
+    pub fn interval(self) -> u32 {
+        self.interval
+    }
+
+    /// Gets the timeout for repeated picture.
+    ///
+    /// Repeat each picture after these seconds (for issues with probe movement).
+    pub fn repeat(self) -> Option<u32> {
+        self.repeat
+    }
+
+    /// Gets the timeout for first picture after launch, in seconds.
+    pub fn first_timeout(self) -> u32 {
+        self.first_timeout
     }
 }
 
@@ -934,20 +1051,6 @@ where
     deserializer.deserialize_u8(PinVisitor)
 }
 
-/// Flight information structure.
-#[derive(Debug, Clone, Copy, Deserialize)]
-pub struct Flight {
-    /// Expected length of the flight, in minutes.
-    length: u32,
-}
-
-impl Flight {
-    /// Gets the expected length for the flight.
-    pub fn length(self) -> u32 {
-        self.length
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -983,10 +1086,16 @@ mod tests {
     #[test]
     #[cfg(feature = "raspicam")]
     fn config_error() {
+        let flight = Flight {
+            length: 300,
+            expected_max_height: 35000,
+        };
+
         #[cfg(feature = "gps")]
         let picture = Picture {
             height: 10_345,
             width: 5_246,
+            rotation: Some(180),
             quality: 95,
             raw: Some(true),
             exif: Some(true),
@@ -998,12 +1107,16 @@ mod tests {
             iso: None,
             ev: None,
             white_balance: Some(WhiteBalance::Horizon),
+            first_timeout: 120,
+            interval: 300,
+            repeat: Some(30),
         };
 
         #[cfg(not(feature = "gps"))]
         let picture = Picture {
             height: 10_345,
             width: 5_246,
+            rotation: Some(180),
             quality: 95,
             raw: Some(true),
             exposure: Some(Exposure::AntiShake),
@@ -1019,6 +1132,7 @@ mod tests {
         let video = Video {
             height: 12_546,
             width: 5_648,
+            rotation: Some(180),
             fps: 92,
             bitrate: 20000000,
             exposure: Some(Exposure::AntiShake),
@@ -1042,6 +1156,16 @@ mod tests {
             location_service: "gprs-service.com".to_owned(),
         };
 
+        #[cfg(feature = "fona")]
+        let battery = Battery {
+            main_min: 1.952777778,
+            main_max: 2.216666667,
+            fona_min: 3.7,
+            fona_max: 4.2,
+            main_min_percent: 0.8,
+            fona_min_percent: 0.75,
+        };
+
         #[cfg(feature = "telemetry")]
         let telemetry = Telemetry {
             uart: PathBuf::from("/dev/ttyUSB0"),
@@ -1058,93 +1182,87 @@ mod tests {
         #[cfg(all(feature = "gps", feature = "fona", feature = "telemetry"))]
         let config = Config {
             debug: None,
+            flight,
+            battery,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
-            camera_rotation: Some(180),
             gps,
             fona,
             telemetry,
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(feature = "gps", feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
+            flight,
+            battery,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
-            camera_rotation: Some(180),
             gps,
             fona,
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(feature = "gps", not(feature = "fona"), feature = "telemetry"))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
-            camera_rotation: Some(180),
             gps,
             telemetry,
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(feature = "gps", not(feature = "fona"), not(feature = "telemetry")))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
-            camera_rotation: Some(180),
             gps,
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(not(feature = "gps"), feature = "fona", feature = "telemetry"))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
             fona,
             telemetry,
-            camera_rotation: Some(180),
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(not(feature = "gps"), feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
             fona,
-            camera_rotation: Some(180),
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(not(feature = "gps"), not(feature = "fona"), feature = "telemetry"))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
             telemetry,
-            camera_rotation: Some(180),
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         #[cfg(all(not(feature = "gps"), not(feature = "fona"), not(feature = "telemetry")))]
         let config = Config {
             debug: None,
+            flight,
+            data_dir: PathBuf::from("data"),
             picture,
             video,
-            camera_rotation: Some(180),
-            flight: Flight { length: 300 },
-            data_dir: PathBuf::from("data"),
         };
 
         let (verify, errors) = config.verify();

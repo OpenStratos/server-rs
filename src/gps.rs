@@ -60,7 +60,7 @@ impl Gps {
     pub fn initialize(&mut self) -> Result<(), Error> {
         info!("Initializing GPS…");
 
-        // TODO start serial and so on.
+        // TODO turn GPS on, start serial and so on.
         unimplemented!()
     }
 
@@ -122,7 +122,7 @@ impl Gps {
 
 impl Drop for Gps {
     fn drop(&mut self) {
-        // TODO stop serial.
+        // TODO stop serial, turn GPS off.
     }
 }
 

@@ -159,7 +159,7 @@ impl Camera {
                 time.as_secs() * 1_000 + u64::from(time.subsec_nanos()) / 1_000_000
             ));
         }
-        if let Some(rot) = CONFIG.camera_rotation() {
+        if let Some(rot) = CONFIG.video().rotation() {
             let _ = command.arg("-rot").arg(format!("{}", rot));
         }
         if let Some(ex) = CONFIG.video().exposure() {
@@ -312,7 +312,7 @@ impl Camera {
             .arg(format!("{}", CONFIG.picture().height()))
             .arg("-q")
             .arg(format!("{}", CONFIG.picture().quality()));
-        if let Some(rot) = CONFIG.camera_rotation() {
+        if let Some(rot) = CONFIG.picture().rotation() {
             let _ = command.arg("-rot").arg(format!("{}", rot));
         }
         #[cfg(feature = "gps")]

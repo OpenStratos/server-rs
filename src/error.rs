@@ -280,3 +280,29 @@ impl fmt::Display for Raspicam {
         }
     }
 }
+
+/// Errors related to logic initialization.
+#[cfg(any(feature = "fona", feature = "gps"))]
+#[derive(Debug, Clone, Copy, Fail)]
+pub enum Init {
+    /// Error initializing GPS module.
+    #[cfg(feature = "gps")]
+    #[fail(display = "error initializing GPS module")]
+    GpsInit,
+    /// Error initializing FONA module.
+    #[cfg(feature = "fona")]
+    #[fail(display = "error initializing FONA module")]
+    FonaInit,
+    /// Error checking GSM connectivity.
+    #[cfg(feature = "fona")]
+    #[fail(display = "error checking GSM connectivity")]
+    CheckGsmConnectivity,
+    /// Error checking battery status.
+    #[cfg(feature = "fona")]
+    #[fail(display = "error checking battery status")]
+    CheckBatteries,
+    /// Not enough battery for the flight.
+    #[cfg(feature = "fona")]
+    #[fail(display = "not enough battery for the flight")]
+    NotEnoughBattery,
+}

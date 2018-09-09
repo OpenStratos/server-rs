@@ -1,25 +1,33 @@
-## OpenStratos configuration file ##
+##---- OpenStratos configuration file ----##
 
+#### GENERAL SETTINGS ####
 # Debug mode.
 debug =  true
-
-# Camera rotation, in degrees.
-camera_rotation = 180
 # Data directory.
 data_dir = "data"
 
-# Picture interval, in seconds.
-pic_interval = 300
-# Repeat each picture after these seconds (for issues with probe movement). (optional)
-pic_repeat = 30
-# First picture timeout in seconds, from the launch.
-first_picture = 120
+## Battery configuration ##
+[battery]
+# Minimum voltage for the main battery.
+main_min = 1.952777778 # 7.4*2660/(2660+7420) - Measured Ohms in voltage divider
+# Maximum voltage for the main battery.
+main_max = 2.216666667 # 8.4*2660/(2660+7420) - Measured Ohms in voltage divider
+# Minimum voltage for the GSM battery.
+fona_min = 3.7
+# Maximum voltage for the GSM battery.
+fona_max = 4.2
+# Minimum admisible percentage for main battery for launch.
+main_min_percent = 80
+# Minimum admisible percentage for FONA battery for launch.
+fona_min_percent = 75
 
-# Picture configuration.
+## Picture configuration ##
 [picture]
 # Static pictures dimensions, in pixels.
 height = 2464
 width = 3280
+# Camera rotation, in degrees.
+rotation = 180
 # Configuration options for EXIF information in pictures.
 exif = true
 # Picture quality
@@ -42,12 +50,20 @@ contrast = 50
 #ev = 0
 # Automatic picture white balance
 white_balance = "horizon"
+# Interval between pictures, in seconds.
+interval = 300 # 5 minutes
+# Repeat each picture after these seconds (for issues with probe movement). (optional)
+repeat = 30
+# First picture timeout in seconds, after the launch.
+first_timeout = 120 # 2 minutes
 
-# Video configuration
+## Video configuration ##
 [video]
 # Video dimensions, in pixels.
 width = 1920
 height = 1080
+# Camera rotation, in degrees.
+rotation = 180
 # Video framerate, in frames per second.
 fps = 30
 # Video bitrate, in bits per second.
@@ -71,13 +87,14 @@ stabilization = true
 # Automatic video white balance
 white_balance = "horizon"
 
-# Flight information.
+## Flight configuration ##
 [flight]
-# Expected flight length, in minutes.
-length = 300
-# TODO: expected height
+# Approximate expected flight length, in minutes.
+length = 300 # 5 hours
+# Approximate expected maximum height, in meters.
+expected_max_height = 35000
 
-# GPS configuration.
+## GPS configuration ##
 [gps]
 # GPS UART serial console path.
 uart = "/dev/ttyAMA0"
@@ -86,7 +103,7 @@ baud_rate = 9600
 # GPS power control GPIO pin number.
 power_gpio = 3
 
-# FONA module configuration.
+##  FONA module configuration ##
 [fona]
 # FONA UART serial console path.
 uart = "/dev/ttyUSB0"
@@ -101,22 +118,9 @@ sms_phone = ""
 # Operator GSM location service domain.
 location_service = "gprs-service.com"
 
-# Telemetry configuration.
+## Telemetry configuration ##
 [telemetry]
 # Telemetry UART serial console path.
 uart = "/dev/ttyUSB1"
 # Telemetry serial baud rate.
 baud_rate = 230400
-
-# Battery configuration.
-[battery]
-# Maximum voltage for the main battery.
-main_max = 2.216666667 # 8.4*2660/(2660+7420) - Measured Ohms in voltage divider
-# Minimum voltage for the main battery.
-main_min = 1.952777778 # 7.4*2660/(2660+7420) - Measured Ohms in voltage divider
-# Maximum voltage for the GSM battery.
-gsm_max = 4.2
-# Minimum voltage for the GSM battery.
-gsm_min = 3.7
-
-# TODO

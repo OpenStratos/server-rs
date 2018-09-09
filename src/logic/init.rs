@@ -38,13 +38,28 @@ impl StateMachine for OpenStratos<Init> {
         check_disk_space()?;
 
         #[cfg(feature = "gps")]
-        initialize_gps()?;
+        {
+            if let Err(e) = initialize_gps() {
+                // TODO: shut down GPS.
+                return e;
+            }
+        }
 
         #[cfg(feature = "fona")]
-        initialize_fona()?;
+        {
+            if let Err(e) = initialize_fona() {
+                // TODO: shut down GPS (if feature enabled) and FONA.
+                return e;
+            }
+        }
 
         #[cfg(feature = "raspicam")]
-        test_raspicam()?;
+        {
+            if let Err(e) = test_raspicam() {
+                // TODO: shut down GPS (if feature enabled) and FONA (if feature enabled).
+                return e;
+            }
+        }
 
         #[cfg(feature = "gps")]
         {
@@ -99,13 +114,13 @@ fn check_disk_space() -> Result<(), Error> {
 fn initialize_gps() -> Result<(), Error> {
     info!("Initializing GPS…");
     match GPS.lock() {
-        Ok(mut gps) => gps.initialize().context(error::Gps::Init)?,
+        Ok(mut gps) => gps.initialize().context(error::Init::GpsInit)?,
         Err(poisoned) => {
             error!("The GPS mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(error::Gps::Init)?
+                .context(error::Init::GpsInit)?
         }
     }
     info!("GPS initialized.");
@@ -117,13 +132,13 @@ fn initialize_gps() -> Result<(), Error> {
 fn initialize_fona() -> Result<(), Error> {
     info!("Initializing Adafruit FONA GSM module…");
     match FONA.lock() {
-        Ok(mut fona) => fona.initialize().context(error::Fona::Init)?,
+        Ok(mut fona) => fona.initialize().context(error::Init::FonaInit)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(error::Fona::Init)?
+                .context(error::Init::FonaInit)?
         }
     }
     info!("Adafruit FONA GSM module initialized.");
@@ -132,15 +147,18 @@ fn initialize_fona() -> Result<(), Error> {
 
     info!("Waiting for GSM connectivity…");
     while {
-        // TODO
-        // match GSM.lock() {
-        //     Ok(gsm) => gsm.has_connectivity()?,
-        //     Err(poisoned) => {
-        //         error!("The GSM mutex was poisoned.");
-        //         poisoned.into_inner().has_connectivity()?
-        //     }
-        // }
-        false
+        match FONA.lock() {
+            Ok(mut fona) => !fona
+                .has_connectivity()
+                .context(error::Init::CheckGsmConnectivity)?,
+            Err(poisoned) => {
+                error!("The FONA mutex was poisoned.");
+                !poisoned
+                    .into_inner()
+                    .has_connectivity()
+                    .context(error::Init::CheckGsmConnectivity)?
+            }
+        }
     } {
         thread::sleep(Duration::from_secs(1));
     }
@@ -153,83 +171,52 @@ fn initialize_fona() -> Result<(), Error> {
 #[cfg(feature = "fona")]
 fn check_batteries() -> Result<(), Error> {
     info!("Checking batteries…");
-    // TODO check batteries
-    // double main_battery, gsm_battery;
-    // if ( ! GSM::get_instance().get_battery_status(main_battery, gsm_battery) &&
-    // 	 ! GSM::get_instance().get_battery_status(main_battery, gsm_battery))
-    // {
-    // 	error!("Error checking batteries.");
-    //
-    // 	logger.log("Turning GSM off...");
-    // 	if (GSM::get_instance().turn_off())
-    // 		logger.log("GSM off.");
-    // 	else
-    // 		logger.log("Error turning GSM off.");
-    //
-    // info!("Turning GPS off…");
-    // match GPS.lock() {
-    //     Ok(mut gps) => {
-    //         if let Ok(_) = gps.turn_off() {
-    //             info!("GPS off.");
-    //         } else {
-    //             error!("Could not turn GPS off.");
-    //         }
-    //     }
-    //     Err(poisoned) => {
-    //         error!("The GPS mutex was poisoned.");
-    //         if let Ok(_) = poisoned.into_inner().turn_off() {
-    //             info!("GPS off.");
-    //         } else {
-    //             error!("Could not turn GPS off.");
-    //         }
-    //     }
-    // }
-    //
-    // #[cfg(not(feature = "no_power_off"))]
-    // power_off();
-    // #[cfg(feature = "no_power_off")]
-    // process::exit(1);
-    // }
-    //
-    // info!("Batteries checked => Main battery: "+
-    //(main_battery > -1 ? to_string(main_battery*100)+"%" : "disconnected") +
-    // 	" - GSM battery: "+ to_string(gsm_battery*100) +"%");
-    //
-    // if ((main_battery < MIN_MAIN_BAT  && main_battery > -1) || gsm_battery < MIN_GSM_BAT)
-    // {
-    // 	error!("Not enough battery.");
-    //
-    // 	logger.log("Turning GSM off...");
-    // 	if (GSM::get_instance().turn_off())
-    // 		logger.log("GSM off.");
-    // 	else
-    // 		logger.log("Error turning GSM off.");
-    //
-    // info!("Turning GPS off…");
-    // match GPS.lock() {
-    //     Ok(mut gps) => {
-    //         if let Ok(_) = gps.turn_off() {
-    //             info!("GPS off.");
-    //         } else {
-    //             error!("Could not turn GPS off.");
-    //         }
-    //     }
-    //     Err(poisoned) => {
-    //         error!("The GPS mutex was poisoned.");
-    //         if let Ok(_) = poisoned.into_inner().turn_off() {
-    //             info!("GPS off.");
-    //         } else {
-    //             error!("Could not turn GPS off.");
-    //         }
-    //     }
-    // }
-    //
-    // #[cfg(not(feature = "no_power_off"))]
-    // power_off();
-    // #[cfg(feature = "no_power_off")]
-    // process::exit(1);
-    // }
-    Ok(())
+
+    let fona_bat_percent = match FONA.lock() {
+        Ok(mut fona) => fona.battery_percent().context(error::Init::CheckBatteries)?,
+        Err(poisoned) => {
+            error!("The FONA mutex was poisoned.");
+            poisoned
+                .into_inner()
+                .battery_percent()
+                .context(error::Init::CheckBatteries)?
+        }
+    };
+    let adc_voltage = match FONA.lock() {
+        Ok(mut fona) => fona.adc_voltage().context(error::Init::CheckBatteries)?,
+        Err(poisoned) => {
+            error!("The FONA mutex was poisoned.");
+            poisoned
+                .into_inner()
+                .adc_voltage()
+                .context(error::Init::CheckBatteries)?
+        }
+    };
+    let main_bat_percent = (adc_voltage - CONFIG.battery().main_min())
+        / (CONFIG.battery().main_max() - CONFIG.battery().main_min());
+
+    info!(
+        "Batteries checked => Main battery: {} - GSM battery: {}",
+        if main_bat_percent > -1_f32 {
+            format!("{}%", main_bat_percent * 100_f32)
+        } else {
+            "disconnected".to_owned()
+        },
+        if fona_bat_percent > -1_f32 {
+            format!("{}%", fona_bat_percent * 100_f32)
+        } else {
+            "disconnected".to_owned()
+        }
+    );
+
+    if (main_bat_percent < CONFIG.battery().main_min_percent() && main_bat_percent > -1_f32)
+        || fona_bat_percent < CONFIG.battery().fona_min_percent()
+    {
+        error!("Not enough battery.");
+        Err(error::Init::NotEnoughBattery.into())
+    } else {
+        Ok(())
+    }
 }
 
 /// Performs a test in the Raspicam module.

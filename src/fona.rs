@@ -18,16 +18,6 @@ lazy_static! {
     pub static ref FONA: Mutex<Fona> = Mutex::new(Fona { serial: None });
 }
 
-/// Minimum battery voltage for the FONA battery.
-///
-/// In a 1S LiPo battery, it should be 3.7 volts.
-pub const BAT_FONA_MIN_V: f32 = 3.7;
-
-/// Maximum battery voltage for the FONA battery.
-///
-/// In a 1S LiPo battery, it should be 4.2 volts.
-pub const BAT_FONA_MAX_V: f32 = 4.2;
-
 /// Adafruit FONA control structure.
 pub struct Fona {
     serial: Option<Serial>,
@@ -89,7 +79,7 @@ impl Fona {
             thread::sleep(Duration::from_millis(100));
             info!("Initialization OK.");
 
-            // Turn off echo.
+            // Turn echo off.
             let _ = self.send_command_read("ATE0")?;
             thread::sleep(Duration::from_millis(100));
 
@@ -359,10 +349,11 @@ impl Fona {
     /// Checks the FONA battery level, in percentage.
     pub fn battery_percent(&mut self) -> Result<f32, Error> {
         let bat_voltage = self.battery_voltage()?;
-        Ok((bat_voltage / 1000.0 - BAT_FONA_MIN_V) / (BAT_FONA_MAX_V - BAT_FONA_MIN_V))
+        Ok((bat_voltage - CONFIG.battery().fona_min())
+            / (CONFIG.battery().fona_max() - CONFIG.battery().fona_min()))
     }
 
-    /// Checks the FONA battery level, in voltage.
+    /// Checks the FONA battery voltage, in volts (`V`).
     pub fn battery_voltage(&mut self) -> Result<f32, Error> {
         let response = self.send_command_read("AT+CBC")?;
         let mut tokens = response.split(',');
@@ -380,7 +371,7 @@ impl Fona {
         }
     }
 
-    /// Checks the ADC (Analog-Digital converter) voltage of the FONA.
+    /// Gets the ADC (Analog-Digital converter) voltage of the FONA, in volts (`V`).
     pub fn adc_voltage(&mut self) -> Result<f32, Error> {
         let response = self.send_command_read("AT+CADC?")?;
         let mut tokens = response.split(',');
