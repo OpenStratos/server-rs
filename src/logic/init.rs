@@ -41,7 +41,7 @@ impl StateMachine for OpenStratos<Init> {
         {
             if let Err(e) = initialize_gps() {
                 // TODO: shut down GPS.
-                return e;
+                return Err(e);
             }
         }
 
@@ -49,7 +49,7 @@ impl StateMachine for OpenStratos<Init> {
         {
             if let Err(e) = initialize_fona() {
                 // TODO: shut down GPS (if feature enabled) and FONA.
-                return e;
+                return Err(e);
             }
         }
 
@@ -57,7 +57,7 @@ impl StateMachine for OpenStratos<Init> {
         {
             if let Err(e) = test_raspicam() {
                 // TODO: shut down GPS (if feature enabled) and FONA (if feature enabled).
-                return e;
+                return Err(e);
             }
         }
 
