@@ -375,14 +375,15 @@ impl Config {
         self.debug == Some(true)
     }
 
-    /// Gets battery configuration
-    pub fn battery(&self) -> Battery {
-        self.battery
-    }
-
     /// Gets the flight information.
     pub fn flight(&self) -> Flight {
         self.flight
+    }
+
+    /// Gets battery configuration
+    #[cfg(feature = "fona")]
+    pub fn battery(&self) -> Battery {
+        self.battery
     }
 
     /// Gets the configuration for video.
