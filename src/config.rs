@@ -1128,6 +1128,9 @@ mod tests {
             iso: None,
             ev: None,
             white_balance: Some(WhiteBalance::Horizon),
+            first_timeout: 120,
+            interval: 300,
+            repeat: Some(30),
         };
 
         let video = Video {
