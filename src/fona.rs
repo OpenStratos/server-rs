@@ -361,9 +361,10 @@ impl Fona {
         // TODO: check beginning of real response.
         if tokens.next() == Some("+CBC:") {
             match tokens.next() {
-                Some(val) => {
-                    Ok(val.parse::<f32>().context(error::Fona::CBCInvalidResponse)? / 1_000_f32)
-                }
+                Some(val) => Ok(val
+                    .parse::<f32>()
+                    .context(error::Fona::CBCInvalidResponse)?
+                    / 1_000_f32),
                 None => Err(error::Fona::CBCInvalidResponse.into()),
             }
         } else {

@@ -40,9 +40,18 @@
 #![forbid(anonymous_parameters)]
 //#![cfg_attr(feature = "cargo-clippy", warn(clippy_pedantic))]
 #![deny(
-    variant_size_differences, unused_results, unused_qualifications, unused_import_braces,
-    unsafe_code, trivial_numeric_casts, trivial_casts, missing_docs, missing_debug_implementations,
-    missing_copy_implementations, box_pointers, unused_extern_crates
+    variant_size_differences,
+    unused_results,
+    unused_qualifications,
+    unused_import_braces,
+    unsafe_code,
+    trivial_numeric_casts,
+    trivial_casts,
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations,
+    box_pointers,
+    unused_extern_crates
 )]
 // Removing some warnings
 #![allow(unsafe_code, box_pointers)]
@@ -267,13 +276,11 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("gps", Box::new(gps)),
-            )
-            .appender(
+            ).appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("gps_frames", Box::new(gps_frames)),
-            )
-            .logger(gps_logger);
+            ).logger(gps_logger);
 
         if CONFIG.debug() {
             let gps_serial = FileAppender::builder()
@@ -319,13 +326,11 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("fona", Box::new(fona)),
-            )
-            .appender(
+            ).appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("fona_frames", Box::new(fona_frames)),
-            )
-            .logger(fona_logger);
+            ).logger(fona_logger);
 
         if CONFIG.debug() {
             let gsm_serial = FileAppender::builder()
@@ -373,13 +378,11 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("telemetry", Box::new(telemetry)),
-            )
-            .appender(
+            ).appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("telemetry_frames", Box::new(telemetry_frames)),
-            )
-            .logger(telemetry_logger);
+            ).logger(telemetry_logger);
 
         if CONFIG.debug() {
             let telemetry_serial = FileAppender::builder()
@@ -405,8 +408,7 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 .appender("stdout")
                 .appender("main")
                 .build(LevelFilter::Info),
-        )
-        .context(error::Log::Build)?;
+        ).context(error::Log::Build)?;
 
     Ok(log4rs::init_config(config)?)
 }

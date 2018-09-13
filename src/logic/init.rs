@@ -173,7 +173,9 @@ fn check_batteries() -> Result<(), Error> {
     info!("Checking batteries…");
 
     let fona_bat_percent = match FONA.lock() {
-        Ok(mut fona) => fona.battery_percent().context(error::Init::CheckBatteries)?,
+        Ok(mut fona) => fona
+            .battery_percent()
+            .context(error::Init::CheckBatteries)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned

@@ -1196,7 +1196,13 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(all(feature = "gps", feature = "fona", not(feature = "telemetry")))]
+        #[cfg(
+            all(
+                feature = "gps",
+                feature = "fona",
+                not(feature = "telemetry")
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1208,7 +1214,13 @@ mod tests {
             fona,
         };
 
-        #[cfg(all(feature = "gps", not(feature = "fona"), feature = "telemetry"))]
+        #[cfg(
+            all(
+                feature = "gps",
+                not(feature = "fona"),
+                feature = "telemetry"
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1219,7 +1231,13 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(all(feature = "gps", not(feature = "fona"), not(feature = "telemetry")))]
+        #[cfg(
+            all(
+                feature = "gps",
+                not(feature = "fona"),
+                not(feature = "telemetry")
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1229,7 +1247,13 @@ mod tests {
             gps,
         };
 
-        #[cfg(all(not(feature = "gps"), feature = "fona", feature = "telemetry"))]
+        #[cfg(
+            all(
+                not(feature = "gps"),
+                feature = "fona",
+                feature = "telemetry"
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1241,7 +1265,13 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(all(not(feature = "gps"), feature = "fona", not(feature = "telemetry")))]
+        #[cfg(
+            all(
+                not(feature = "gps"),
+                feature = "fona",
+                not(feature = "telemetry")
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1252,7 +1282,13 @@ mod tests {
             fona,
         };
 
-        #[cfg(all(not(feature = "gps"), not(feature = "fona"), feature = "telemetry"))]
+        #[cfg(
+            all(
+                not(feature = "gps"),
+                not(feature = "fona"),
+                feature = "telemetry"
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
@@ -1262,7 +1298,13 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(all(not(feature = "gps"), not(feature = "fona"), not(feature = "telemetry")))]
+        #[cfg(
+            all(
+                not(feature = "gps"),
+                not(feature = "fona"),
+                not(feature = "telemetry")
+            )
+        )]
         let config = Config {
             debug: None,
             flight,
