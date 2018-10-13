@@ -31,7 +31,7 @@ impl fmt::Debug for Fona {
             f,
             "Fona {{ serial: {:?} }}",
             if let Some(ref serial) = &self.serial {
-                serial.port_name()
+                serial.name()
             } else {
                 None
             }

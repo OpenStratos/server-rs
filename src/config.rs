@@ -57,8 +57,6 @@ use toml;
 // Only required for GPS, FONA or telemetry
 #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
 use serde::de::{self, Deserializer, Visitor};
-#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
-use tokio_serial::BaudRate;
 
 // Only required for FONA
 #[cfg(feature = "fona")]
@@ -836,11 +834,7 @@ pub struct Gps {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    ///
-    /// **Note:** it will only accept baud rates from 1 to `u32::MAX` (`usize` in Raspberry Pi is
-    /// `u32`).
-    #[serde(deserialize_with = "deserialize_baudrate")]
-    baud_rate: BaudRate,
+    baud_rate: u32,
     /// Power GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -854,7 +848,7 @@ impl Gps {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> BaudRate {
+    pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
 
@@ -871,8 +865,7 @@ pub struct Fona {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    #[serde(deserialize_with = "deserialize_baudrate")]
-    baud_rate: BaudRate,
+    baud_rate: u32,
     /// Power control GPIO pin.
     #[serde(deserialize_with = "deserialize_pin")]
     power_gpio: Pin,
@@ -893,7 +886,7 @@ impl Fona {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> BaudRate {
+    pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
 
@@ -967,8 +960,7 @@ pub struct Telemetry {
     /// UART serial console path.
     uart: PathBuf,
     /// Serial console baud rate.
-    #[serde(deserialize_with = "deserialize_baudrate")]
-    baud_rate: BaudRate,
+    baud_rate: u32,
 }
 
 #[cfg(feature = "telemetry")]
@@ -979,44 +971,9 @@ impl Telemetry {
     }
 
     /// Gets the serial console baud rate.
-    pub fn baud_rate(&self) -> BaudRate {
+    pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
-}
-
-/// Deserializes a Tokio serial baud rate.
-#[cfg(any(feature = "gps", feature = "telemetry", feature = "fona"))]
-fn deserialize_baudrate<'de, D>(deserializer: D) -> Result<BaudRate, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    /// Visitor for baud rate.
-    struct TokioBaudRateVisitor;
-    impl<'dev> Visitor<'dev> for TokioBaudRateVisitor {
-        type Value = BaudRate;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-            use std::u32;
-            write!(formatter, "an integer between 1 and {}", u32::MAX)
-        }
-
-        fn visit_i64<E>(self, value: i64) -> Result<BaudRate, E>
-        where
-            E: de::Error,
-        {
-            use std::u32;
-
-            if value > 0 && i64::from(u32::MAX) >= value {
-                Ok(BaudRate::from(value as u32))
-            } else {
-                Err(E::custom(format!("baud rate out of range: {}", value)))
-            }
-        }
-
-        // TODO: create more visitors, to make it future proof with other deserializers.
-    }
-
-    deserializer.deserialize_u32(TokioBaudRateVisitor)
 }
 
 /// Deserializes a Raspberry Pi pin number into a `Pin` structure.
@@ -1078,7 +1035,7 @@ mod tests {
         #[cfg(feature = "gps")]
         {
             assert_eq!(config.gps().uart(), Path::new("/dev/ttyAMA0"));
-            assert_eq!(config.gps().baud_rate(), BaudRate::Baud9600);
+            assert_eq!(config.gps().baud_rate(), 9_600);
             assert_eq!(config.gps().power_gpio().get_pin(), 3)
         }
     }
