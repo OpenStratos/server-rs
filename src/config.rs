@@ -1095,7 +1095,7 @@ mod tests {
             width: 5_648,
             rotation: Some(180),
             fps: 92,
-            bitrate: 20000000,
+            bitrate: 20_000_000,
             exposure: Some(Exposure::AntiShake),
             brightness: Some(50),
             contrast: Some(50),
@@ -1110,7 +1110,7 @@ mod tests {
         #[cfg(feature = "fona")]
         let fona = Fona {
             uart: PathBuf::from("/dev/ttyUSB0"),
-            baud_rate: BaudRate::Baud9600,
+            baud_rate: 9_600,
             power_gpio: Pin::new(7),
             status_gpio: Pin::new(21),
             sms_phone: PhoneNumber(String::new()),
@@ -1119,8 +1119,8 @@ mod tests {
 
         #[cfg(feature = "fona")]
         let battery = Battery {
-            main_min: 1.952777778,
-            main_max: 2.216666667,
+            main_min: 1.952_777_7,
+            main_max: 2.216_666_7,
             fona_min: 3.7,
             fona_max: 4.2,
             main_min_percent: 0.8,
@@ -1130,13 +1130,13 @@ mod tests {
         #[cfg(feature = "telemetry")]
         let telemetry = Telemetry {
             uart: PathBuf::from("/dev/ttyUSB0"),
-            baud_rate: BaudRate::BaudOther(230400),
+            baud_rate: 230_400,
         };
 
         #[cfg(feature = "gps")]
         let gps = Gps {
             uart: PathBuf::from("/dev/ttyAMA0"),
-            baud_rate: BaudRate::Baud9600,
+            baud_rate: 9_600,
             power_gpio: Pin::new(3),
         };
 
