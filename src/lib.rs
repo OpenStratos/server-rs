@@ -76,7 +76,7 @@ extern crate toml;
 // Only required for GPS, FONA or telemetry
 #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
 extern crate serde;
-#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+#[cfg(any(feature = "fona"))] // feature = "gps", feature = "telemetry"
 extern crate tokio_serial;
 
 // Only required for GPS or FONA

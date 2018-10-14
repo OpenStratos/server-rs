@@ -47,7 +47,7 @@ use std::{
 use std::{ffi::OsStr, i8, u16};
 
 // Only required for GPS, FONA or telemetry
-#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+#[cfg(any(feature = "gps", feature = "fona"))]
 use std::fmt;
 
 use colored::Colorize;
