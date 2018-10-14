@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["FixStatus","GPS fix status."]],"struct":[["GPS","GPS data for concurrent check."],["Gps","GPS information structure."]]});

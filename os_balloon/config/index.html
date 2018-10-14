@@ -1,0 +1,130 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `config` mod in crate `os_balloon`."><meta name="keywords" content="rust, rustlang, rust-lang, config"><title>os_balloon::config - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png"></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../os_balloon/index.html'><img src='https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png' alt='logo' width='100'></a><p class='location'>Module config</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></div><p class='location'><a href='../index.html'>os_balloon</a></p><script>window.sidebarCurrent = {name: 'config', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>os_balloon</a>::<wbr><a class="mod" href=''>config</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../../src/os_balloon/config.rs.html#1-1292' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Configuration module.</p>
+<p>One of the main features of OpenStratos is that it's almost 100% configurable. Apart from the
+features above, the package contains a <code>config.toml</code> file, writen in
+<a href="https://en.wikipedia.org/wiki/TOML">TOML</a> that enables the configuration of the setup without
+requiring a recompilation of the software. Things like the picture/video options, alert phone
+number, debug mode, pin numbers and many more can be modified with that file.</p>
+<p>Some documentation can be found in the file itself, thank to its comments, but main options are
+explained here:</p>
+<ul>
+<li><strong>Debug mode</strong> (<code>debug = bool</code>): Turns the debug mode on or off, it's off by default. The
+debug mode will print all serial communication in logs, and it will add more insightful logs,
+that enable debugging system malfunction. This mode will consume more resources than
+non-debugging mode, and it's not recommended for normal balloon operation. Also, debug logs will
+be full of silly comments that might not provide anything useful in a real flight.</li>
+<li><strong>Camera rotation</strong> (<code>camera_rotation = 0-359</code>): Sets the rotation of the camera for videos
+and pictures, in degrees. This is useful if the probe, by design, requires the camera to be in a
+non-vertical position.</li>
+<li><strong>Data directory</strong> (<code>data_dir = &quot;/path/to/data&quot;</code>): Sets the path to the main data output
+directory. Logs, images, videos and current state file will be stored in this path. Make sure
+it's a reliable path between reboots.</li>
+<li><strong>Picture section</strong> (<code>[picture]</code>): Sets the configuration for pictures. Dimensions, quality,
+brightness, contrast, ISO, exposure and many more can be configured. Two configuration options
+are a bit different from the rest actually. The <code>exif</code> parameter sets if GPS data should be
+added to images, so that the final image has position metadata, for example. The <code>raw</code> option
+controls if the raw sensor data should be added to images as JPEG metadata. This will add about
+8MiB of information to the images, at least.</li>
+<li><strong>Video section</strong> (<code>[video]</code>): Sets the configuration for videos. Dimensions, frames per
+second, bitrate, and many more, most of them also available for pictures.</li>
+</ul>
+<p>You can also check the <a href="struct.Config.html"><code>Config</code></a> structure for further implementation
+details.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Battery.html"
+                                  title='struct os_balloon::config::Battery'>Battery</a></td>
+                           <td class='docblock-short'>
+                                <p>Battery configuration structure.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.CONFIG.html"
+                                  title='struct os_balloon::config::CONFIG'>CONFIG</a></td>
+                           <td class='docblock-short'>
+                                <p>Configuration object.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Config.html"
+                                  title='struct os_balloon::config::Config'>Config</a></td>
+                           <td class='docblock-short'>
+                                <p>Configuration object.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Flight.html"
+                                  title='struct os_balloon::config::Flight'>Flight</a></td>
+                           <td class='docblock-short'>
+                                <p>Flight configuration structure.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Fona.html"
+                                  title='struct os_balloon::config::Fona'>Fona</a></td>
+                           <td class='docblock-short'>
+                                <p>Fona configuration structure</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Gps.html"
+                                  title='struct os_balloon::config::Gps'>Gps</a></td>
+                           <td class='docblock-short'>
+                                <p>GPS configuration structure.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.PhoneNumber.html"
+                                  title='struct os_balloon::config::PhoneNumber'>PhoneNumber</a></td>
+                           <td class='docblock-short'>
+                                <p>Phone number representation.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Picture.html"
+                                  title='struct os_balloon::config::Picture'>Picture</a></td>
+                           <td class='docblock-short'>
+                                <p>Picture configuration structure.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Telemetry.html"
+                                  title='struct os_balloon::config::Telemetry'>Telemetry</a></td>
+                           <td class='docblock-short'>
+                                <p>Telemetry configuration structure.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="struct" href="struct.Video.html"
+                                  title='struct os_balloon::config::Video'>Video</a></td>
+                           <td class='docblock-short'>
+                                <p>Video configuration structure.</p>
+
+                           </td>
+                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.Exposure.html"
+                                  title='enum os_balloon::config::Exposure'>Exposure</a></td>
+                           <td class='docblock-short'>
+                                <p>Exposure setting.</p>
+
+                           </td>
+                       </tr>
+                       <tr class=' module-item'>
+                           <td><a class="enum" href="enum.WhiteBalance.html"
+                                  title='enum os_balloon::config::WhiteBalance'>WhiteBalance</a></td>
+                           <td class='docblock-short'>
+                                <p>Exposure setting.</p>
+
+                           </td>
+                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "os_balloon";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

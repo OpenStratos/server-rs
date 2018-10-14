@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["IMG_DIR","Image directory inside data directory."],["VIDEO_DIR","Video directory inside data directory."]],"struct":[["CAMERA","Shared static camera object."],["Camera","Camera structure."],["ExifData","Structure representing EXIF data for a picture."]]});

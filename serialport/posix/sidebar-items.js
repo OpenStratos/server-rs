@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["available_ports","Scans the system for serial ports and returns a list of them. The `SerialPortInfo` struct contains the name of the port which can be used for opening it."]],"struct":[["TTYPort","A TTY-based serial port implementation."]]});
