@@ -346,10 +346,11 @@ impl GetState for EternalLoop {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        AcquiringFix, FixAcquired, GetState, GoingDown, GoingUp, Init, Landed, SafeMode, ShutDown,
-        State, WaitingLaunch,
-    };
+    #[cfg(not(feature = "gps"))]
+    use super::EternalLoop;
+    #[cfg(feature = "gps")]
+    use super::{AcquiringFix, FixAcquired, GoingDown, GoingUp, Landed, WaitingLaunch};
+    use super::{GetState, Init, SafeMode, ShutDown, State};
 
     /// Tests if the `Init` state generates the correct `State` enumeration variant in
     /// `get_state()`.

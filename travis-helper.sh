@@ -6,19 +6,19 @@ action="$1"
 if [ "$action" = "test" ]; then
   if [ $DEFAULT_FEATURES = true ]; then
     if [ -z $FEATURES ]; then
-      echo "cargo test --verbose --no-default-features" &&
-      cargo test --verbose --no-default-features
-    else
-      echo "cargo test --verbose --no-default-features --features=\"$FEATURES\"" &&
-      cargo test --verbose --no-default-features --features="$FEATURES"
-    fi
-  else
-    if [ -z $FEATURES ]; then
       echo "cargo test --verbose" &&
       cargo test --verbose
     else
       echo "cargo test --verbose --features=\"$FEATURES\"" &&
       cargo test --verbose --features="$FEATURES"
+    fi
+  else
+    if [ -z $FEATURES ]; then
+      echo "cargo test --verbose --no-default-features" &&
+      cargo test --verbose --no-default-features
+    else
+      echo "cargo test --verbose --no-default-features --features=\"$FEATURES\"" &&
+      cargo test --verbose --no-default-features --features="$FEATURES"
     fi
   fi
 

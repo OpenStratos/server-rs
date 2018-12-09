@@ -1010,10 +1010,21 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        Battery, Config, Exposure, Flight, Fona, Gps, Path, PathBuf, PhoneNumber, Picture, Pin,
-        Telemetry, Video, WhiteBalance, CONFIG,
-    };
+    #[cfg(feature = "gps")]
+    use super::Gps;
+    #[cfg(feature = "telemetry")]
+    use super::Telemetry;
+    #[cfg(feature = "fona")]
+    use super::{Battery, Fona, PhoneNumber, Video, WhiteBalance};
+    use super::{Config, CONFIG};
+    #[cfg(feature = "raspicam")]
+    use super::{Exposure, Flight, Picture};
+
+    #[cfg(any(feature = "gps", feature = "fona"))]
+    use sysfs_gpio::Pin;
+
+    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+    use std::path::{Path, PathBuf};
 
     /// Loads the default configuration and checks it.
     #[test]
