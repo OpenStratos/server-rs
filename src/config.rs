@@ -784,7 +784,7 @@ impl AsRef<OsStr> for Exposure {
     }
 }
 
-/// Exposure setting.
+/// White balance setting.
 #[cfg(feature = "raspicam")]
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Deserialize)]
 #[serde(field_identifier, rename_all = "lowercase")]
