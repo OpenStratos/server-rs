@@ -27,10 +27,10 @@ use std::{
 };
 
 use failure::{Error, ResultExt};
+use lazy_static::lazy_static;
+use log::error;
 
-use config::CONFIG;
-use error;
-use STATE_FILE;
+use crate::{config::CONFIG, error, STATE_FILE};
 
 lazy_static! {
     static ref CURRENT_STATE: Mutex<State> = Mutex::new(State::Init);
@@ -346,7 +346,10 @@ impl GetState for EternalLoop {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{
+        AcquiringFix, FixAcquired, GetState, GoingDown, GoingUp, Init, Landed, SafeMode, ShutDown,
+        State, WaitingLaunch,
+    };
 
     /// Tests if the `Init` state generates the correct `State` enumeration variant in
     /// `get_state()`.
@@ -460,7 +463,7 @@ mod tests {
         let _ = "WAITING_LAUNCH".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::WaitingLaunch` is translated to *WAITIN_LAUNCH* as a string.
+    /// Tests that the `State::WaitingLaunch` is translated to *WAITING_LAUNCH* as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_waiting_launch() {

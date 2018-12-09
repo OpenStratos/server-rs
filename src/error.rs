@@ -1,9 +1,8 @@
 //! Error module.
 
-use std::fmt;
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
-use STATE_FILE;
+use crate::STATE_FILE;
 
 /// Errors that happened in a certain part of the logic.
 #[derive(Debug, Clone, Copy, Fail)]
@@ -86,7 +85,7 @@ pub enum Fs {
     DataInit,
     /// Error creating a directory.
     DirectoryCreation {
-        /// Path to the directory meant to be greated.
+        /// Path to the directory meant to be created.
         path: PathBuf,
     },
 }

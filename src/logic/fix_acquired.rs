@@ -2,7 +2,7 @@
 
 use failure::Error;
 
-use super::*;
+use super::{FixAcquired, OpenStratos, StateMachine, WaitingLaunch};
 
 impl StateMachine for OpenStratos<FixAcquired> {
     type Next = OpenStratos<WaitingLaunch>;

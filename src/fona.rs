@@ -6,12 +6,12 @@
 
 use std::{fmt, io::Write, sync::Mutex, thread, time::Duration};
 
-use failure::{Error, Fail, ResultExt};
+use failure::{bail, Error, Fail, ResultExt};
+use lazy_static::lazy_static;
+use log::{debug, error, info, warn};
 use tokio_serial::{Serial, SerialPortSettings};
 
-use config::CONFIG;
-use error;
-use generate_error_string;
+use crate::{config::CONFIG, error, generate_error_string};
 
 lazy_static! {
     /// The FONA module control structure.
@@ -191,7 +191,7 @@ impl Fona {
             let new_line = self.read_line()?;
             if !new_line.is_empty() {
                 warn!(
-                    "There was some non-flushed output after sending the messsage: `{}`",
+                    "There was some non-flushed output after sending the message: `{}`",
                     new_line
                 );
             }
@@ -208,7 +208,7 @@ impl Fona {
             let new_line = self.read_line()?;
             if !new_line.is_empty() {
                 warn!(
-                    "There was some non-flushed output after sending the messsage: `{}`",
+                    "There was some non-flushed output after sending the message: `{}`",
                     new_line
                 );
             }

@@ -2,7 +2,7 @@
 
 use failure::Error;
 
-use super::*;
+use super::{Landed, OpenStratos, ShutDown, StateMachine};
 
 impl StateMachine for OpenStratos<Landed> {
     type Next = OpenStratos<ShutDown>;

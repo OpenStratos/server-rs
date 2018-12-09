@@ -13,7 +13,7 @@
 //!
 //! ## Running OpenStratos
 //!
-//! Running OpenStratos is as simple as installing the latest Rust stable build (preferrably using
+//! Running OpenStratos is as simple as installing the latest Rust stable build (preferably using
 //! [rustup.rs](https://rustup.rs/)) and then running `cargo run` in the crate directory. Remember
 //! to use `cargo run --release` to compile the software with all optimizations enabled.
 //!
@@ -60,7 +60,7 @@
 //!
 //! All these features are enabled by default. You can opt-out to all of them passing the
 //! `--no-default-features` flag to Cargo when building / running the software, and enable each of
-//! them separatelly. To enable more than one feature, add space between them in the `--features`
+//! them separately. To enable more than one feature, add space between them in the `--features`
 //! option. E.g. `--no-default-features --features="gps telemetry"`.
 //!
 //! ## Configuration
@@ -103,16 +103,16 @@
 //! Waiting launch.
 //! ```
 //!
-//! The information in this SMS is the altitude, the latitude, the longitude, the position degree of
-//! precission (PDOP), the number of GPS satellites connected, the GPS fix status and the battery
+//! The information in this SMS is the altitude, the latitude, the longitude, the position dilution
+//! of precision (PDOP), the number of GPS satellites connected, the GPS fix status and the battery
 //! capacities. Of course, this content will vary if no GPS is provided. It will try to send it a
-//! second time if it fails the first one. Once the SMS is sent, OpenStratos asumes that the balloon
+//! second time if it fails the first one. Once the SMS is sent, OpenStratos assumes that the balloon
 //! could be launched, so it will not stop until landing or critical failure.
 //!
-//! The on-board computer will now wait for the launch. It will try to get a reasonable precission
+//! The on-board computer will now wait for the launch. It will try to get a reasonable precision
 //! in altitude to record the launch altitude (to check it later). It will then wait until launch.
 //! It will try to detect a rapid ascent, or as a backup, if the current altitude is much higher
-//! than the launch altitude (100m with good precission, more if the precission is bad). This will
+//! than the launch altitude (100m with good precision, more if the precision is bad). This will
 //! only work if GPS is enabled. If not, it will simply record until the device is manually shut
 //! down, OpenStratos will have no way of knowing its state. You will need to provide your own
 //! tracking mechanism.
@@ -129,7 +129,7 @@
 //! Once the balloon bursts, it will no longer take any pictures. The whole descent will be recorded
 //! in video (if the camera is enabled). Once the balloon gets to 2.5km altitude, it will turn on
 //! the GSM and try to send an SMS. It will try to send SMSs at 2.5km, 1.5km and 500m altitude above
-//! sea level. Some/all of them might fail, if the conectivity is poor or if the probe lands higher
+//! sea level. Some/all of them might fail, if the connectivity is poor or if the probe lands higher
 //! than any of those marks. It's not a problem, since once the landing is detected, a landed SMS
 //! will be sent. Landing is detected if the probe is more or less at the same altitude for a long
 //! time (expected descent rate is bigger than 5 m/s).
@@ -144,9 +144,9 @@
 //!
 //! *In development…*
 
-#![cfg_attr(feature = "cargo-clippy", deny(clippy))]
+#![deny(clippy::all)]
 #![forbid(anonymous_parameters)]
-//#![cfg_attr(feature = "cargo-clippy", warn(clippy_pedantic))]
+#![warn(clippy::pedantic)]
 #![deny(
     variant_size_differences,
     unused_results,
@@ -162,14 +162,9 @@
     unused_extern_crates
 )]
 
-extern crate colored;
-#[macro_use]
-extern crate log;
-extern crate os_balloon;
-
 use colored::Colorize;
-
-use os_balloon::*;
+use log::{error, info};
+use os_balloon::{generate_error_string, init_loggers, run, CONFIG};
 
 /// Program entry point.
 ///

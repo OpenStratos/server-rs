@@ -36,9 +36,9 @@
 //!
 //! *In development…*
 
-#![cfg_attr(feature = "cargo-clippy", deny(clippy))]
+#![deny(clippy::all)]
 #![forbid(anonymous_parameters)]
-//#![cfg_attr(feature = "cargo-clippy", warn(clippy_pedantic))]
+//#![warn(clippy::pedantic)]
 #![deny(
     variant_size_differences,
     unused_results,
@@ -56,32 +56,10 @@
 // Removing some warnings
 #![allow(unsafe_code, box_pointers)]
 
-extern crate chrono;
-extern crate colored;
-// Macros only required for FONA or Raspicam
-#[cfg_attr(any(feature = "fona", feature = "raspicam"), macro_use)]
-extern crate failure;
 #[macro_use]
 extern crate failure_derive;
 #[macro_use]
-extern crate lazy_static;
-extern crate libc;
-#[macro_use]
-extern crate log;
-extern crate log4rs;
-#[macro_use]
 extern crate serde_derive;
-extern crate toml;
-
-// Only required for GPS, FONA or telemetry
-#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
-extern crate serde;
-#[cfg(any(feature = "fona"))] // feature = "gps", feature = "telemetry"
-extern crate tokio_serial;
-
-// Only required for GPS or FONA
-#[cfg(any(feature = "gps", feature = "fona"))]
-extern crate sysfs_gpio;
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";
@@ -104,14 +82,14 @@ use std::fs;
 
 use failure::{Error, ResultExt};
 
-pub use config::CONFIG;
-use logic::{MainLogic, State};
+pub use crate::config::CONFIG;
+use crate::logic::{MainLogic, State};
 
 /// The main logic of the program.
 pub fn run() -> Result<(), Error> {
     initialize_data_filesystem().context(error::Fs::DataInit)?;
 
-    if let Some(state) = State::get_last().context(error::LastState::Read)? {
+    if let Some(_state) = State::get_last().context(error::LastState::Read)? {
         // TODO recover from last state and continue
         unimplemented!()
     } else {
@@ -219,15 +197,17 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
     };
 
     let config = Config::builder()
-            // Appenders
-            .appender(Appender::builder().build("stdout", Box::new(stdout)))
-            .appender(Appender::builder().build("main", Box::new(main)))
-            .appender(Appender::builder().build("system", Box::new(system)))
-            // Loggers
-            .logger(Logger::builder()
-                        .appender("system")
-                        .additive(false)
-                        .build("system", LevelFilter::Info));
+        // Appenders
+        .appender(Appender::builder().build("stdout", Box::new(stdout)))
+        .appender(Appender::builder().build("main", Box::new(main)))
+        .appender(Appender::builder().build("system", Box::new(system)))
+        // Loggers
+        .logger(
+            Logger::builder()
+                .appender("system")
+                .additive(false)
+                .build("system", LevelFilter::Info),
+        );
 
     #[cfg(feature = "raspicam")]
     let config = {
@@ -276,11 +256,13 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("gps", Box::new(gps)),
-            ).appender(
+            )
+            .appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("gps_frames", Box::new(gps_frames)),
-            ).logger(gps_logger);
+            )
+            .logger(gps_logger);
 
         if CONFIG.debug() {
             let gps_serial = FileAppender::builder()
@@ -326,11 +308,13 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("fona", Box::new(fona)),
-            ).appender(
+            )
+            .appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("fona_frames", Box::new(fona_frames)),
-            ).logger(fona_logger);
+            )
+            .logger(fona_logger);
 
         if CONFIG.debug() {
             let gsm_serial = FileAppender::builder()
@@ -378,11 +362,13 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 Appender::builder()
                     .filter(Box::new(ThresholdFilter::new(LevelFilter::Info)))
                     .build("telemetry", Box::new(telemetry)),
-            ).appender(
+            )
+            .appender(
                 Appender::builder()
                     .filter(Box::new(DebugFilter))
                     .build("telemetry_frames", Box::new(telemetry_frames)),
-            ).logger(telemetry_logger);
+            )
+            .logger(telemetry_logger);
 
         if CONFIG.debug() {
             let telemetry_serial = FileAppender::builder()
@@ -408,7 +394,8 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
                 .appender("stdout")
                 .appender("main")
                 .build(LevelFilter::Info),
-        ).context(error::Log::Build)?;
+        )
+        .context(error::Log::Build)?;
 
     Ok(log4rs::init_config(config)?)
 }

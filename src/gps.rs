@@ -2,14 +2,14 @@
 
 #![allow(missing_debug_implementations)]
 
-use std::fmt;
-use std::str::FromStr;
-use std::sync::Mutex;
+use std::{fmt, str::FromStr, sync::Mutex};
 
 use chrono::{DateTime, Utc};
 use failure::Error;
+use lazy_static::lazy_static;
+use log::info;
 
-use error;
+use crate::error;
 
 lazy_static! {
     /// GPS data for concurrent check.
@@ -164,7 +164,7 @@ impl fmt::Display for FixStatus {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{FixStatus, GPS};
 
     /// Checks the GPS status from string conversion.
     #[test]
@@ -174,7 +174,7 @@ mod tests {
 
         // Check errors.
         assert!("".parse::<FixStatus>().is_err());
-        assert!("sadfsa".parse::<FixStatus>().is_err());
+        assert!("invalid".parse::<FixStatus>().is_err());
         assert!("a".parse::<FixStatus>().is_err());
         assert!("Ab".parse::<FixStatus>().is_err());
     }

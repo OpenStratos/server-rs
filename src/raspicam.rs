@@ -14,13 +14,13 @@ use std::{
 #[cfg(feature = "gps")]
 use std::fmt;
 
-use failure::Error;
+use failure::{bail, Error};
+use lazy_static::lazy_static;
+use log::{debug, error, info, warn};
 
-use config::CONFIG;
-use error;
-use generate_error_string;
 #[cfg(feature = "gps")]
-use gps::{FixStatus, GPS};
+use crate::gps::{FixStatus, GPS};
+use crate::{config::CONFIG, error, generate_error_string};
 
 /// Video directory inside data directory.
 pub const VIDEO_DIR: &str = "video";
@@ -38,7 +38,7 @@ lazy_static! {
 
 /// Camera structure.
 ///
-/// This structure controlls the use of the camera.
+/// This structure controls the use of the camera.
 #[derive(Debug)]
 pub struct Camera {
     /// Directory to save video files.
@@ -59,7 +59,7 @@ impl Camera {
     ///
     /// An optional second parameter can be provided to specify a file name for the video recording,
     /// useful in case of testing. If that file name is provided, or if the method is executed
-    /// as a test, the file will be removed after the recording, except if the `mantain_test_video`
+    /// as a test, the file will be removed after the recording, except if the `maintain_test_video`
     /// feature is used. If a file name is provided, a time should be provided too, and it will
     /// throw a warning if not.
     ///
@@ -252,7 +252,7 @@ impl Camera {
     {
         let file_name = file_name.into();
 
-        info!("Takin picture…");
+        info!("Taking picture…");
         if self.is_recording() {
             warn!("The camera was recording video when trying to take the picture. Stopping…");
             self.stop_recording()?;
@@ -384,7 +384,7 @@ pub struct ExifData {
     gps_satellites: u8,
     /// GPS fix status.
     gps_status: FixStatus,
-    /// GPS position dillution of precission.
+    /// GPS position dilution of precision.
     gps_dop: f32,
     /// GPS speed.
     gps_speed: f32,
@@ -450,7 +450,7 @@ impl ToString for ExifData {
         //                        self.gps_timestamp * 100f32));
 
         exif.push_str(&format!(" -x GPS.GPSSatellites={}", self.gps_satellites));
-        exif.push_str(&format!(" -x GPS.GPSStatuss={}", self.gps_status));
+        exif.push_str(&format!(" -x GPS.GPSStatus={}", self.gps_status));
         exif.push_str(&format!(
             " -x GPS.GPSDOP={:.0}/1000",
             self.gps_dop * 1_000_f32
@@ -545,7 +545,7 @@ impl fmt::Display for LongitudeRef {
 /// Tests module.
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{ExifData, FixStatus, LatitudeRef, LongitudeRef, CAMERA};
 
     /// Tests EXIF generation.
     #[test]
@@ -569,7 +569,7 @@ mod tests {
             " -x GPSMeasureMode=3 -x GPS.GPSDifferential=0 -x GPS.GPSLatitudeRef=N -x \
              GPS.GPSLatitude=23444970/1000000 -x GPS.GPSLongitudeRef=E -x \
              GPS.GPSLongitude=100057920/1000000 -x GPS.GPSAltitudeRef=0 -x \
-             GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatuss=A -x \
+             GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatus=A -x \
              GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed=13500/1000 -x \
              GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000"
         );

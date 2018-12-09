@@ -14,13 +14,22 @@ use std::thread;
 #[cfg(feature = "no_power_off")]
 use std::process;
 
-use super::*;
-#[cfg(feature = "fona")]
-use fona::FONA;
+#[cfg(any(feature = "gps", feature = "fona", feature = "raspicam"))]
+use failure::ResultExt;
+use log::{error, info};
+
+#[cfg(not(feature = "gps"))]
+use super::EternalLoop;
 #[cfg(feature = "gps")]
-use gps::GPS;
+use super::{error as crate_error, AcquiringFix};
+use super::{Error, Init, OpenStratos, StateMachine, CONFIG};
+
+#[cfg(feature = "fona")]
+use crate::fona::FONA;
+#[cfg(feature = "gps")]
+use crate::gps::GPS;
 #[cfg(feature = "raspicam")]
-use raspicam::VIDEO_DIR;
+use crate::raspicam::VIDEO_DIR;
 
 /// Test video file.
 #[cfg(feature = "raspicam")]
@@ -33,7 +42,7 @@ impl StateMachine for OpenStratos<Init> {
     #[cfg(not(feature = "gps"))]
     type Next = OpenStratos<EternalLoop>;
 
-    #[cfg_attr(feature = "cargo-clippy", allow(block_in_if_condition_expr))]
+    #[allow(clippy::block_in_if_condition_expr)]
     fn execute(self) -> Result<Self::Next, Error> {
         check_disk_space()?;
 
@@ -114,13 +123,13 @@ fn check_disk_space() -> Result<(), Error> {
 fn initialize_gps() -> Result<(), Error> {
     info!("Initializing GPS…");
     match GPS.lock() {
-        Ok(mut gps) => gps.initialize().context(error::Init::GpsInit)?,
+        Ok(mut gps) => gps.initialize().context(crate_error::Init::GpsInit)?,
         Err(poisoned) => {
             error!("The GPS mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(error::Init::GpsInit)?
+                .context(crate_error::Init::GpsInit)?
         }
     }
     info!("GPS initialized.");
@@ -132,13 +141,13 @@ fn initialize_gps() -> Result<(), Error> {
 fn initialize_fona() -> Result<(), Error> {
     info!("Initializing Adafruit FONA GSM module…");
     match FONA.lock() {
-        Ok(mut fona) => fona.initialize().context(error::Init::FonaInit)?,
+        Ok(mut fona) => fona.initialize().context(crate_error::Init::FonaInit)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(error::Init::FonaInit)?
+                .context(crate_error::Init::FonaInit)?
         }
     }
     info!("Adafruit FONA GSM module initialized.");
@@ -150,13 +159,13 @@ fn initialize_fona() -> Result<(), Error> {
         match FONA.lock() {
             Ok(mut fona) => !fona
                 .has_connectivity()
-                .context(error::Init::CheckGsmConnectivity)?,
+                .context(crate_error::Init::CheckGsmConnectivity)?,
             Err(poisoned) => {
                 error!("The FONA mutex was poisoned.");
                 !poisoned
                     .into_inner()
                     .has_connectivity()
-                    .context(error::Init::CheckGsmConnectivity)?
+                    .context(crate_error::Init::CheckGsmConnectivity)?
             }
         }
     } {
@@ -175,23 +184,25 @@ fn check_batteries() -> Result<(), Error> {
     let fona_bat_percent = match FONA.lock() {
         Ok(mut fona) => fona
             .battery_percent()
-            .context(error::Init::CheckBatteries)?,
+            .context(crate_error::Init::CheckBatteries)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .battery_percent()
-                .context(error::Init::CheckBatteries)?
+                .context(crate_error::Init::CheckBatteries)?
         }
     };
     let adc_voltage = match FONA.lock() {
-        Ok(mut fona) => fona.adc_voltage().context(error::Init::CheckBatteries)?,
+        Ok(mut fona) => fona
+            .adc_voltage()
+            .context(crate_error::Init::CheckBatteries)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .adc_voltage()
-                .context(error::Init::CheckBatteries)?
+                .context(crate_error::Init::CheckBatteries)?
         }
     };
     let main_bat_percent = (adc_voltage - CONFIG.battery().main_min())
@@ -215,7 +226,7 @@ fn check_batteries() -> Result<(), Error> {
         || fona_bat_percent < CONFIG.battery().fona_min_percent()
     {
         error!("Not enough battery.");
-        Err(error::Init::NotEnoughBattery.into())
+        Err(crate_error::Init::NotEnoughBattery.into())
     } else {
         Ok(())
     }
@@ -226,20 +237,20 @@ fn check_batteries() -> Result<(), Error> {
 fn test_raspicam() -> Result<(), Error> {
     use std::fs::remove_file;
 
-    use raspicam::CAMERA;
+    use crate::raspicam::CAMERA;
 
     info!("Testing camera recording…");
     info!("Recording 10 seconds as test…");
     match CAMERA.lock() {
         Ok(mut cam) => cam
             .record(Duration::from_secs(10), TEST_VIDEO_FILE)
-            .context(error::Raspicam::Test)?,
+            .context(crate_error::Raspicam::Test)?,
         Err(poisoned) => {
             error!("The CAMERA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .record(Duration::from_secs(10), TEST_VIDEO_FILE)
-                .context(error::Raspicam::Test)?
+                .context(crate_error::Raspicam::Test)?
         }
     }
 
@@ -247,7 +258,7 @@ fn test_raspicam() -> Result<(), Error> {
     if video_path.exists() {
         info!("Camera test OK.");
         info!("Removing test file…");
-        remove_file(&video_path).context(error::Raspicam::TestRemove {
+        remove_file(&video_path).context(crate_error::Raspicam::TestRemove {
             test_file: video_path.clone(),
         })?;
         info!("Test file removed.");
@@ -276,11 +287,7 @@ fn test_raspicam() -> Result<(), Error> {
 
 /// Gets the available disk space for OpenStratos.
 fn get_available_disk_space() -> Result<u64, Error> {
-    use std::ffi::CString;
-    use std::mem;
-    use std::os::unix::ffi::OsStrExt;
-
-    use libc;
+    use std::{ffi::CString, mem, os::unix::ffi::OsStrExt};
 
     let dir = CString::new(CONFIG.data_dir().as_os_str().as_bytes())?;
 

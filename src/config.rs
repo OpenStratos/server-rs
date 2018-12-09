@@ -1,7 +1,7 @@
 //! Configuration module.
 //!
 //! One of the main features of OpenStratos is that it's almost 100% configurable. Apart from the
-//! features above, the package contains a `config.toml` file, writen in
+//! features above, the package contains a `config.toml` file, written in
 //! [TOML](https://en.wikipedia.org/wiki/TOML) that enables the configuration of the setup without
 //! requiring a recompilation of the software. Things like the picture/video options, alert phone
 //! number, debug mode, pin numbers and many more can be modified with that file.
@@ -52,6 +52,7 @@ use std::fmt;
 
 use colored::Colorize;
 use failure::{Error, ResultExt};
+use lazy_static::lazy_static;
 use toml;
 
 // Only required for GPS, FONA or telemetry
@@ -66,9 +67,7 @@ use serde::de::Deserialize;
 #[cfg(any(feature = "gps", feature = "fona"))]
 use sysfs_gpio::Pin;
 
-use error;
-use generate_error_string;
-use CONFIG_FILE;
+use crate::{error, generate_error_string, CONFIG_FILE};
 
 lazy_static! {
     /// Configuration object.
@@ -453,9 +452,9 @@ pub struct Battery {
     fona_min: f32,
     /// Maximum voltage for the FONA battery when full, at 100%, in volts (`V`).
     fona_max: f32,
-    /// Minimum admisible percentage for main battery for the launch.
+    /// Minimum admissible percentage for main battery for the launch.
     main_min_percent: f32,
-    /// Minimum admisible percentage for FONA battery for the launch.
+    /// Minimum admissible percentage for FONA battery for the launch.
     fona_min_percent: f32,
 }
 
@@ -481,12 +480,12 @@ impl Battery {
         self.fona_min
     }
 
-    /// Gets the minimum admisible percentage for main battery for the launch.
+    /// Gets the minimum admissible percentage for main battery for the launch.
     pub fn main_min_percent(self) -> f32 {
         self.main_min_percent
     }
 
-    /// Gets the minimum admisible percentage for FONA battery for the launch.
+    /// Gets the minimum admissible percentage for FONA battery for the launch.
     pub fn fona_min_percent(self) -> f32 {
         self.fona_min_percent
     }
@@ -508,7 +507,7 @@ pub struct Video {
     bitrate: u32,
     /// Exposure configuration.
     exposure: Option<Exposure>,
-    /// Brightnes correction.
+    /// Brightness correction.
     brightness: Option<u8>,
     /// Contrast correction.
     contrast: Option<i8>,
@@ -618,7 +617,7 @@ pub struct Picture {
     raw: Option<bool>,
     /// Exposure configuration.
     exposure: Option<Exposure>,
-    /// Brightnes correction.
+    /// Brightness correction.
     brightness: Option<u8>,
     /// Contrast correction.
     contrast: Option<i8>,
@@ -758,7 +757,7 @@ pub enum Exposure {
     VeryLong,
     /// Constrain fps to a fixed value.
     FixedFps,
-    /// Antishake mode.
+    /// Anti-shake mode.
     AntiShake,
     /// Select setting optimized for fireworks.
     Fireworks,
@@ -993,7 +992,7 @@ where
             formatter.write_str("an integer between 2 and 28")
         }
 
-        #[cfg_attr(feature = "cargo-clippy", allow(absurd_extreme_comparisons))]
+        #[allow(clippy::absurd_extreme_comparisons)]
         fn visit_i64<E>(self, value: i64) -> Result<Pin, E>
         where
             E: de::Error,
@@ -1011,7 +1010,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{
+        Battery, Config, Exposure, Flight, Fona, Gps, Path, PathBuf, PhoneNumber, Picture, Pin,
+        Telemetry, Video, WhiteBalance, CONFIG,
+    };
 
     /// Loads the default configuration and checks it.
     #[test]
@@ -1153,13 +1155,7 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(
-            all(
-                feature = "gps",
-                feature = "fona",
-                not(feature = "telemetry")
-            )
-        )]
+        #[cfg(all(feature = "gps", feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             flight,
@@ -1171,13 +1167,7 @@ mod tests {
             fona,
         };
 
-        #[cfg(
-            all(
-                feature = "gps",
-                not(feature = "fona"),
-                feature = "telemetry"
-            )
-        )]
+        #[cfg(all(feature = "gps", not(feature = "fona"), feature = "telemetry"))]
         let config = Config {
             debug: None,
             flight,
@@ -1188,13 +1178,7 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(
-            all(
-                feature = "gps",
-                not(feature = "fona"),
-                not(feature = "telemetry")
-            )
-        )]
+        #[cfg(all(feature = "gps", not(feature = "fona"), not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             flight,
@@ -1204,13 +1188,7 @@ mod tests {
             gps,
         };
 
-        #[cfg(
-            all(
-                not(feature = "gps"),
-                feature = "fona",
-                feature = "telemetry"
-            )
-        )]
+        #[cfg(all(not(feature = "gps"), feature = "fona", feature = "telemetry"))]
         let config = Config {
             debug: None,
             flight,
@@ -1222,13 +1200,7 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(
-            all(
-                not(feature = "gps"),
-                feature = "fona",
-                not(feature = "telemetry")
-            )
-        )]
+        #[cfg(all(not(feature = "gps"), feature = "fona", not(feature = "telemetry")))]
         let config = Config {
             debug: None,
             flight,
@@ -1239,13 +1211,7 @@ mod tests {
             fona,
         };
 
-        #[cfg(
-            all(
-                not(feature = "gps"),
-                not(feature = "fona"),
-                feature = "telemetry"
-            )
-        )]
+        #[cfg(all(not(feature = "gps"), not(feature = "fona"), feature = "telemetry"))]
         let config = Config {
             debug: None,
             flight,
@@ -1255,13 +1221,11 @@ mod tests {
             telemetry,
         };
 
-        #[cfg(
-            all(
-                not(feature = "gps"),
-                not(feature = "fona"),
-                not(feature = "telemetry")
-            )
-        )]
+        #[cfg(all(
+            not(feature = "gps"),
+            not(feature = "fona"),
+            not(feature = "telemetry")
+        ))]
         let config = Config {
             debug: None,
             flight,

@@ -2,7 +2,7 @@
 
 use failure::Error;
 
-use super::*;
+use super::{AcquiringFix, FixAcquired, OpenStratos, StateMachine};
 
 impl StateMachine for OpenStratos<AcquiringFix> {
     type Next = OpenStratos<FixAcquired>;

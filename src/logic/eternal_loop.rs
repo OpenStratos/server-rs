@@ -2,7 +2,7 @@
 
 use failure::Error;
 
-use super::*;
+use super::{EternalLoop, ShutDown, OpenStratos, StateMachine};
 
 impl StateMachine for OpenStratos<EternalLoop> {
     type Next = OpenStratos<ShutDown>;
