@@ -18,10 +18,12 @@ use std::process;
 use failure::ResultExt;
 use log::{error, info};
 
+#[cfg(any(feature = "gps", feature = "fona", feature = "raspicam"))]
+use super::error as crate_error;
+#[cfg(feature = "gps")]
+use super::AcquiringFix;
 #[cfg(not(feature = "gps"))]
 use super::EternalLoop;
-#[cfg(feature = "gps")]
-use super::{error as crate_error, AcquiringFix};
 use super::{Error, Init, OpenStratos, StateMachine, CONFIG};
 
 #[cfg(feature = "fona")]

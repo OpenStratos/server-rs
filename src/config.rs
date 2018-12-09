@@ -56,7 +56,7 @@ use lazy_static::lazy_static;
 use toml;
 
 // Only required for GPS, FONA or telemetry
-#[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
+#[cfg(any(feature = "gps", feature = "fona"))]
 use serde::de::{self, Deserializer, Visitor};
 
 // Only required for FONA
@@ -1010,21 +1010,23 @@ where
 
 #[cfg(test)]
 mod tests {
-    #[cfg(feature = "gps")]
+    #[cfg(all(feature = "gps", feature = "raspicam"))]
     use super::Gps;
-    #[cfg(feature = "telemetry")]
+    #[cfg(all(feature = "raspicam", feature = "telemetry"))]
     use super::Telemetry;
-    #[cfg(feature = "fona")]
-    use super::{Battery, Fona, PhoneNumber, Video, WhiteBalance};
+    #[cfg(all(feature = "raspicam", feature = "fona"))]
+    use super::{Battery, Fona, PhoneNumber};
     use super::{Config, CONFIG};
     #[cfg(feature = "raspicam")]
-    use super::{Exposure, Flight, Picture};
+    use super::{Exposure, Flight, Picture, Video, WhiteBalance};
 
-    #[cfg(any(feature = "gps", feature = "fona"))]
+    #[cfg(all(feature = "raspicam", any(feature = "gps", feature = "fona")))]
     use sysfs_gpio::Pin;
 
-    #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
-    use std::path::{Path, PathBuf};
+    #[cfg(feature = "gps")]
+    use std::path::Path;
+    #[cfg(feature = "raspicam")]
+    use std::path::PathBuf;
 
     /// Loads the default configuration and checks it.
     #[test]

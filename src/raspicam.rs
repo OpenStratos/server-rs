@@ -545,7 +545,9 @@ impl fmt::Display for LongitudeRef {
 /// Tests module.
 #[cfg(test)]
 mod tests {
-    use super::{ExifData, FixStatus, LatitudeRef, LongitudeRef, CAMERA};
+    use super::CAMERA;
+    #[cfg(feature = "gps")]
+    use super::{ExifData, FixStatus, LatitudeRef, LongitudeRef};
 
     /// Tests EXIF generation.
     #[test]
