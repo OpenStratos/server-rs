@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["FONA","The FONA module control structure."],["Fona","Adafruit FONA control structure."],["Location","Structure representing the location of the probe as obtained by the FONA module."]]});
+initSidebarItems({"static":[["FONA",""]],"struct":[["FONA","The FONA module control structure."],["Fona","Adafruit FONA control structure."],["Location","Structure representing the location of the probe as obtained by the FONA module."]]});

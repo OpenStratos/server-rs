@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/mio-serial-3.0.0/src/unix.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unix.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/mio-serial-3.1.0/src/unix.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>unix.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -472,6 +472,38 @@
 <span id="472">472</span>
 <span id="473">473</span>
 <span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Unix impl of mio-enabled serial ports.</span>
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">convert</span>::<span class="ident">AsRef</span>;
@@ -483,21 +515,18 @@
 <span class="kw">use</span> <span class="ident">mio</span>::<span class="ident">unix</span>::<span class="ident">EventedFd</span>;
 <span class="kw">use</span> <span class="ident">mio</span>::{<span class="ident">Evented</span>, <span class="ident">Poll</span>, <span class="ident">PollOpt</span>, <span class="ident">Ready</span>, <span class="ident">Token</span>};
 
-<span class="kw">use</span> <span class="ident">serialport</span>;
 <span class="kw">use</span> <span class="ident">serialport</span>::<span class="ident">posix</span>::<span class="ident">TTYPort</span>;
 <span class="kw">use</span> <span class="ident">serialport</span>::<span class="ident">prelude</span>::<span class="kw-2">*</span>;
 
-<span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">libc</span>;
-<span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">sys</span>::<span class="ident">termios</span>;
-<span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">sys</span>::<span class="ident">termios</span>::{<span class="ident">SetArg</span>, <span class="ident">SpecialCharacterIndices</span>};
-<span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">Error</span> <span class="kw">as</span> <span class="ident">nixError</span>;
+<span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">sys</span>::<span class="ident">termios</span>::{<span class="self">self</span>, <span class="ident">SetArg</span>, <span class="ident">SpecialCharacterIndices</span>};
+<span class="kw">use</span> <span class="ident">nix</span>::{<span class="self">self</span>, <span class="ident">libc</span>};
 
 <span class="doccomment">/// *nix serial port using termios</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Serial</span> {
     <span class="ident">inner</span>: <span class="ident">TTYPort</span>,
 }
 
-<span class="kw">fn</span> <span class="ident">map_nix_error</span>(<span class="ident">e</span>: <span class="ident">nixError</span>) <span class="op">-&gt;</span> ::<span class="ident">Error</span> {
+<span class="kw">fn</span> <span class="ident">map_nix_error</span>(<span class="ident">e</span>: <span class="ident">nix</span>::<span class="ident">Error</span>) <span class="op">-&gt;</span> ::<span class="ident">Error</span> {
     ::<span class="ident">Error</span> {
         <span class="ident">kind</span>: ::<span class="ident">ErrorKind</span>::<span class="ident">Io</span>(<span class="ident">io</span>::<span class="ident">ErrorKind</span>::<span class="ident">Other</span>),
         <span class="ident">description</span>: <span class="ident">e</span>.<span class="ident">to_string</span>(),
@@ -668,7 +697,8 @@
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">stop_bits</span>()
     }
 
-    <span class="doccomment">/// Returns the current timeout.</span>
+    <span class="doccomment">/// Returns the current timeout. This parameter is const and equal to zero and implemented due</span>
+    <span class="doccomment">/// to required for trait completeness.</span>
     <span class="kw">fn</span> <span class="ident">timeout</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Duration</span> {
         <span class="ident">Duration</span>::<span class="ident">from_secs</span>(<span class="number">0</span>)
     }
@@ -678,7 +708,7 @@
     <span class="doccomment">/// Applies all settings for a struct. This isn&#39;t guaranteed to involve only</span>
     <span class="doccomment">/// a single call into the driver, though that may be done on some</span>
     <span class="doccomment">/// platforms.</span>
-    <span class="kw">fn</span> <span class="ident">set_all</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">settings</span>: <span class="kw-2">&amp;</span><span class="ident">SerialPortSettings</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_all</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">settings</span>: <span class="kw-2">&amp;</span><span class="ident">SerialPortSettings</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_all</span>(<span class="ident">settings</span>)
     }
 
@@ -689,33 +719,33 @@
     <span class="doccomment">/// If the implementation does not support the requested baud rate, this function may return an</span>
     <span class="doccomment">/// `InvalidInput` error. Even if the baud rate is accepted by `set_baud_rate()`, it may not be</span>
     <span class="doccomment">/// supported by the underlying hardware.</span>
-    <span class="kw">fn</span> <span class="ident">set_baud_rate</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">baud_rate</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_baud_rate</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">baud_rate</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_baud_rate</span>(<span class="ident">baud_rate</span>)
     }
 
     <span class="doccomment">/// Sets the character size.</span>
-    <span class="kw">fn</span> <span class="ident">set_data_bits</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">data_bits</span>: ::<span class="ident">DataBits</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_data_bits</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">data_bits</span>: ::<span class="ident">DataBits</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_data_bits</span>(<span class="ident">data_bits</span>)
     }
 
     <span class="doccomment">/// Sets the flow control mode.</span>
-    <span class="kw">fn</span> <span class="ident">set_flow_control</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flow_control</span>: ::<span class="ident">FlowControl</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_flow_control</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">flow_control</span>: ::<span class="ident">FlowControl</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_flow_control</span>(<span class="ident">flow_control</span>)
     }
 
     <span class="doccomment">/// Sets the parity-checking mode.</span>
-    <span class="kw">fn</span> <span class="ident">set_parity</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">parity</span>: ::<span class="ident">Parity</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_parity</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">parity</span>: ::<span class="ident">Parity</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_parity</span>(<span class="ident">parity</span>)
     }
 
     <span class="doccomment">/// Sets the number of stop bits.</span>
-    <span class="kw">fn</span> <span class="ident">set_stop_bits</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">stop_bits</span>: ::<span class="ident">StopBits</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_stop_bits</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">stop_bits</span>: ::<span class="ident">StopBits</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">set_stop_bits</span>(<span class="ident">stop_bits</span>)
     }
 
-    <span class="doccomment">/// Sets the timeout for future I/O operations.  This parameter is ignored but</span>
+    <span class="doccomment">/// Sets the timeout for future I/O operations. This parameter is ignored but</span>
     <span class="doccomment">/// required for trait completeness.</span>
-    <span class="kw">fn</span> <span class="ident">set_timeout</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">Duration</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">set_timeout</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="kw">_</span>: <span class="ident">Duration</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -732,7 +762,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">write_request_to_send</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">level</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">write_request_to_send</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">level</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">write_request_to_send</span>(<span class="ident">level</span>)
     }
 
@@ -747,7 +777,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">write_data_terminal_ready</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">level</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">write_data_terminal_ready</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">level</span>: <span class="ident">bool</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">write_data_terminal_ready</span>(<span class="ident">level</span>)
     }
 
@@ -764,7 +794,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">read_clear_to_send</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">read_clear_to_send</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">read_clear_to_send</span>()
     }
 
@@ -779,7 +809,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">read_data_set_ready</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">read_data_set_ready</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">read_data_set_ready</span>()
     }
 
@@ -794,7 +824,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">read_ring_indicator</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">read_ring_indicator</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">read_ring_indicator</span>()
     }
 
@@ -809,11 +839,45 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
     <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
-    <span class="kw">fn</span> <span class="ident">read_carrier_detect</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">read_carrier_detect</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">read_carrier_detect</span>()
     }
 
-    <span class="comment">// Misc methods</span>
+    <span class="doccomment">/// Gets the number of bytes available to be read from the input buffer.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function may return the following errors:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
+    <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
+    <span class="kw">fn</span> <span class="ident">bytes_to_read</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">bytes_to_read</span>()
+    }
+
+    <span class="doccomment">/// Get the number of bytes written to the output buffer, awaiting transmission.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function may return the following errors:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
+    <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
+    <span class="kw">fn</span> <span class="ident">bytes_to_write</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">u32</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">bytes_to_write</span>()
+    }
+
+    <span class="doccomment">/// Discards all bytes from the serial driver&#39;s input buffer and/or output buffer.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Errors</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This function may return the following errors:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * `NoDevice` if the device was disconnected.</span>
+    <span class="doccomment">/// * `Io` for any other type of I/O error.</span>
+    <span class="kw">fn</span> <span class="ident">clear</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buffer_to_clear</span>: <span class="ident">ClearBuffer</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">clear</span>(<span class="ident">buffer_to_clear</span>)
+    }
 
     <span class="doccomment">/// Attempts to clone the `SerialPort`. This allow you to write and read simultaneously from the</span>
     <span class="doccomment">/// same serial connection. Please note that if you want a real asynchronous serial port you</span>
@@ -827,7 +891,7 @@
     <span class="doccomment">/// # Errors</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function returns an error if the serial port couldn&#39;t be cloned.</span>
-    <span class="kw">fn</span> <span class="ident">try_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">serialport</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">SerialPort</span><span class="op">&gt;&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">try_clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> ::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="ident">SerialPort</span><span class="op">&gt;&gt;</span> {
         <span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">try_clone</span>()
     }
 }

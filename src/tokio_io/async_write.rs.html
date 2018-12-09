@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-io-0.1.9/src/async_write.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_write.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-io-0.1.10/src/async_write.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_write.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -218,6 +218,11 @@
 <span id="218">218</span>
 <span id="219">219</span>
 <span id="220">220</span>
+<span id="221">221</span>
+<span id="222">222</span>
+<span id="223">223</span>
+<span id="224">224</span>
+<span id="225">225</span>
 </pre><pre class="rust ">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">io</span> <span class="kw">as</span> <span class="ident">std_io</span>;
 <span class="kw">use</span> <span class="ident">bytes</span>::<span class="ident">Buf</span>;
@@ -231,8 +236,8 @@
 <span class="doccomment">/// **nonblocking**. All non-blocking I/O objects must return an error when</span>
 <span class="doccomment">/// bytes cannot be written instead of blocking the current thread.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Specifically, this means that the `write` function will return one of the</span>
-<span class="doccomment">/// following:</span>
+<span class="doccomment">/// Specifically, this means that the `poll_write` function will return one of</span>
+<span class="doccomment">/// the following:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * `Ok(Async::Ready(n))` means that `n` bytes of data was immediately</span>
 <span class="doccomment">///   written.</span>
@@ -240,7 +245,7 @@
 <span class="doccomment">/// * `Ok(Async::NotReady)` means that no data was written from the buffer</span>
 <span class="doccomment">///   provided. The I/O object is not currently writable but may become writable</span>
 <span class="doccomment">///   in the future. Most importantly, **the current future&#39;s task is scheduled</span>
-<span class="doccomment">///   to get unparked when the object is readable**. This means that like</span>
+<span class="doccomment">///   to get unparked when the object is writable**. This means that like</span>
 <span class="doccomment">///   `Future::poll` you&#39;ll receive a notification when the I/O object is</span>
 <span class="doccomment">///   writable again.</span>
 <span class="doccomment">///</span>
@@ -261,7 +266,7 @@
     <span class="doccomment">/// On success, returns `Ok(Async::Ready(num_bytes_written))`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If the object is not ready for writing, the method returns</span>
-    <span class="doccomment">/// `Ok(Async::Pending)` and arranges for the current task (via</span>
+    <span class="doccomment">/// `Ok(Async::NotReady)` and arranges for the current task (via</span>
     <span class="doccomment">/// `cx.waker()`) to receive a notification when the object becomes</span>
     <span class="doccomment">/// readable or is closed.</span>
     <span class="kw">fn</span> <span class="ident">poll_write</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span>[<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">std_io</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
@@ -280,7 +285,7 @@
     <span class="doccomment">/// On success, returns `Ok(Async::Ready(()))`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If flushing cannot immediately complete, this method returns</span>
-    <span class="doccomment">/// `Ok(Async::Pending)` and arranges for the current task (via</span>
+    <span class="doccomment">/// `Ok(Async::NotReady)` and arranges for the current task (via</span>
     <span class="doccomment">/// `cx.waker()`) to receive a notification when the object can make</span>
     <span class="doccomment">/// progress towards flushing.</span>
     <span class="kw">fn</span> <span class="ident">poll_flush</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span>(), <span class="ident">std_io</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
@@ -393,17 +398,22 @@
     }
 }
 
-<span class="comment">// TODO: Implement `prepare_uninitialized_buffer` for `io::Take`.</span>
-<span class="comment">// This is blocked on rust-lang/rust#27269</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsyncRead</span><span class="op">&gt;</span> <span class="ident">AsyncRead</span> <span class="kw">for</span> <span class="ident">std_io</span>::<span class="ident">Take</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">prepare_uninitialized_buffer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+        <span class="self">self</span>.<span class="ident">get_ref</span>().<span class="ident">prepare_uninitialized_buffer</span>(<span class="ident">buf</span>)
+    }
 }
 
-<span class="comment">// TODO: Implement `prepare_uninitialized_buffer` when upstream exposes inner</span>
-<span class="comment">// parts</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">U</span><span class="op">&gt;</span> <span class="ident">AsyncRead</span> <span class="kw">for</span> <span class="ident">std_io</span>::<span class="ident">Chain</span><span class="op">&lt;</span><span class="ident">T</span>, <span class="ident">U</span><span class="op">&gt;</span>
     <span class="kw">where</span> <span class="ident">T</span>: <span class="ident">AsyncRead</span>,
           <span class="ident">U</span>: <span class="ident">AsyncRead</span>,
 {
+    <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">prepare_uninitialized_buffer</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">bool</span> {
+        <span class="kw">let</span> (<span class="ident">t</span>, <span class="ident">u</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">get_ref</span>();
+        <span class="comment">// We don&#39;t need to execute the second initializer if the first one</span>
+        <span class="comment">// already zeroed the buffer out.</span>
+        <span class="ident">t</span>.<span class="ident">prepare_uninitialized_buffer</span>(<span class="ident">buf</span>) <span class="op">||</span> <span class="ident">u</span>.<span class="ident">prepare_uninitialized_buffer</span>(<span class="ident">buf</span>)
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsyncWrite</span><span class="op">&gt;</span> <span class="ident">AsyncWrite</span> <span class="kw">for</span> <span class="ident">std_io</span>::<span class="ident">BufWriter</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/lazycell-1.2.0/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/lazycell-1.2.1/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -581,6 +581,72 @@
 <span id="581">581</span>
 <span id="582">582</span>
 <span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
 </pre><pre class="rust ">
 <span class="comment">// Original work Copyright (c) 2014 The Rust Project Developers</span>
 <span class="comment">// Modified work Copyright (c) 2016-2018 Nikita Pekin and the lazycell contributors</span>
@@ -799,6 +865,17 @@
     }
 }
 
+<span class="kw">impl</span> <span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">LazyCell</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Create a clone of this `LazyCell`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If self has not been initialized, returns an uninitialized `LazyCell`</span>
+    <span class="doccomment">/// otherwise returns a `LazyCell` already initialized with a clone of the</span>
+    <span class="doccomment">/// contents of self.</span>
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">LazyCell</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="ident">LazyCell</span> { <span class="ident">inner</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="self">self</span>.<span class="ident">borrow</span>().<span class="ident">map</span>(<span class="ident">Clone</span>::<span class="ident">clone</span>) ) }
+    }
+}
+
 <span class="comment">// Tracks the AtomicLazyCell inner state</span>
 <span class="kw">const</span> <span class="ident">NONE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">0</span>;
 <span class="kw">const</span> <span class="ident">LOCK</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">1</span>;
@@ -895,6 +972,23 @@
             <span class="ident">SOME</span> <span class="op">=&gt;</span> <span class="kw">unsafe</span> { <span class="kw-2">*</span><span class="self">self</span>.<span class="ident">inner</span>.<span class="ident">get</span>() },
             <span class="kw">_</span> <span class="op">=&gt;</span> <span class="prelude-val">None</span>,
         }
+    }
+}
+
+<span class="kw">impl</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">Clone</span><span class="op">&gt;</span> <span class="ident">Clone</span> <span class="kw">for</span> <span class="ident">AtomicLazyCell</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+    <span class="doccomment">/// Create a clone of this `AtomicLazyCell`</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// If self has not been initialized, returns an uninitialized `AtomicLazyCell`</span>
+    <span class="doccomment">/// otherwise returns an `AtomicLazyCell` already initialized with a clone of the</span>
+    <span class="doccomment">/// contents of self.</span>
+    <span class="kw">fn</span> <span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">AtomicLazyCell</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
+        <span class="self">self</span>.<span class="ident">borrow</span>().<span class="ident">map_or</span>(
+            <span class="self">Self</span>::<span class="ident">NONE</span>,
+            <span class="op">|</span><span class="ident">v</span><span class="op">|</span> <span class="ident">AtomicLazyCell</span> {
+                <span class="ident">inner</span>: <span class="ident">UnsafeCell</span>::<span class="ident">new</span>(<span class="prelude-val">Some</span>(<span class="ident">v</span>.<span class="ident">clone</span>())),
+                <span class="ident">state</span>: <span class="ident">AtomicUsize</span>::<span class="ident">new</span>(<span class="ident">SOME</span>),
+            }
+        )
     }
 }
 
@@ -1163,6 +1257,44 @@
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">replace</span>(<span class="number">2</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">replace</span>(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">2</span>));
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3</span>));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">clone</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cell</span> <span class="op">=</span> <span class="ident">LazyCell</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">clone1</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">clone</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">fill</span>(<span class="number">1</span>), <span class="prelude-val">Ok</span>(()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clone2</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">clone</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">replace</span>(<span class="number">2</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">fill</span>(<span class="number">3</span>), <span class="prelude-val">Ok</span>(()));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">replace</span>(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">4</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2</span>));
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">clone_atomic</span>() {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cell</span> <span class="op">=</span> <span class="ident">AtomicLazyCell</span>::<span class="ident">new</span>();
+        <span class="kw">let</span> <span class="ident">clone1</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">clone</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">fill</span>(<span class="number">1</span>), <span class="prelude-val">Ok</span>(()));
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">clone2</span> <span class="op">=</span> <span class="ident">cell</span>.<span class="ident">clone</span>();
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">replace</span>(<span class="number">2</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">fill</span>(<span class="number">3</span>), <span class="prelude-val">Ok</span>(()));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">replace</span>(<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone1</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">clone2</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">4</span>));
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cell</span>.<span class="ident">borrow</span>(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">2</span>));
     }
 }
 </pre>

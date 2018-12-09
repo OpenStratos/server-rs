@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-io-0.1.9/src/async_read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/tokio-io-0.1.10/src/async_read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>async_read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -183,18 +183,18 @@
 <span class="doccomment">/// **non-blocking**. All non-blocking I/O objects must return an error when</span>
 <span class="doccomment">/// bytes are unavailable instead of blocking the current thread.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Specifically, this means that the `read` function will return one of the</span>
-<span class="doccomment">/// following:</span>
+<span class="doccomment">/// Specifically, this means that the `poll_read` function will return one of</span>
+<span class="doccomment">/// the following:</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * `Ok(Async::Ready(n))` means that `n` bytes of data was immediately read</span>
 <span class="doccomment">///   and placed into the output buffer, where `n` == 0 implies that EOF has</span>
 <span class="doccomment">///   been reached.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// * `Ok(Async::NotReady)` means that no data was read into the buffer </span>
+<span class="doccomment">/// * `Ok(Async::NotReady)` means that no data was read into the buffer</span>
 <span class="doccomment">///   provided. The I/O object is not currently readable but may become readable</span>
 <span class="doccomment">///   in the future. Most importantly, **the current future&#39;s task is scheduled</span>
-<span class="doccomment">///   to get unparked when the object is readable**. This means that like </span>
-<span class="doccomment">///   `Future::poll` you&#39;ll receive a notification when the I/O object is </span>
+<span class="doccomment">///   to get unparked when the object is readable**. This means that like</span>
+<span class="doccomment">///   `Future::poll` you&#39;ll receive a notification when the I/O object is</span>
 <span class="doccomment">///   readable again.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// * `Err(e)` for other errors are standard I/O errors coming from the</span>
@@ -213,13 +213,13 @@
     <span class="doccomment">/// zero out buffers can be expensive.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function does any necessary work to prepare an uninitialized buffer</span>
-    <span class="doccomment">/// to be safe to pass to `read`. If `read` guarantees to never attempt read</span>
-    <span class="doccomment">/// data out of the supplied buffer, then `prepare_uninitialized_buffer`</span>
+    <span class="doccomment">/// to be safe to pass to `read`. If `read` guarantees to never attempt to</span>
+    <span class="doccomment">/// read data out of the supplied buffer, then `prepare_uninitialized_buffer`</span>
     <span class="doccomment">/// doesn&#39;t need to do any work.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If this function returns `true`, then the memory has been zeroed out.</span>
     <span class="doccomment">/// This allows implementations of `AsyncRead` which are composed of</span>
-    <span class="doccomment">/// multiple sub implementations to efficiently implement</span>
+    <span class="doccomment">/// multiple subimplementations to efficiently implement</span>
     <span class="doccomment">/// `prepare_uninitialized_buffer`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function isn&#39;t actually `unsafe` to call but `unsafe` to implement.</span>
@@ -244,7 +244,7 @@
     <span class="doccomment">/// On success, returns `Ok(Async::Ready(num_bytes_read))`.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// If no data is available for reading, the method returns</span>
-    <span class="doccomment">/// `Ok(Async::Pending)` and arranges for the current task (via</span>
+    <span class="doccomment">/// `Ok(Async::NotReady)` and arranges for the current task (via</span>
     <span class="doccomment">/// `cx.waker()`) to receive a notification when the object becomes</span>
     <span class="doccomment">/// readable or is closed.</span>
     <span class="kw">fn</span> <span class="ident">poll_read</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">buf</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>]) <span class="op">-&gt;</span> <span class="ident">Poll</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">std_io</span>::<span class="ident">Error</span><span class="op">&gt;</span> {
@@ -257,7 +257,7 @@
         }
     }
 
-    <span class="doccomment">/// Pull some bytes from this source into the specified `Buf`, returning</span>
+    <span class="doccomment">/// Pull some bytes from this source into the specified `BufMut`, returning</span>
     <span class="doccomment">/// how many bytes were read.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// The `buf` provided will have bytes read into it and the internal cursor</span>
@@ -285,7 +285,7 @@
     }
 
     <span class="doccomment">/// Provides a `Stream` and `Sink` interface for reading and writing to this</span>
-    <span class="doccomment">/// `Io` object, using `Decode` and `Encode` to read and write the raw data.</span>
+    <span class="doccomment">/// I/O object, using `Decode` and `Encode` to read and write the raw data.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Raw I/O objects work with byte sequences, but higher-level code usually</span>
     <span class="doccomment">/// wants to batch these into meaningful chunks, called &quot;frames&quot;. This</span>

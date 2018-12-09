@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/smallvec-0.6.5/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/smallvec-0.6.7/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">   1</span>
 <span id="2">   2</span>
 <span id="3">   3</span>
 <span id="4">   4</span>
@@ -2177,6 +2177,132 @@
 <span id="2177">2177</span>
 <span id="2178">2178</span>
 <span id="2179">2179</span>
+<span id="2180">2180</span>
+<span id="2181">2181</span>
+<span id="2182">2182</span>
+<span id="2183">2183</span>
+<span id="2184">2184</span>
+<span id="2185">2185</span>
+<span id="2186">2186</span>
+<span id="2187">2187</span>
+<span id="2188">2188</span>
+<span id="2189">2189</span>
+<span id="2190">2190</span>
+<span id="2191">2191</span>
+<span id="2192">2192</span>
+<span id="2193">2193</span>
+<span id="2194">2194</span>
+<span id="2195">2195</span>
+<span id="2196">2196</span>
+<span id="2197">2197</span>
+<span id="2198">2198</span>
+<span id="2199">2199</span>
+<span id="2200">2200</span>
+<span id="2201">2201</span>
+<span id="2202">2202</span>
+<span id="2203">2203</span>
+<span id="2204">2204</span>
+<span id="2205">2205</span>
+<span id="2206">2206</span>
+<span id="2207">2207</span>
+<span id="2208">2208</span>
+<span id="2209">2209</span>
+<span id="2210">2210</span>
+<span id="2211">2211</span>
+<span id="2212">2212</span>
+<span id="2213">2213</span>
+<span id="2214">2214</span>
+<span id="2215">2215</span>
+<span id="2216">2216</span>
+<span id="2217">2217</span>
+<span id="2218">2218</span>
+<span id="2219">2219</span>
+<span id="2220">2220</span>
+<span id="2221">2221</span>
+<span id="2222">2222</span>
+<span id="2223">2223</span>
+<span id="2224">2224</span>
+<span id="2225">2225</span>
+<span id="2226">2226</span>
+<span id="2227">2227</span>
+<span id="2228">2228</span>
+<span id="2229">2229</span>
+<span id="2230">2230</span>
+<span id="2231">2231</span>
+<span id="2232">2232</span>
+<span id="2233">2233</span>
+<span id="2234">2234</span>
+<span id="2235">2235</span>
+<span id="2236">2236</span>
+<span id="2237">2237</span>
+<span id="2238">2238</span>
+<span id="2239">2239</span>
+<span id="2240">2240</span>
+<span id="2241">2241</span>
+<span id="2242">2242</span>
+<span id="2243">2243</span>
+<span id="2244">2244</span>
+<span id="2245">2245</span>
+<span id="2246">2246</span>
+<span id="2247">2247</span>
+<span id="2248">2248</span>
+<span id="2249">2249</span>
+<span id="2250">2250</span>
+<span id="2251">2251</span>
+<span id="2252">2252</span>
+<span id="2253">2253</span>
+<span id="2254">2254</span>
+<span id="2255">2255</span>
+<span id="2256">2256</span>
+<span id="2257">2257</span>
+<span id="2258">2258</span>
+<span id="2259">2259</span>
+<span id="2260">2260</span>
+<span id="2261">2261</span>
+<span id="2262">2262</span>
+<span id="2263">2263</span>
+<span id="2264">2264</span>
+<span id="2265">2265</span>
+<span id="2266">2266</span>
+<span id="2267">2267</span>
+<span id="2268">2268</span>
+<span id="2269">2269</span>
+<span id="2270">2270</span>
+<span id="2271">2271</span>
+<span id="2272">2272</span>
+<span id="2273">2273</span>
+<span id="2274">2274</span>
+<span id="2275">2275</span>
+<span id="2276">2276</span>
+<span id="2277">2277</span>
+<span id="2278">2278</span>
+<span id="2279">2279</span>
+<span id="2280">2280</span>
+<span id="2281">2281</span>
+<span id="2282">2282</span>
+<span id="2283">2283</span>
+<span id="2284">2284</span>
+<span id="2285">2285</span>
+<span id="2286">2286</span>
+<span id="2287">2287</span>
+<span id="2288">2288</span>
+<span id="2289">2289</span>
+<span id="2290">2290</span>
+<span id="2291">2291</span>
+<span id="2292">2292</span>
+<span id="2293">2293</span>
+<span id="2294">2294</span>
+<span id="2295">2295</span>
+<span id="2296">2296</span>
+<span id="2297">2297</span>
+<span id="2298">2298</span>
+<span id="2299">2299</span>
+<span id="2300">2300</span>
+<span id="2301">2301</span>
+<span id="2302">2302</span>
+<span id="2303">2303</span>
+<span id="2304">2304</span>
+<span id="2305">2305</span>
 </pre><pre class="rust ">
 <span class="comment">// Licensed under the Apache License, Version 2.0 &lt;LICENSE-APACHE or</span>
 <span class="comment">// http://www.apache.org/licenses/LICENSE-2.0&gt; or the MIT license</span>
@@ -2211,6 +2337,8 @@
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">no_std</span>)]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>), <span class="ident">feature</span>(<span class="ident">alloc</span>))]</span>
 <span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;union&quot;</span>, <span class="ident">feature</span>(<span class="ident">untagged_unions</span>))]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>, <span class="ident">feature</span>(<span class="ident">specialization</span>))]</span>
+<span class="attribute">#![<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;may_dangle&quot;</span>, <span class="ident">feature</span>(<span class="ident">dropck_eyepatch</span>))]</span>
 <span class="attribute">#![<span class="ident">deny</span>(<span class="ident">missing_docs</span>)]</span>
 
 
@@ -2862,7 +2990,7 @@
         }
     }
 
-    <span class="doccomment">/// Reserve the minumum capacity for `additional` more elements to be inserted.</span>
+    <span class="doccomment">/// Reserve the minimum capacity for `additional` more elements to be inserted.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// Panics if the new capacity overflows `usize`.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">reserve_exact</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">additional</span>: <span class="ident">usize</span>) {
@@ -3119,6 +3247,86 @@
     {
         <span class="self">self</span>.<span class="ident">dedup_by</span>(<span class="op">|</span><span class="ident">a</span>, <span class="ident">b</span><span class="op">|</span> <span class="ident">key</span>(<span class="ident">a</span>) <span class="op">==</span> <span class="ident">key</span>(<span class="ident">b</span>));
     }
+
+    <span class="doccomment">/// Creates a `SmallVec` directly from the raw components of another</span>
+    <span class="doccomment">/// `SmallVec`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Safety</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// This is highly unsafe, due to the number of invariants that aren&#39;t</span>
+    <span class="doccomment">/// checked:</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// * `ptr` needs to have been previously allocated via `SmallVec` for its</span>
+    <span class="doccomment">///   spilled storage (at least, it&#39;s highly likely to be incorrect if it</span>
+    <span class="doccomment">///   wasn&#39;t).</span>
+    <span class="doccomment">/// * `ptr`&#39;s `A::Item` type needs to be the same size and alignment that</span>
+    <span class="doccomment">///   it was allocated with</span>
+    <span class="doccomment">/// * `length` needs to be less than or equal to `capacity`.</span>
+    <span class="doccomment">/// * `capacity` needs to be the capacity that the pointer was allocated</span>
+    <span class="doccomment">///   with.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Violating these may cause problems like corrupting the allocator&#39;s</span>
+    <span class="doccomment">/// internal data structures.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Additionally, `capacity` must be greater than the amount of inline</span>
+    <span class="doccomment">/// storage `A` has; that is, the new `SmallVec` must need to spill over</span>
+    <span class="doccomment">/// into heap allocated storage. This condition is asserted against.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The ownership of `ptr` is effectively transferred to the</span>
+    <span class="doccomment">/// `SmallVec` which may then deallocate, reallocate or change the</span>
+    <span class="doccomment">/// contents of memory pointed to by the pointer at will. Ensure</span>
+    <span class="doccomment">/// that nothing else uses the pointer after calling this</span>
+    <span class="doccomment">/// function.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// # #[macro_use] extern crate smallvec;</span>
+    <span class="doccomment">/// # use smallvec::SmallVec;</span>
+    <span class="doccomment">/// use std::mem;</span>
+    <span class="doccomment">/// use std::ptr;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// fn main() {</span>
+    <span class="doccomment">///     let mut v: SmallVec&lt;[_; 1]&gt; = smallvec![1, 2, 3];</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     // Pull out the important parts of `v`.</span>
+    <span class="doccomment">///     let p = v.as_mut_ptr();</span>
+    <span class="doccomment">///     let len = v.len();</span>
+    <span class="doccomment">///     let cap = v.capacity();</span>
+    <span class="doccomment">///     let spilled = v.spilled();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     unsafe {</span>
+    <span class="doccomment">///         // Forget all about `v`. The heap allocation that stored the</span>
+    <span class="doccomment">///         // three values won&#39;t be deallocated.</span>
+    <span class="doccomment">///         mem::forget(v);</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///         // Overwrite memory with [4, 5, 6].</span>
+    <span class="doccomment">///         //</span>
+    <span class="doccomment">///         // This is only safe if `spilled` is true! Otherwise, we are</span>
+    <span class="doccomment">///         // writing into the old `SmallVec`&#39;s inline storage on the</span>
+    <span class="doccomment">///         // stack.</span>
+    <span class="doccomment">///         assert!(spilled);</span>
+    <span class="doccomment">///         for i in 0..len as isize {</span>
+    <span class="doccomment">///             ptr::write(p.offset(i), 4 + i);</span>
+    <span class="doccomment">///         }</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///         // Put everything back together into a SmallVec with a different</span>
+    <span class="doccomment">///         // amount of inline storage, but which is still less than `cap`.</span>
+    <span class="doccomment">///         let rebuilt = SmallVec::&lt;[_; 2]&gt;::from_raw_parts(p, len, cap);</span>
+    <span class="doccomment">///         assert_eq!(&amp;*rebuilt, &amp;[4, 5, 6]);</span>
+    <span class="doccomment">///     }</span>
+    <span class="doccomment">/// }</span>
+    <span class="kw">pub</span> <span class="kw">unsafe</span> <span class="kw">fn</span> <span class="ident">from_raw_parts</span>(
+        <span class="ident">ptr</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">A</span>::<span class="ident">Item</span>,
+        <span class="ident">length</span>: <span class="ident">usize</span>,
+        <span class="ident">capacity</span>: <span class="ident">usize</span>,
+    ) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+        <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">capacity</span> <span class="op">&gt;</span> <span class="ident">A</span>::<span class="ident">size</span>());
+        <span class="ident">SmallVec</span> {
+            <span class="ident">capacity</span>,
+            <span class="ident">data</span>: <span class="ident">SmallVecData</span>::<span class="ident">from_heap</span>(<span class="ident">ptr</span>, <span class="ident">length</span>),
+        }
+    }
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">A</span>::<span class="ident">Item</span>: <span class="ident">Copy</span> {
@@ -3138,10 +3346,10 @@
             }
         } <span class="kw">else</span> {
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">b</span> <span class="op">=</span> <span class="ident">slice</span>.<span class="ident">to_vec</span>();
-            <span class="kw">let</span> <span class="ident">ptr</span> <span class="op">=</span> <span class="ident">b</span>.<span class="ident">as_mut_ptr</span>();
+            <span class="kw">let</span> (<span class="ident">ptr</span>, <span class="ident">cap</span>) <span class="op">=</span> (<span class="ident">b</span>.<span class="ident">as_mut_ptr</span>(), <span class="ident">b</span>.<span class="ident">capacity</span>());
             <span class="ident">mem</span>::<span class="ident">forget</span>(<span class="ident">b</span>);
             <span class="ident">SmallVec</span> {
-                <span class="ident">capacity</span>: <span class="ident">len</span>,
+                <span class="ident">capacity</span>: <span class="ident">cap</span>,
                 <span class="ident">data</span>: <span class="ident">SmallVecData</span>::<span class="ident">from_heap</span>(<span class="ident">ptr</span>, <span class="ident">len</span>),
             }
         }
@@ -3336,10 +3544,39 @@
     }
 }
 
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>)]</span>
+<span class="kw">trait</span> <span class="ident">SpecFrom</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Array</span>, <span class="ident">S</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">spec_from</span>(<span class="ident">slice</span>: <span class="ident">S</span>) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span>;
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">SpecFrom</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">A</span>::<span class="ident">Item</span>: <span class="ident">Clone</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="ident">default</span> <span class="kw">fn</span> <span class="ident">spec_from</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+        <span class="ident">slice</span>.<span class="ident">into_iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>()
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>)]</span>
+<span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">SpecFrom</span><span class="op">&lt;</span><span class="ident">A</span>, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">A</span>::<span class="ident">Item</span>: <span class="ident">Copy</span> {
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">spec_from</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+        <span class="ident">SmallVec</span>::<span class="ident">from_slice</span>(<span class="ident">slice</span>)
+    }
+}
+
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]<span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> <span class="kw">where</span> <span class="ident">A</span>::<span class="ident">Item</span>: <span class="ident">Clone</span> {
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>))]</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
         <span class="ident">slice</span>.<span class="ident">into_iter</span>().<span class="ident">cloned</span>().<span class="ident">collect</span>()
+    }
+
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;specialization&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">inline</span>]</span>
+    <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">slice</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">A</span>::<span class="ident">Item</span>]) <span class="op">-&gt;</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+        <span class="ident">SmallVec</span>::<span class="ident">spec_from</span>(<span class="ident">slice</span>)
     }
 }
 
@@ -3444,6 +3681,21 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;may_dangle&quot;</span>)]</span>
+<span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="attribute">#[<span class="ident">may_dangle</span>]</span> <span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+        <span class="kw">unsafe</span> {
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">spilled</span>() {
+                <span class="kw">let</span> (<span class="ident">ptr</span>, <span class="ident">len</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">data</span>.<span class="ident">heap</span>();
+                <span class="ident">Vec</span>::<span class="ident">from_raw_parts</span>(<span class="ident">ptr</span>, <span class="ident">len</span>, <span class="self">self</span>.<span class="ident">capacity</span>);
+            } <span class="kw">else</span> {
+                <span class="ident">ptr</span>::<span class="ident">drop_in_place</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>[..]);
+            }
+        }
+    }
+}
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;may_dangle&quot;</span>))]</span>
 <span class="kw">impl</span><span class="op">&lt;</span><span class="ident">A</span>: <span class="ident">Array</span><span class="op">&gt;</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">SmallVec</span><span class="op">&lt;</span><span class="ident">A</span><span class="op">&gt;</span> {
     <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
         <span class="kw">unsafe</span> {

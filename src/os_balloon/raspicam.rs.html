@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/raspicam.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>raspicam.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../os_balloon/index.html'><img src='https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `src/raspicam.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>raspicam.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../os_balloon/index.html'><img src='https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -581,6 +581,8 @@
 <span id="581">581</span>
 <span id="582">582</span>
 <span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
 </pre><pre class="rust ">
 <span class="doccomment">//! Raspberry Pi camera module.</span>
 
@@ -598,13 +600,13 @@
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">fmt</span>;
 
-<span class="kw">use</span> <span class="ident">failure</span>::<span class="ident">Error</span>;
+<span class="kw">use</span> <span class="ident">failure</span>::{<span class="ident">bail</span>, <span class="ident">Error</span>};
+<span class="kw">use</span> <span class="ident">lazy_static</span>::<span class="ident">lazy_static</span>;
+<span class="kw">use</span> <span class="ident">log</span>::{<span class="ident">debug</span>, <span class="ident">error</span>, <span class="ident">info</span>, <span class="ident">warn</span>};
 
-<span class="kw">use</span> <span class="ident">config</span>::<span class="ident">CONFIG</span>;
-<span class="kw">use</span> <span class="ident">error</span>;
-<span class="kw">use</span> <span class="ident">generate_error_string</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
-<span class="kw">use</span> <span class="ident">gps</span>::{<span class="ident">FixStatus</span>, <span class="ident">GPS</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::<span class="ident">gps</span>::{<span class="ident">FixStatus</span>, <span class="ident">GPS</span>};
+<span class="kw">use</span> <span class="kw">crate</span>::{<span class="ident">config</span>::<span class="ident">CONFIG</span>, <span class="ident">error</span>, <span class="ident">generate_error_string</span>};
 
 <span class="doccomment">/// Video directory inside data directory.</span>
 <span class="kw">pub</span> <span class="kw">const</span> <span class="ident">VIDEO_DIR</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="string">&quot;video&quot;</span>;
@@ -622,7 +624,7 @@
 
 <span class="doccomment">/// Camera structure.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This structure controlls the use of the camera.</span>
+<span class="doccomment">/// This structure controls the use of the camera.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Camera</span> {
     <span class="doccomment">/// Directory to save video files.</span>
@@ -643,7 +645,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// An optional second parameter can be provided to specify a file name for the video recording,</span>
     <span class="doccomment">/// useful in case of testing. If that file name is provided, or if the method is executed</span>
-    <span class="doccomment">/// as a test, the file will be removed after the recording, except if the `mantain_test_video`</span>
+    <span class="doccomment">/// as a test, the file will be removed after the recording, except if the `maintain_test_video`</span>
     <span class="doccomment">/// feature is used. If a file name is provided, a time should be provided too, and it will</span>
     <span class="doccomment">/// throw a warning if not.</span>
     <span class="doccomment">///</span>
@@ -693,7 +695,7 @@
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">Camera</span>::<span class="ident">generate_video_command</span>(<span class="ident">time</span>, <span class="ident">file</span>);
 
-        <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cargo-clippy&quot;</span>, <span class="ident">allow</span>(<span class="ident">use_debug</span>))]</span>
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">use_debug</span>)]</span>
         {
             <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;Recording command: {:?}&quot;</span>, <span class="ident">command</span>);
         }
@@ -836,7 +838,7 @@
     {
         <span class="kw">let</span> <span class="ident">file_name</span> <span class="op">=</span> <span class="ident">file_name</span>.<span class="ident">into</span>();
 
-        <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Takin picture…&quot;</span>);
+        <span class="macro">info</span><span class="macro">!</span>(<span class="string">&quot;Taking picture…&quot;</span>);
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">is_recording</span>() {
             <span class="macro">warn</span><span class="macro">!</span>(<span class="string">&quot;The camera was recording video when trying to take the picture. Stopping…&quot;</span>);
             <span class="self">self</span>.<span class="ident">stop_recording</span>()<span class="question-mark">?</span>;
@@ -860,7 +862,7 @@
         }
 
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">command</span> <span class="op">=</span> <span class="ident">Camera</span>::<span class="ident">generate_picture_command</span>(<span class="ident">file</span>);
-        <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;cargo-clippy&quot;</span>, <span class="ident">allow</span>(<span class="ident">use_debug</span>))]</span>
+        <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">clippy</span>::<span class="ident">use_debug</span>)]</span>
         {
             <span class="macro">debug</span><span class="macro">!</span>(<span class="string">&quot;Picture command: {:?}&quot;</span>, <span class="ident">command</span>);
         }
@@ -968,7 +970,7 @@
     <span class="ident">gps_satellites</span>: <span class="ident">u8</span>,
     <span class="doccomment">/// GPS fix status.</span>
     <span class="ident">gps_status</span>: <span class="ident">FixStatus</span>,
-    <span class="doccomment">/// GPS position dillution of precission.</span>
+    <span class="doccomment">/// GPS position dilution of precision.</span>
     <span class="ident">gps_dop</span>: <span class="ident">f32</span>,
     <span class="doccomment">/// GPS speed.</span>
     <span class="ident">gps_speed</span>: <span class="ident">f32</span>,
@@ -1034,7 +1036,7 @@
         <span class="comment">//                        self.gps_timestamp * 100f32));</span>
 
         <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSSatellites={}&quot;</span>, <span class="self">self</span>.<span class="ident">gps_satellites</span>));
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSStatuss={}&quot;</span>, <span class="self">self</span>.<span class="ident">gps_status</span>));
+        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSStatus={}&quot;</span>, <span class="self">self</span>.<span class="ident">gps_status</span>));
         <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
             <span class="string">&quot; -x GPS.GPSDOP={:.0}/1000&quot;</span>,
             <span class="self">self</span>.<span class="ident">gps_dop</span> <span class="op">*</span> <span class="number">1_000_f32</span>
@@ -1129,7 +1131,9 @@
 <span class="doccomment">/// Tests module.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
 <span class="kw">mod</span> <span class="ident">tests</span> {
-    <span class="kw">use</span> <span class="kw">super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use</span> <span class="kw">super</span>::<span class="ident">CAMERA</span>;
+    <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
+    <span class="kw">use</span> <span class="kw">super</span>::{<span class="ident">ExifData</span>, <span class="ident">FixStatus</span>, <span class="ident">LatitudeRef</span>, <span class="ident">LongitudeRef</span>};
 
     <span class="doccomment">/// Tests EXIF generation.</span>
     <span class="attribute">#[<span class="ident">test</span>]</span>
@@ -1153,7 +1157,7 @@
             <span class="string">&quot; -x GPSMeasureMode=3 -x GPS.GPSDifferential=0 -x GPS.GPSLatitudeRef=N -x \
              GPS.GPSLatitude=23444970/1000000 -x GPS.GPSLongitudeRef=E -x \
              GPS.GPSLongitude=100057920/1000000 -x GPS.GPSAltitudeRef=0 -x \
-             GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatuss=A -x \
+             GPS.GPSAltitude=150034/100 -x GPS.GPSSatellites=7 -x GPS.GPSStatus=A -x \
              GPS.GPSDOP=3210/1000 -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed=13500/1000 -x \
              GPS.GPSTrackRef=T -x GPS.GPSTrack=1650/1000&quot;</span>
         );

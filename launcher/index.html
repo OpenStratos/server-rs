@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `launcher` crate."><meta name="keywords" content="rust, rustlang, rust-lang, launcher"><title>launcher - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><link rel="shortcut icon" href="https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png"></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../launcher/index.html'><img src='https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png' alt='logo' width='100'></a><p class='location'>Crate launcher</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'launcher', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='in-band'>Crate <a class="mod" href=''>launcher</a></span><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/launcher/main.rs.html#1-199' title='goto source code'>[src]</a></span></h1><div class='docblock'><p>Balloon software launcher.</p>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `launcher` crate."><meta name="keywords" content="rust, rustlang, rust-lang, launcher"><title>launcher - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><link rel="shortcut icon" href="https://openstratos.org/wp-content/uploads/2015/10/OpenStratos-mark.png"></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../launcher/index.html'><img src='https://openstratos.org/wp-content/uploads/2017/05/OpenStratos-768x226.png' alt='logo' width='100'></a><p class='location'>Crate launcher</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all launcher's items</p></a><div class="block items"><ul><li><a href="#functions">Functions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'launcher', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/launcher/main.rs.html#1-194' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>launcher</a></span></h1><div class='docblock'><p>Balloon software launcher.</p>
 <p>This crate contains the main initialization logic for the balloon software. For further
 development documentation, please refer to the <a href="../os_balloon/index.html"><code>os_balloon</code></a> crate.
 OpenStratos is designed to work in a Raspberry Pi model A+, B+, Zero, v2 B or v3 B, but it could
 work in other Linux-powered devices too with proper configuration.</p>
 <h2 id="running-openstratos" class="section-header"><a href="#running-openstratos">Running OpenStratos</a></h2>
-<p>Running OpenStratos is as simple as installing the latest Rust stable build (preferrably using
+<p>Running OpenStratos is as simple as installing the latest Rust stable build (preferably using
 <a href="https://rustup.rs/">rustup.rs</a>) and then running <code>cargo run</code> in the crate directory. Remember
 to use <code>cargo run --release</code> to compile the software with all optimizations enabled.</p>
 <h2 id="features" class="section-header"><a href="#features">Features</a></h2>
@@ -48,7 +48,7 @@ module in transparent mode, for example, to receive the information via serial i
 </ul>
 <p>All these features are enabled by default. You can opt-out to all of them passing the
 <code>--no-default-features</code> flag to Cargo when building / running the software, and enable each of
-them separatelly. To enable more than one feature, add space between them in the <code>--features</code>
+them separately. To enable more than one feature, add space between them in the <code>--features</code>
 option. E.g. <code>--no-default-features --features=&quot;gps telemetry&quot;</code>.</p>
 <h2 id="configuration" class="section-header"><a href="#configuration">Configuration</a></h2>
 <p>OpenStratos is highly configurable. Please refer to the
@@ -82,15 +82,15 @@ Main bat: 92%
 GSM bat: 93%
 Waiting launch.
 </code></pre>
-<p>The information in this SMS is the altitude, the latitude, the longitude, the position degree of
-precission (PDOP), the number of GPS satellites connected, the GPS fix status and the battery
+<p>The information in this SMS is the altitude, the latitude, the longitude, the position dilution
+of precision (PDOP), the number of GPS satellites connected, the GPS fix status and the battery
 capacities. Of course, this content will vary if no GPS is provided. It will try to send it a
-second time if it fails the first one. Once the SMS is sent, OpenStratos asumes that the balloon
+second time if it fails the first one. Once the SMS is sent, OpenStratos assumes that the balloon
 could be launched, so it will not stop until landing or critical failure.</p>
-<p>The on-board computer will now wait for the launch. It will try to get a reasonable precission
+<p>The on-board computer will now wait for the launch. It will try to get a reasonable precision
 in altitude to record the launch altitude (to check it later). It will then wait until launch.
 It will try to detect a rapid ascent, or as a backup, if the current altitude is much higher
-than the launch altitude (100m with good precission, more if the precission is bad). This will
+than the launch altitude (100m with good precision, more if the precision is bad). This will
 only work if GPS is enabled. If not, it will simply record until the device is manually shut
 down, OpenStratos will have no way of knowing its state. You will need to provide your own
 tracking mechanism.</p>
@@ -105,7 +105,7 @@ altitude ever reached.</p>
 <p>Once the balloon bursts, it will no longer take any pictures. The whole descent will be recorded
 in video (if the camera is enabled). Once the balloon gets to 2.5km altitude, it will turn on
 the GSM and try to send an SMS. It will try to send SMSs at 2.5km, 1.5km and 500m altitude above
-sea level. Some/all of them might fail, if the conectivity is poor or if the probe lands higher
+sea level. Some/all of them might fail, if the connectivity is poor or if the probe lands higher
 than any of those marks. It's not a problem, since once the landing is detected, a landed SMS
 will be sent. Landing is detected if the probe is more or less at the same altitude for a long
 time (expected descent rate is bigger than 5 m/s).</p>
