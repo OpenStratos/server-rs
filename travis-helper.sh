@@ -6,21 +6,25 @@ action="$1"
 if [ "$action" = "test" ]; then
   if [ $DEFAULT_FEATURES = true ]; then
     if [ -z $FEATURES ]; then
+      echo "cargo test --verbose --no-default-features" &&
       cargo test --verbose --no-default-features
     else
+      echo "cargo test --verbose --no-default-features --features=\"$FEATURES\"" &&
       cargo test --verbose --no-default-features --features="$FEATURES"
     fi
   else
     if [ -z $FEATURES ]; then
+      echo "cargo test --verbose" &&
       cargo test --verbose
     else
+      echo "cargo test --verbose --features=\"$FEATURES\"" &&
       cargo test --verbose --features="$FEATURES"
     fi
   fi
 
 # Check formatting.
 elif [ "$action" = "fmt_check" ]; then
-  if [ "$TRAVIS_RUST_VERSION" = "stable" && (-z $FEATURES) && $DEFAULT_FEATURES ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" = "stable" && (-z $FEATURES) && $DEFAULT_FEATURES ]]; then
     rustup component add rustfmt &&
     cargo fmt --verbose -- --check
   fi
