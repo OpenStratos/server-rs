@@ -109,7 +109,7 @@ impl Camera {
 
         let mut command = Camera::generate_video_command(time, file);
 
-        #[cfg_attr(feature = "cargo-clippy", allow(use_debug))]
+        #[allow(clippy::use_debug)]
         {
             debug!("Recording command: {:?}", command);
         }
@@ -276,7 +276,7 @@ impl Camera {
         }
 
         let mut command = Camera::generate_picture_command(file);
-        #[cfg_attr(feature = "cargo-clippy", allow(use_debug))]
+        #[allow(clippy::use_debug)]
         {
             debug!("Picture command: {:?}", command);
         }

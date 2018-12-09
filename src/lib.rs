@@ -109,7 +109,7 @@ pub fn initialize_data_filesystem() -> Result<(), Error> {
 }
 
 /// Generates a stack trace string of an error.
-#[cfg_attr(feature = "cargo-clippy", allow(use_debug))]
+#[allow(clippy::use_debug)]
 pub fn generate_error_string<S>(error: &Error, main_error: S) -> String
 where
     S: AsRef<str>,
