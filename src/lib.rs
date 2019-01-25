@@ -56,11 +56,6 @@
 // Removing some warnings
 #![allow(unsafe_code, box_pointers)]
 
-#[macro_use]
-extern crate failure_derive;
-#[macro_use]
-extern crate serde_derive;
-
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";
 /// Last state file, in the `data` directory.

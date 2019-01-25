@@ -2,6 +2,8 @@
 
 use std::{fmt, path::PathBuf};
 
+use failure::Fail;
+
 use crate::STATE_FILE;
 
 /// Errors that happened in a certain part of the logic.

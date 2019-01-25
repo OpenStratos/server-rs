@@ -53,15 +53,12 @@ use std::fmt;
 use colored::Colorize;
 use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
+use serde::Deserialize;
 use toml;
 
 // Only required for GPS, FONA or telemetry
 #[cfg(any(feature = "gps", feature = "fona"))]
 use serde::de::{self, Deserializer, Visitor};
-
-// Only required for FONA
-#[cfg(feature = "fona")]
-use serde::de::Deserialize;
 
 // Only required for GPS or FONA
 #[cfg(any(feature = "gps", feature = "fona"))]
