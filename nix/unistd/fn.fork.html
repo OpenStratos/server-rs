@@ -4,7 +4,7 @@ fork(2)</a>).</p>
 be created that are identical with the exception of their pid and the
 return value of this function.  As an example:</p>
 
-<pre class="rust rust-example-rendered">
+<div class="example-wrap"><pre class="rust rust-example-rendered">
 <span class="kw">use</span> <span class="ident">nix</span>::<span class="ident">unistd</span>::{<span class="ident">fork</span>, <span class="ident">ForkResult</span>};
 
 <span class="kw">match</span> <span class="ident">fork</span>() {
@@ -13,7 +13,7 @@ return value of this function.  As an example:</p>
    }
    <span class="prelude-val">Ok</span>(<span class="ident">ForkResult</span>::<span class="ident">Child</span>) <span class="op">=&gt;</span> <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;I&#39;m a new child process&quot;</span>),
    <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=&gt;</span> <span class="macro">println</span><span class="macro">!</span>(<span class="string">&quot;Fork failed&quot;</span>),
-}</pre>
+}</pre></div>
 <p>This will print something like the following (order indeterministic).  The
 thing to note is that you end up with two processes continuing execution
 immediately after the fork call but with different match arms.</p>

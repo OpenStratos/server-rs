@@ -3,96 +3,19 @@ pressure, for use communicating between tasks on the same thread.</p>
 <p>These queues are the same as those in <code>futures::sync</code>, except they're not
 intended to be sent across threads.</p>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.Execute.html"
-                                  title='struct futures::unsync::mpsc::Execute'>Execute</a></td>
-                           <td class='docblock-short'>
-                                <p>Type of future which <code>Executor</code> instances must be able to execute for <code>spawn</code>.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.Receiver.html"
-                                  title='struct futures::unsync::mpsc::Receiver'>Receiver</a></td>
-                           <td class='docblock-short'>
-                                <p>The receiving end of a channel which implements the <code>Stream</code> trait.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.SendError.html"
-                                  title='struct futures::unsync::mpsc::SendError'>SendError</a></td>
-                           <td class='docblock-short'>
-                                <p>Error type for sending, used when the receiving end of a channel is
+<table><tr class='module-item'><td><a class="struct" href="struct.Execute.html" title='futures::unsync::mpsc::Execute struct'>Execute</a></td><td class='docblock-short'><p>Type of future which <code>Executor</code> instances must be able to execute for <code>spawn</code>.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Receiver.html" title='futures::unsync::mpsc::Receiver struct'>Receiver</a></td><td class='docblock-short'><p>The receiving end of a channel which implements the <code>Stream</code> trait.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.SendError.html" title='futures::unsync::mpsc::SendError struct'>SendError</a></td><td class='docblock-short'><p>Error type for sending, used when the receiving end of a channel is
 dropped</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.Sender.html"
-                                  title='struct futures::unsync::mpsc::Sender'>Sender</a></td>
-                           <td class='docblock-short'>
-                                <p>The transmission end of a channel.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.SpawnHandle.html"
-                                  title='struct futures::unsync::mpsc::SpawnHandle'>SpawnHandle</a></td>
-                           <td class='docblock-short'>
-                                <p>Handle returned from the <code>spawn</code> function.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.UnboundedReceiver.html"
-                                  title='struct futures::unsync::mpsc::UnboundedReceiver'>UnboundedReceiver</a></td>
-                           <td class='docblock-short'>
-                                <p>The receiving end of an unbounded channel.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.UnboundedSender.html"
-                                  title='struct futures::unsync::mpsc::UnboundedSender'>UnboundedSender</a></td>
-                           <td class='docblock-short'>
-                                <p>The transmission end of an unbounded channel.</p>
-
-                           </td>
-                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.channel.html"
-                                  title='fn futures::unsync::mpsc::channel'>channel</a></td>
-                           <td class='docblock-short'>
-                                <p>Creates a bounded in-memory channel with buffered storage.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.spawn.html"
-                                  title='fn futures::unsync::mpsc::spawn'>spawn</a></td>
-                           <td class='docblock-short'>
-                                <p>Spawns a <code>stream</code> onto the instance of <code>Executor</code> provided, <code>executor</code>,
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Sender.html" title='futures::unsync::mpsc::Sender struct'>Sender</a></td><td class='docblock-short'><p>The transmission end of a channel.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.SpawnHandle.html" title='futures::unsync::mpsc::SpawnHandle struct'>SpawnHandle</a></td><td class='docblock-short'><p>Handle returned from the <code>spawn</code> function.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.UnboundedReceiver.html" title='futures::unsync::mpsc::UnboundedReceiver struct'>UnboundedReceiver</a></td><td class='docblock-short'><p>The receiving end of an unbounded channel.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.UnboundedSender.html" title='futures::unsync::mpsc::UnboundedSender struct'>UnboundedSender</a></td><td class='docblock-short'><p>The transmission end of an unbounded channel.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.channel.html" title='futures::unsync::mpsc::channel fn'>channel</a></td><td class='docblock-short'><p>Creates a bounded in-memory channel with buffered storage.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.spawn.html" title='futures::unsync::mpsc::spawn fn'>spawn</a></td><td class='docblock-short'><p>Spawns a <code>stream</code> onto the instance of <code>Executor</code> provided, <code>executor</code>,
 returning a handle representing the remote stream.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.spawn_unbounded.html"
-                                  title='fn futures::unsync::mpsc::spawn_unbounded'>spawn_unbounded</a></td>
-                           <td class='docblock-short'>
-                                <p>Spawns a <code>stream</code> onto the instance of <code>Executor</code> provided, <code>executor</code>,
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.spawn_unbounded.html" title='futures::unsync::mpsc::spawn_unbounded fn'>spawn_unbounded</a></td><td class='docblock-short'><p>Spawns a <code>stream</code> onto the instance of <code>Executor</code> provided, <code>executor</code>,
 returning a handle representing the remote stream, with unbounded buffering.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.unbounded.html"
-                                  title='fn futures::unsync::mpsc::unbounded'>unbounded</a></td>
-                           <td class='docblock-short'>
-                                <p>Creates an unbounded in-memory channel with buffered storage.</p>
-
-                           </td>
-                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../../";window.currentCrate = "futures";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.unbounded.html" title='futures::unsync::mpsc::unbounded fn'>unbounded</a></td><td class='docblock-short'><p>Creates an unbounded in-memory channel with buffered storage.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../../";window.currentCrate = "futures";</script><script src="../../../aliases.js"></script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

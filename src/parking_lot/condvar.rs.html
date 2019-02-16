@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/parking_lot-0.6.4/src/condvar.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>condvar.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/parking_lot-0.7.1/src/condvar.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>condvar.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -531,7 +531,151 @@
 <span id="531">531</span>
 <span id="532">532</span>
 <span id="533">533</span>
-</pre><pre class="rust ">
+<span id="534">534</span>
+<span id="535">535</span>
+<span id="536">536</span>
+<span id="537">537</span>
+<span id="538">538</span>
+<span id="539">539</span>
+<span id="540">540</span>
+<span id="541">541</span>
+<span id="542">542</span>
+<span id="543">543</span>
+<span id="544">544</span>
+<span id="545">545</span>
+<span id="546">546</span>
+<span id="547">547</span>
+<span id="548">548</span>
+<span id="549">549</span>
+<span id="550">550</span>
+<span id="551">551</span>
+<span id="552">552</span>
+<span id="553">553</span>
+<span id="554">554</span>
+<span id="555">555</span>
+<span id="556">556</span>
+<span id="557">557</span>
+<span id="558">558</span>
+<span id="559">559</span>
+<span id="560">560</span>
+<span id="561">561</span>
+<span id="562">562</span>
+<span id="563">563</span>
+<span id="564">564</span>
+<span id="565">565</span>
+<span id="566">566</span>
+<span id="567">567</span>
+<span id="568">568</span>
+<span id="569">569</span>
+<span id="570">570</span>
+<span id="571">571</span>
+<span id="572">572</span>
+<span id="573">573</span>
+<span id="574">574</span>
+<span id="575">575</span>
+<span id="576">576</span>
+<span id="577">577</span>
+<span id="578">578</span>
+<span id="579">579</span>
+<span id="580">580</span>
+<span id="581">581</span>
+<span id="582">582</span>
+<span id="583">583</span>
+<span id="584">584</span>
+<span id="585">585</span>
+<span id="586">586</span>
+<span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
+<span id="614">614</span>
+<span id="615">615</span>
+<span id="616">616</span>
+<span id="617">617</span>
+<span id="618">618</span>
+<span id="619">619</span>
+<span id="620">620</span>
+<span id="621">621</span>
+<span id="622">622</span>
+<span id="623">623</span>
+<span id="624">624</span>
+<span id="625">625</span>
+<span id="626">626</span>
+<span id="627">627</span>
+<span id="628">628</span>
+<span id="629">629</span>
+<span id="630">630</span>
+<span id="631">631</span>
+<span id="632">632</span>
+<span id="633">633</span>
+<span id="634">634</span>
+<span id="635">635</span>
+<span id="636">636</span>
+<span id="637">637</span>
+<span id="638">638</span>
+<span id="639">639</span>
+<span id="640">640</span>
+<span id="641">641</span>
+<span id="642">642</span>
+<span id="643">643</span>
+<span id="644">644</span>
+<span id="645">645</span>
+<span id="646">646</span>
+<span id="647">647</span>
+<span id="648">648</span>
+<span id="649">649</span>
+<span id="650">650</span>
+<span id="651">651</span>
+<span id="652">652</span>
+<span id="653">653</span>
+<span id="654">654</span>
+<span id="655">655</span>
+<span id="656">656</span>
+<span id="657">657</span>
+<span id="658">658</span>
+<span id="659">659</span>
+<span id="660">660</span>
+<span id="661">661</span>
+<span id="662">662</span>
+<span id="663">663</span>
+<span id="664">664</span>
+<span id="665">665</span>
+<span id="666">666</span>
+<span id="667">667</span>
+<span id="668">668</span>
+<span id="669">669</span>
+<span id="670">670</span>
+<span id="671">671</span>
+<span id="672">672</span>
+<span id="673">673</span>
+<span id="674">674</span>
+<span id="675">675</span>
+<span id="676">676</span>
+<span id="677">677</span>
+</pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2016 Amanieu d&#39;Antras</span>
 <span class="comment">//</span>
 <span class="comment">// Licensed under the Apache License, Version 2.0, &lt;LICENSE-APACHE or</span>
@@ -547,6 +691,7 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="ident">AtomicPtr</span>, <span class="ident">Ordering</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">time</span>::{<span class="ident">Duration</span>, <span class="ident">Instant</span>};
 <span class="kw">use</span> <span class="ident">std</span>::{<span class="ident">fmt</span>, <span class="ident">ptr</span>};
+<span class="kw">use</span> <span class="ident">util</span>;
 
 <span class="doccomment">/// A type indicating whether a timed wait on a condition variable returned</span>
 <span class="doccomment">/// due to a time out or not.</span>
@@ -641,39 +786,83 @@
 
     <span class="doccomment">/// Wakes up one blocked thread on this condvar.</span>
     <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns whether a thread was woken up.</span>
+    <span class="doccomment">///</span>
     <span class="doccomment">/// If there is a blocked thread on this condition variable, then it will</span>
     <span class="doccomment">/// be woken up from its call to `wait` or `wait_timeout`. Calls to</span>
     <span class="doccomment">/// `notify_one` are not buffered in any way.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// To wake up all threads, see `notify_all()`.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use parking_lot::Condvar;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// let condvar = Condvar::new();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// // do something with condvar, share it with other threads</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// if !condvar.notify_one() {</span>
+    <span class="doccomment">///     println!(&quot;Nobody was listening for this.&quot;);</span>
+    <span class="doccomment">/// }</span>
+    <span class="doccomment">/// ```</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_one</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
         <span class="comment">// Nothing to do if there are no waiting threads</span>
-        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>).<span class="ident">is_null</span>() {
-            <span class="kw">return</span>;
+        <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
+        <span class="kw">if</span> <span class="ident">state</span>.<span class="ident">is_null</span>() {
+            <span class="kw">return</span> <span class="bool-val">false</span>;
         }
 
-        <span class="self">self</span>.<span class="ident">notify_one_slow</span>();
+        <span class="self">self</span>.<span class="ident">notify_one_slow</span>(<span class="ident">state</span>)
     }
 
     <span class="attribute">#[<span class="ident">cold</span>]</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">notify_one_slow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="kw">fn</span> <span class="ident">notify_one_slow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mutex</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">RawMutex</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
         <span class="kw">unsafe</span> {
-            <span class="comment">// Unpark one thread</span>
-            <span class="kw">let</span> <span class="ident">addr</span> <span class="op">=</span> <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>;
-            <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="op">|</span><span class="ident">result</span>: <span class="ident">UnparkResult</span><span class="op">|</span> {
+            <span class="comment">// Unpark one thread and requeue the rest onto the mutex</span>
+            <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>;
+            <span class="kw">let</span> <span class="ident">to</span> <span class="op">=</span> <span class="ident">mutex</span> <span class="kw">as</span> <span class="ident">usize</span>;
+            <span class="kw">let</span> <span class="ident">validate</span> <span class="op">=</span> <span class="op">||</span> {
+                <span class="comment">// Make sure that our atomic state still points to the same</span>
+                <span class="comment">// mutex. If not then it means that all threads on the current</span>
+                <span class="comment">// mutex were woken up and a new waiting thread switched to a</span>
+                <span class="comment">// different mutex. In that case we can get away with doing</span>
+                <span class="comment">// nothing.</span>
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>) <span class="op">!=</span> <span class="ident">mutex</span> {
+                    <span class="kw">return</span> <span class="ident">RequeueOp</span>::<span class="ident">Abort</span>;
+                }
+
+                <span class="comment">// Unpark one thread if the mutex is unlocked, otherwise just</span>
+                <span class="comment">// requeue everything to the mutex. This is safe to do here</span>
+                <span class="comment">// since unlocking the mutex when the parked bit is set requires</span>
+                <span class="comment">// locking the queue. There is the possibility of a race if the</span>
+                <span class="comment">// mutex gets locked after we check, but that doesn&#39;t matter in</span>
+                <span class="comment">// this case.</span>
+                <span class="kw">if</span> (<span class="kw-2">*</span><span class="ident">mutex</span>).<span class="ident">mark_parked_if_locked</span>() {
+                    <span class="ident">RequeueOp</span>::<span class="ident">RequeueOne</span>
+                } <span class="kw">else</span> {
+                    <span class="ident">RequeueOp</span>::<span class="ident">UnparkOne</span>
+                }
+            };
+            <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="op">|</span><span class="ident">_op</span>, <span class="ident">result</span>: <span class="ident">UnparkResult</span><span class="op">|</span> {
                 <span class="comment">// Clear our state if there are no more waiting threads</span>
                 <span class="kw">if</span> <span class="op">!</span><span class="ident">result</span>.<span class="ident">have_more_threads</span> {
                     <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">store</span>(<span class="ident">ptr</span>::<span class="ident">null_mut</span>(), <span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
                 }
                 <span class="ident">TOKEN_NORMAL</span>
             };
-            <span class="ident">parking_lot_core</span>::<span class="ident">unpark_one</span>(<span class="ident">addr</span>, <span class="ident">callback</span>);
+            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">parking_lot_core</span>::<span class="ident">unpark_requeue</span>(<span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">validate</span>, <span class="ident">callback</span>);
+
+            <span class="ident">res</span>.<span class="ident">unparked_threads</span> <span class="op">+</span> <span class="ident">res</span>.<span class="ident">requeued_threads</span> <span class="op">!=</span> <span class="number">0</span>
         }
     }
 
     <span class="doccomment">/// Wakes up all blocked threads on this condvar.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Returns the number of threads woken up.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This method will ensure that any current waiters on the condition</span>
     <span class="doccomment">/// variable are awoken. Calls to `notify_all()` are not buffered in any</span>
@@ -681,19 +870,19 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// To wake up only one thread, see `notify_one()`.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">notify_all</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
         <span class="comment">// Nothing to do if there are no waiting threads</span>
         <span class="kw">let</span> <span class="ident">state</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">load</span>(<span class="ident">Ordering</span>::<span class="ident">Relaxed</span>);
         <span class="kw">if</span> <span class="ident">state</span>.<span class="ident">is_null</span>() {
-            <span class="kw">return</span>;
+            <span class="kw">return</span> <span class="number">0</span>;
         }
 
-        <span class="self">self</span>.<span class="ident">notify_all_slow</span>(<span class="ident">state</span>);
+        <span class="self">self</span>.<span class="ident">notify_all_slow</span>(<span class="ident">state</span>)
     }
 
     <span class="attribute">#[<span class="ident">cold</span>]</span>
     <span class="attribute">#[<span class="ident">inline</span>(<span class="ident">never</span>)]</span>
-    <span class="kw">fn</span> <span class="ident">notify_all_slow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mutex</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">RawMutex</span>) {
+    <span class="kw">fn</span> <span class="ident">notify_all_slow</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mutex</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">RawMutex</span>) <span class="op">-&gt;</span> <span class="ident">usize</span> {
         <span class="kw">unsafe</span> {
             <span class="comment">// Unpark one thread and requeue the rest onto the mutex</span>
             <span class="kw">let</span> <span class="ident">from</span> <span class="op">=</span> <span class="self">self</span> <span class="kw">as</span> <span class="kw-2">*</span><span class="kw">const</span> <span class="kw">_</span> <span class="kw">as</span> <span class="ident">usize</span>;
@@ -727,12 +916,14 @@
             <span class="kw">let</span> <span class="ident">callback</span> <span class="op">=</span> <span class="op">|</span><span class="ident">op</span>, <span class="ident">result</span>: <span class="ident">UnparkResult</span><span class="op">|</span> {
                 <span class="comment">// If we requeued threads to the mutex, mark it as having</span>
                 <span class="comment">// parked threads. The RequeueAll case is already handled above.</span>
-                <span class="kw">if</span> <span class="ident">op</span> <span class="op">==</span> <span class="ident">RequeueOp</span>::<span class="ident">UnparkOneRequeueRest</span> <span class="op">&amp;&amp;</span> <span class="ident">result</span>.<span class="ident">have_more_threads</span> {
+                <span class="kw">if</span> <span class="ident">op</span> <span class="op">==</span> <span class="ident">RequeueOp</span>::<span class="ident">UnparkOneRequeueRest</span> <span class="op">&amp;&amp;</span> <span class="ident">result</span>.<span class="ident">requeued_threads</span> <span class="op">!=</span> <span class="number">0</span> {
                     (<span class="kw-2">*</span><span class="ident">mutex</span>).<span class="ident">mark_parked</span>();
                 }
                 <span class="ident">TOKEN_NORMAL</span>
             };
-            <span class="ident">parking_lot_core</span>::<span class="ident">unpark_requeue</span>(<span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">validate</span>, <span class="ident">callback</span>);
+            <span class="kw">let</span> <span class="ident">res</span> <span class="op">=</span> <span class="ident">parking_lot_core</span>::<span class="ident">unpark_requeue</span>(<span class="ident">from</span>, <span class="ident">to</span>, <span class="ident">validate</span>, <span class="ident">callback</span>);
+
+            <span class="ident">res</span>.<span class="ident">unparked_threads</span> <span class="op">+</span> <span class="ident">res</span>.<span class="ident">requeued_threads</span>
         }
     }
 
@@ -791,11 +982,7 @@
 
     <span class="comment">// This is a non-generic function to reduce the monomorphization cost of</span>
     <span class="comment">// using `wait_until`.</span>
-    <span class="kw">fn</span> <span class="ident">wait_until_internal</span>(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">mutex</span>: <span class="kw-2">&amp;</span><span class="ident">RawMutex</span>,
-        <span class="ident">timeout</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span>,
-    ) <span class="op">-&gt;</span> <span class="ident">WaitTimeoutResult</span> {
+    <span class="kw">fn</span> <span class="ident">wait_until_internal</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">mutex</span>: <span class="kw-2">&amp;</span><span class="ident">RawMutex</span>, <span class="ident">timeout</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Instant</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">WaitTimeoutResult</span> {
         <span class="kw">unsafe</span> {
             <span class="kw">let</span> <span class="ident">result</span>;
             <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">bad_mutex</span> <span class="op">=</span> <span class="bool-val">false</span>;
@@ -879,13 +1066,20 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Like `wait`, the lock specified will be re-acquired when this function</span>
     <span class="doccomment">/// returns, regardless of whether the timeout elapsed or not.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Panics</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// Panics if the given `timeout` is so large that it can&#39;t be added to the current time.</span>
+    <span class="doccomment">/// This panic is not possible if the crate is built with the `nightly` feature, then a too</span>
+    <span class="doccomment">/// large `timeout` becomes equivalent to just calling `wait`.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">wait_for</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="ident">guard</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
+        <span class="ident">mutex_guard</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">MutexGuard</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>,
         <span class="ident">timeout</span>: <span class="ident">Duration</span>,
     ) <span class="op">-&gt;</span> <span class="ident">WaitTimeoutResult</span> {
-        <span class="self">self</span>.<span class="ident">wait_until</span>(<span class="ident">guard</span>, <span class="ident">Instant</span>::<span class="ident">now</span>() <span class="op">+</span> <span class="ident">timeout</span>)
+        <span class="kw">let</span> <span class="ident">deadline</span> <span class="op">=</span> <span class="ident">util</span>::<span class="ident">to_deadline</span>(<span class="ident">timeout</span>);
+        <span class="self">self</span>.<span class="ident">wait_until_internal</span>(<span class="kw">unsafe</span> { <span class="ident">MutexGuard</span>::<span class="ident">mutex</span>(<span class="ident">mutex_guard</span>).<span class="ident">raw</span>() }, <span class="ident">deadline</span>)
     }
 }
 
@@ -969,6 +1163,70 @@
     }
 
     <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">notify_one_return_true</span>() {
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(()));
+        <span class="kw">let</span> <span class="ident">m2</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Condvar</span>::<span class="ident">new</span>());
+        <span class="kw">let</span> <span class="ident">c2</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">clone</span>();
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">lock</span>();
+        <span class="kw">let</span> <span class="ident">_t</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">||</span> {
+            <span class="kw">let</span> <span class="ident">_g</span> <span class="op">=</span> <span class="ident">m2</span>.<span class="ident">lock</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">c2</span>.<span class="ident">notify_one</span>());
+        });
+        <span class="ident">c</span>.<span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">notify_one_return_false</span>() {
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(()));
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Condvar</span>::<span class="ident">new</span>());
+
+        <span class="kw">let</span> <span class="ident">_t</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">||</span> {
+            <span class="kw">let</span> <span class="ident">_g</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">lock</span>();
+            <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">c</span>.<span class="ident">notify_one</span>());
+        });
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">notify_all_return</span>() {
+        <span class="kw">const</span> <span class="ident">N</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">10</span>;
+
+        <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>((<span class="ident">Mutex</span>::<span class="ident">new</span>(<span class="number">0</span>), <span class="ident">Condvar</span>::<span class="ident">new</span>()));
+        <span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">channel</span>();
+        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">N</span> {
+            <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">data</span>.<span class="ident">clone</span>();
+            <span class="kw">let</span> <span class="ident">tx</span> <span class="op">=</span> <span class="ident">tx</span>.<span class="ident">clone</span>();
+            <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">||</span> {
+                <span class="kw">let</span> <span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">lock</span>, <span class="kw-2">ref</span> <span class="ident">cond</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">data</span>;
+                <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cnt</span> <span class="op">=</span> <span class="ident">lock</span>.<span class="ident">lock</span>();
+                <span class="kw-2">*</span><span class="ident">cnt</span> <span class="op">+=</span> <span class="number">1</span>;
+                <span class="kw">if</span> <span class="kw-2">*</span><span class="ident">cnt</span> <span class="op">==</span> <span class="ident">N</span> {
+                    <span class="ident">tx</span>.<span class="ident">send</span>(()).<span class="ident">unwrap</span>();
+                }
+                <span class="kw">while</span> <span class="kw-2">*</span><span class="ident">cnt</span> <span class="op">!=</span> <span class="number">0</span> {
+                    <span class="ident">cond</span>.<span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">cnt</span>);
+                }
+                <span class="ident">tx</span>.<span class="ident">send</span>(()).<span class="ident">unwrap</span>();
+            });
+        }
+        <span class="ident">drop</span>(<span class="ident">tx</span>);
+
+        <span class="kw">let</span> <span class="kw-2">&amp;</span>(<span class="kw-2">ref</span> <span class="ident">lock</span>, <span class="kw-2">ref</span> <span class="ident">cond</span>) <span class="op">=</span> <span class="kw-2">&amp;</span><span class="kw-2">*</span><span class="ident">data</span>;
+        <span class="ident">rx</span>.<span class="ident">recv</span>().<span class="ident">unwrap</span>();
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">cnt</span> <span class="op">=</span> <span class="ident">lock</span>.<span class="ident">lock</span>();
+        <span class="kw-2">*</span><span class="ident">cnt</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cond</span>.<span class="ident">notify_all</span>(), <span class="ident">N</span>);
+        <span class="ident">drop</span>(<span class="ident">cnt</span>);
+
+        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="ident">N</span> {
+            <span class="ident">rx</span>.<span class="ident">recv</span>().<span class="ident">unwrap</span>();
+        }
+
+        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="ident">cond</span>.<span class="ident">notify_all</span>(), <span class="number">0</span>);
+    }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
     <span class="kw">fn</span> <span class="ident">wait_for</span>() {
         <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(()));
         <span class="kw">let</span> <span class="ident">m2</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">clone</span>();
@@ -978,12 +1236,21 @@
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">lock</span>();
         <span class="kw">let</span> <span class="ident">no_timeout</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">wait_for</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>, <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="number">1</span>));
         <span class="macro">assert</span><span class="macro">!</span>(<span class="ident">no_timeout</span>.<span class="ident">timed_out</span>());
+
         <span class="kw">let</span> <span class="ident">_t</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">||</span> {
             <span class="kw">let</span> <span class="ident">_g</span> <span class="op">=</span> <span class="ident">m2</span>.<span class="ident">lock</span>();
             <span class="ident">c2</span>.<span class="ident">notify_one</span>();
         });
-        <span class="kw">let</span> <span class="ident">timeout_res</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">wait_for</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>, <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="ident">u32</span>::<span class="ident">max_value</span>() <span class="kw">as</span> <span class="ident">u64</span>));
+        <span class="comment">// Non-nightly panics on too large timeouts. Nightly treats it as indefinite wait.</span>
+        <span class="kw">let</span> <span class="ident">very_long_timeout</span> <span class="op">=</span> <span class="kw">if</span> <span class="macro">cfg</span><span class="macro">!</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>) {
+            <span class="ident">Duration</span>::<span class="ident">from_secs</span>(<span class="ident">u64</span>::<span class="ident">max_value</span>())
+        } <span class="kw">else</span> {
+            <span class="ident">Duration</span>::<span class="ident">from_millis</span>(<span class="ident">u32</span>::<span class="ident">max_value</span>() <span class="kw">as</span> <span class="ident">u64</span>)
+        };
+
+        <span class="kw">let</span> <span class="ident">timeout_res</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">wait_for</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>, <span class="ident">very_long_timeout</span>);
         <span class="macro">assert</span><span class="macro">!</span>(<span class="op">!</span><span class="ident">timeout_res</span>.<span class="ident">timed_out</span>());
+
         <span class="ident">drop</span>(<span class="ident">g</span>);
     }
 
@@ -1064,6 +1331,27 @@
         <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Condvar</span>::<span class="ident">new</span>();
         <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot;{:?}&quot;</span>, <span class="ident">c</span>), <span class="string">&quot;Condvar { .. }&quot;</span>);
     }
+
+    <span class="attribute">#[<span class="ident">test</span>]</span>
+    <span class="kw">fn</span> <span class="ident">test_condvar_requeue</span>() {
+        <span class="kw">let</span> <span class="ident">m</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Mutex</span>::<span class="ident">new</span>(()));
+        <span class="kw">let</span> <span class="ident">m2</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">c</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">Condvar</span>::<span class="ident">new</span>());
+        <span class="kw">let</span> <span class="ident">c2</span> <span class="op">=</span> <span class="ident">c</span>.<span class="ident">clone</span>();
+        <span class="kw">let</span> <span class="ident">t</span> <span class="op">=</span> <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="kw">move</span> <span class="op">||</span> {
+            <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">m2</span>.<span class="ident">lock</span>();
+            <span class="ident">c2</span>.<span class="ident">wait</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>);
+        });
+
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">g</span> <span class="op">=</span> <span class="ident">m</span>.<span class="ident">lock</span>();
+        <span class="kw">while</span> <span class="op">!</span><span class="ident">c</span>.<span class="ident">notify_one</span>() {
+            <span class="comment">// Wait for the thread to get into wait()</span>
+            ::<span class="ident">MutexGuard</span>::<span class="ident">bump</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">g</span>);
+        }
+        <span class="comment">// The thread should have been requeued to the mutex, which we wake up now.</span>
+        <span class="ident">drop</span>(<span class="ident">g</span>);
+        <span class="ident">t</span>.<span class="ident">join</span>().<span class="ident">unwrap</span>();
+    }
 }
-</pre>
-</section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "parking_lot";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>
+</pre></div>
+</section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../../";window.currentCrate = "parking_lot";</script><script src="../../aliases.js"></script><script src="../../main.js"></script><script src="../../source-files.js"></script><script src="../../source-script.js"></script><script defer src="../../search-index.js"></script></body></html>

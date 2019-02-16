@@ -61,8 +61,8 @@ an unsafety question here.</p>
 associated with it.</p>
 <p>This method is intended to have a signature such as:</p>
 
-<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><pre class="rust rust-example-rendered ignore">
-<span class="kw">fn</span> <span class="ident">drop_raw</span>(<span class="self">self</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="self">Self</span>);</pre>
+<div class='information'><div class='tooltip ignore'>ⓘ<span class='tooltiptext'>This example is not tested</span></div></div><div class="example-wrap"><pre class="rust rust-example-rendered ignore">
+<span class="kw">fn</span> <span class="ident">drop_raw</span>(<span class="self">self</span>: <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="self">Self</span>);</pre></div>
 <p>Unfortunately in Rust today that signature is not object safe.
 Nevertheless it's recommended to implement this function <em>as if</em> that
 were its signature. As such it is not safe to call on an invalid

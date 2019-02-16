@@ -8,113 +8,22 @@
 </ul>
 </div><h2 id='reexports' class='section-header'><a href="#reexports">Re-exports</a></h2>
 <table><tr><td><code>pub use unix::<a class="struct" href="../mio_serial/unix/struct.Serial.html" title="struct mio_serial::unix::Serial">Serial</a>;</code></td></tr></table><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="mod" href="unix/index.html"
-                                  title='mod mio_serial::unix'>unix</a></td>
-                           <td class='docblock-short'>
-                                <p>Unix impl of mio-enabled serial ports.</p>
-
-                           </td>
-                       </tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.Error.html"
-                                  title='struct mio_serial::Error'>Error</a></td>
-                           <td class='docblock-short'>
-                                <p>An error type for serial port operations.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.SerialPortInfo.html"
-                                  title='struct mio_serial::SerialPortInfo'>SerialPortInfo</a></td>
-                           <td class='docblock-short'>
-                                <p>A device-independent implementation of serial port information.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.SerialPortSettings.html"
-                                  title='struct mio_serial::SerialPortSettings'>SerialPortSettings</a></td>
-                           <td class='docblock-short'>
-                                <p>A struct containing all serial port settings</p>
-
-                           </td>
-                       </tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.ClearBuffer.html"
-                                  title='enum mio_serial::ClearBuffer'>ClearBuffer</a></td>
-                           <td class='docblock-short'>
-                                <p>Specifies which buffer or buffers to purge when calling <a href="trait.SerialPort.html#tymethod.clear"><code>clear</code></a>.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.DataBits.html"
-                                  title='enum mio_serial::DataBits'>DataBits</a></td>
-                           <td class='docblock-short'>
-                                <p>Number of bits per character.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.ErrorKind.html"
-                                  title='enum mio_serial::ErrorKind'>ErrorKind</a></td>
-                           <td class='docblock-short'>
-                                <p>Categories of errors that can occur when interacting with serial ports.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.FlowControl.html"
-                                  title='enum mio_serial::FlowControl'>FlowControl</a></td>
-                           <td class='docblock-short'>
-                                <p>Flow control modes.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.Parity.html"
-                                  title='enum mio_serial::Parity'>Parity</a></td>
-                           <td class='docblock-short'>
-                                <p>Parity checking modes.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="enum" href="enum.StopBits.html"
-                                  title='enum mio_serial::StopBits'>StopBits</a></td>
-                           <td class='docblock-short'>
-                                <p>Number of stop bits.</p>
-
-                           </td>
-                       </tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="trait" href="trait.SerialPort.html"
-                                  title='trait mio_serial::SerialPort'>SerialPort</a></td>
-                           <td class='docblock-short'>
-                                <p>A trait for serial port devices</p>
-
-                           </td>
-                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.available_ports.html"
-                                  title='fn mio_serial::available_ports'>available_ports</a></td>
-                           <td class='docblock-short'>
-                                <p>Returns a list of all serial ports on system</p>
-
-                           </td>
-                       </tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="type" href="type.Result.html"
-                                  title='type mio_serial::Result'>Result</a></td>
-                           <td class='docblock-short'>
-                                <p>A type for results generated by interacting with serial ports.</p>
-
-                           </td>
-                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "mio_serial";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
+<table><tr class='module-item'><td><a class="mod" href="unix/index.html" title='mio_serial::unix mod'>unix</a></td><td class='docblock-short'><p>Unix impl of mio-enabled serial ports.</p>
+</td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.Error.html" title='mio_serial::Error struct'>Error</a></td><td class='docblock-short'><p>An error type for serial port operations.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.SerialPortInfo.html" title='mio_serial::SerialPortInfo struct'>SerialPortInfo</a></td><td class='docblock-short'><p>A device-independent implementation of serial port information.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.SerialPortSettings.html" title='mio_serial::SerialPortSettings struct'>SerialPortSettings</a></td><td class='docblock-short'><p>A struct containing all serial port settings</p>
+</td></tr></table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table><tr class='module-item'><td><a class="enum" href="enum.ClearBuffer.html" title='mio_serial::ClearBuffer enum'>ClearBuffer</a></td><td class='docblock-short'><p>Specifies which buffer or buffers to purge when calling <a href="trait.SerialPort.html#tymethod.clear"><code>clear</code></a>.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.DataBits.html" title='mio_serial::DataBits enum'>DataBits</a></td><td class='docblock-short'><p>Number of bits per character.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.ErrorKind.html" title='mio_serial::ErrorKind enum'>ErrorKind</a></td><td class='docblock-short'><p>Categories of errors that can occur when interacting with serial ports.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.FlowControl.html" title='mio_serial::FlowControl enum'>FlowControl</a></td><td class='docblock-short'><p>Flow control modes.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.Parity.html" title='mio_serial::Parity enum'>Parity</a></td><td class='docblock-short'><p>Parity checking modes.</p>
+</td></tr><tr class='module-item'><td><a class="enum" href="enum.StopBits.html" title='mio_serial::StopBits enum'>StopBits</a></td><td class='docblock-short'><p>Number of stop bits.</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.SerialPort.html" title='mio_serial::SerialPort trait'>SerialPort</a></td><td class='docblock-short'><p>A trait for serial port devices</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.available_ports.html" title='mio_serial::available_ports fn'>available_ports</a></td><td class='docblock-short'><p>Returns a list of all serial ports on system</p>
+</td></tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table><tr class='module-item'><td><a class="type" href="type.Result.html" title='mio_serial::Result type'>Result</a></td><td class='docblock-short'><p>A type for results generated by interacting with serial ports.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "mio_serial";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

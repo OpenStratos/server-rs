@@ -8,7 +8,7 @@ MDC makes it easy to partition log messages on a per-request basis.</p>
 <h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
 <p>Forwarding the contents of the MDC to a new thread:</p>
 
-<pre class="rust rust-example-rendered">
+<div class="example-wrap"><pre class="rust rust-example-rendered">
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
 
 <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">mdc</span> <span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[];
@@ -16,87 +16,17 @@ MDC makes it easy to partition log messages on a per-request basis.</p>
 
 <span class="ident">thread</span>::<span class="ident">spawn</span>(<span class="op">||</span> {
     <span class="ident">log_mdc</span>::<span class="ident">extend</span>(<span class="ident">mdc</span>);
-});</pre>
+});</pre></div>
 </div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.ExtendGuard.html"
-                                  title='struct log_mdc::ExtendGuard'>ExtendGuard</a></td>
-                           <td class='docblock-short'>
-                                <p>A guard objects which restores MDC entries when dropped.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="struct" href="struct.InsertGuard.html"
-                                  title='struct log_mdc::InsertGuard'>InsertGuard</a></td>
-                           <td class='docblock-short'>
-                                <p>A guard object which restores an MDC entry when dropped.</p>
-
-                           </td>
-                       </tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
-<table>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.clear.html"
-                                  title='fn log_mdc::clear'>clear</a></td>
-                           <td class='docblock-short'>
-                                <p>Removes all values from the MDC.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.extend.html"
-                                  title='fn log_mdc::extend'>extend</a></td>
-                           <td class='docblock-short'>
-                                <p>Extends the MDC with new entries.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.extend_scoped.html"
-                                  title='fn log_mdc::extend_scoped'>extend_scoped</a></td>
-                           <td class='docblock-short'>
-                                <p>Extends the MDC with new entries in a scoped fashion.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.get.html"
-                                  title='fn log_mdc::get'>get</a></td>
-                           <td class='docblock-short'>
-                                <p>Retrieves a value from the MDC.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.insert.html"
-                                  title='fn log_mdc::insert'>insert</a></td>
-                           <td class='docblock-short'>
-                                <p>Inserts a new entry into the MDC, returning the old value.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.insert_scoped.html"
-                                  title='fn log_mdc::insert_scoped'>insert_scoped</a></td>
-                           <td class='docblock-short'>
-                                <p>Inserts a new entry into the MDC in a scoped fashion.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.iter.html"
-                                  title='fn log_mdc::iter'>iter</a></td>
-                           <td class='docblock-short'>
-                                <p>Invokes the provided closure for each entry in the MDC.</p>
-
-                           </td>
-                       </tr>
-                       <tr class=' module-item'>
-                           <td><a class="fn" href="fn.remove.html"
-                                  title='fn log_mdc::remove'>remove</a></td>
-                           <td class='docblock-short'>
-                                <p>Removes a value from the MDC.</p>
-
-                           </td>
-                       </tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "log_mdc";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
+<table><tr class='module-item'><td><a class="struct" href="struct.ExtendGuard.html" title='log_mdc::ExtendGuard struct'>ExtendGuard</a></td><td class='docblock-short'><p>A guard objects which restores MDC entries when dropped.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.InsertGuard.html" title='log_mdc::InsertGuard struct'>InsertGuard</a></td><td class='docblock-short'><p>A guard object which restores an MDC entry when dropped.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.clear.html" title='log_mdc::clear fn'>clear</a></td><td class='docblock-short'><p>Removes all values from the MDC.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.extend.html" title='log_mdc::extend fn'>extend</a></td><td class='docblock-short'><p>Extends the MDC with new entries.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.extend_scoped.html" title='log_mdc::extend_scoped fn'>extend_scoped</a></td><td class='docblock-short'><p>Extends the MDC with new entries in a scoped fashion.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.get.html" title='log_mdc::get fn'>get</a></td><td class='docblock-short'><p>Retrieves a value from the MDC.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.insert.html" title='log_mdc::insert fn'>insert</a></td><td class='docblock-short'><p>Inserts a new entry into the MDC, returning the old value.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.insert_scoped.html" title='log_mdc::insert_scoped fn'>insert_scoped</a></td><td class='docblock-short'><p>Inserts a new entry into the MDC in a scoped fashion.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.iter.html" title='log_mdc::iter fn'>iter</a></td><td class='docblock-short'><p>Invokes the provided closure for each entry in the MDC.</p>
+</td></tr><tr class='module-item'><td><a class="fn" href="fn.remove.html" title='log_mdc::remove fn'>remove</a></td><td class='docblock-short'><p>Removes a value from the MDC.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g. <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g. <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g. <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "log_mdc";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
