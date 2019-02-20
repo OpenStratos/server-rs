@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.6.3/src/atomic/atomic_cell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic_cell.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.6.5/src/atomic/atomic_cell.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>atomic_cell.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -902,6 +902,26 @@
 <span id="902">902</span>
 <span id="903">903</span>
 <span id="904">904</span>
+<span id="905">905</span>
+<span id="906">906</span>
+<span id="907">907</span>
+<span id="908">908</span>
+<span id="909">909</span>
+<span id="910">910</span>
+<span id="911">911</span>
+<span id="912">912</span>
+<span id="913">913</span>
+<span id="914">914</span>
+<span id="915">915</span>
+<span id="916">916</span>
+<span id="917">917</span>
+<span id="918">918</span>
+<span id="919">919</span>
+<span id="920">920</span>
+<span id="921">921</span>
+<span id="922">922</span>
+<span id="923">923</span>
+<span id="924">924</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">cell</span>::<span class="ident">UnsafeCell</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
@@ -909,6 +929,8 @@
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">ptr</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">slice</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">sync</span>::<span class="ident">atomic</span>::{<span class="self">self</span>, <span class="ident">AtomicBool</span>, <span class="ident">AtomicUsize</span>, <span class="ident">Ordering</span>};
+
+<span class="kw">use</span> <span class="ident">Backoff</span>;
 
 <span class="doccomment">/// A thread-safe mutable memory location.</span>
 <span class="doccomment">///</span>
@@ -1369,18 +1391,24 @@
             }
         }
     };
+    (<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>:<span class="ident">tt</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">atomic</span>:<span class="ident">ty</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">example</span>:<span class="ident">tt</span>) <span class="op">=&gt;</span> {
+        <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">target_has_atomic</span> <span class="op">=</span> <span class="macro-nonterminal">$</span><span class="macro-nonterminal">size</span>)]</span>
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="macro-nonterminal">$</span><span class="macro-nonterminal">t</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">atomic</span>, <span class="macro-nonterminal">$</span><span class="macro-nonterminal">example</span>);
+    };
 }
 
 <span class="macro">cfg_if</span><span class="macro">!</span> {
     <span class="kw">if</span> <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;nightly&quot;</span>)]</span> {
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u8</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU8</span>, <span class="string">&quot;let a = AtomicCell::new(7u8);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i8</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI8</span>, <span class="string">&quot;let a = AtomicCell::new(7i8);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u16</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU16</span>, <span class="string">&quot;let a = AtomicCell::new(7u16);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i16</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI16</span>, <span class="string">&quot;let a = AtomicCell::new(7i16);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u32</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU32</span>, <span class="string">&quot;let a = AtomicCell::new(7u32);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i32</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI32</span>, <span class="string">&quot;let a = AtomicCell::new(7i32);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u64</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU64</span>, <span class="string">&quot;let a = AtomicCell::new(7u64);&quot;</span>);
-        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i64</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI64</span>, <span class="string">&quot;let a = AtomicCell::new(7i64);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u8</span>, <span class="string">&quot;8&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU8</span>, <span class="string">&quot;let a = AtomicCell::new(7u8);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i8</span>, <span class="string">&quot;8&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI8</span>, <span class="string">&quot;let a = AtomicCell::new(7i8);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u16</span>, <span class="string">&quot;16&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU16</span>, <span class="string">&quot;let a = AtomicCell::new(7u16);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i16</span>, <span class="string">&quot;16&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI16</span>, <span class="string">&quot;let a = AtomicCell::new(7i16);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u32</span>, <span class="string">&quot;32&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU32</span>, <span class="string">&quot;let a = AtomicCell::new(7u32);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i32</span>, <span class="string">&quot;32&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI32</span>, <span class="string">&quot;let a = AtomicCell::new(7i32);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u64</span>, <span class="string">&quot;64&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicU64</span>, <span class="string">&quot;let a = AtomicCell::new(7u64);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i64</span>, <span class="string">&quot;64&quot;</span>, <span class="ident">atomic</span>::<span class="ident">AtomicI64</span>, <span class="string">&quot;let a = AtomicCell::new(7i64);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u128</span>, <span class="string">&quot;let a = AtomicCell::new(7u128);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i128</span>, <span class="string">&quot;let a = AtomicCell::new(7i128);&quot;</span>);
     } <span class="kw">else</span> {
         <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u8</span>, <span class="string">&quot;let a = AtomicCell::new(7u8);&quot;</span>);
         <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i8</span>, <span class="string">&quot;let a = AtomicCell::new(7i8);&quot;</span>);
@@ -1390,6 +1418,8 @@
         <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i32</span>, <span class="string">&quot;let a = AtomicCell::new(7i32);&quot;</span>);
         <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u64</span>, <span class="string">&quot;let a = AtomicCell::new(7u64);&quot;</span>);
         <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i64</span>, <span class="string">&quot;let a = AtomicCell::new(7i64);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">u128</span>, <span class="string">&quot;let a = AtomicCell::new(7u128);&quot;</span>);
+        <span class="macro">impl_arithmetic</span><span class="macro">!</span>(<span class="ident">i128</span>, <span class="string">&quot;let a = AtomicCell::new(7i128);&quot;</span>);
     }
 }
 
@@ -1534,8 +1564,7 @@
     <span class="doccomment">/// Grabs the lock for writing.</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">write</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">WriteGuard</span> {
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">step</span> <span class="op">=</span> <span class="number">0usize</span>;
-
+        <span class="kw">let</span> <span class="ident">backoff</span> <span class="op">=</span> <span class="ident">Backoff</span>::<span class="ident">new</span>();
         <span class="kw">loop</span> {
             <span class="kw">let</span> <span class="ident">previous</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">state</span>.<span class="ident">swap</span>(<span class="number">1</span>, <span class="ident">Ordering</span>::<span class="ident">Acquire</span>);
 
@@ -1548,17 +1577,7 @@
                 };
             }
 
-            <span class="kw">if</span> <span class="ident">step</span> <span class="op">&lt;</span> <span class="number">10</span> {
-                <span class="ident">atomic</span>::<span class="ident">spin_loop_hint</span>();
-            } <span class="kw">else</span> {
-                <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">not</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>))]</span>
-                <span class="ident">atomic</span>::<span class="ident">spin_loop_hint</span>();
-
-                <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;std&quot;</span>)]</span>
-                ::<span class="ident">std</span>::<span class="ident">thread</span>::<span class="ident">yield_now</span>();
-            }
-
-            <span class="ident">step</span> <span class="op">=</span> <span class="ident">step</span>.<span class="ident">wrapping_add</span>(<span class="number">1</span>);
+            <span class="ident">backoff</span>.<span class="ident">snooze</span>();
         }
     }
 }
@@ -1601,7 +1620,28 @@
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="attribute">#[<span class="ident">must_use</span>]</span>
 <span class="kw">fn</span> <span class="ident">lock</span>(<span class="ident">addr</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;static</span> <span class="ident">Lock</span> {
-    <span class="comment">// The number of locks is prime.</span>
+    <span class="comment">// The number of locks is a prime number because we want to make sure `addr % LEN` gets</span>
+    <span class="comment">// dispersed across all locks.</span>
+    <span class="comment">//</span>
+    <span class="comment">// Note that addresses are always aligned to some power of 2, depending on type `T` in</span>
+    <span class="comment">// `AtomicCell&lt;T&gt;`. If `LEN` was an even number, then `addr % LEN` would be an even number,</span>
+    <span class="comment">// too, which means only half of the locks would get utilized!</span>
+    <span class="comment">//</span>
+    <span class="comment">// It is also possible for addresses to accidentally get aligned to a number that is not a</span>
+    <span class="comment">// power of 2. Consider this example:</span>
+    <span class="comment">//</span>
+    <span class="comment">// ```</span>
+    <span class="comment">// #[repr(C)]</span>
+    <span class="comment">// struct Foo {</span>
+    <span class="comment">//     a: AtomicCell&lt;u8&gt;,</span>
+    <span class="comment">//     b: u8,</span>
+    <span class="comment">//     c: u8,</span>
+    <span class="comment">// }</span>
+    <span class="comment">// ```</span>
+    <span class="comment">//</span>
+    <span class="comment">// Now, if we have a slice of type `&amp;[Foo]`, it is possible that field `a` in all items gets</span>
+    <span class="comment">// stored at addresses that are multiples of 3. It&#39;d be too bad if `LEN` was divisible by 3.</span>
+    <span class="comment">// In order to protect from such cases, we simply choose a large prime number for `LEN`.</span>
     <span class="kw">const</span> <span class="ident">LEN</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">97</span>;
 
     <span class="kw">const</span> <span class="ident">L</span>: <span class="ident">Lock</span> <span class="op">=</span> <span class="ident">Lock</span> {

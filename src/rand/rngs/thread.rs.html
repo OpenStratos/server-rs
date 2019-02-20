@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.4/src/rngs/thread.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.5/src/rngs/thread.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -135,10 +135,6 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
-<span id="138">138</span>
-<span id="139">139</span>
-<span id="140">140</span>
-<span id="141">141</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">//</span>
@@ -206,11 +202,9 @@
 <span class="doccomment">/// Cloning this handle just produces a new reference to the same thread-local</span>
 <span class="doccomment">/// generator.</span>
 <span class="doccomment">/// </span>
-<span class="doccomment">/// [`thread_rng`]: ../fn.thread_rng.html</span>
-<span class="doccomment">/// [`ReseedingRng`]: adapter/struct.ReseedingRng.html</span>
-<span class="doccomment">/// [`StdRng`]: struct.StdRng.html</span>
-<span class="doccomment">/// [`EntropyRng`]: struct.EntropyRng.html</span>
-<span class="doccomment">/// [HC-128]: ../../rand_hc/struct.Hc128Rng.html</span>
+<span class="doccomment">/// [`ReseedingRng`]: crate::rngs::adapter::ReseedingRng</span>
+<span class="doccomment">/// [`StdRng`]: crate::rngs::StdRng</span>
+<span class="doccomment">/// [HC-128]: rand_hc::Hc128Rng</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ThreadRng</span> {
     <span class="comment">// use of raw pointer implies type is neither Send nor Sync</span>
@@ -236,8 +230,6 @@
 <span class="doccomment">/// `ThreadRng::default()` equivelent.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// For more information see [`ThreadRng`].</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`ThreadRng`]: rngs/struct.ThreadRng.html</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">thread_rng</span>() <span class="op">-&gt;</span> <span class="ident">ThreadRng</span> {
     <span class="ident">ThreadRng</span> { <span class="ident">rng</span>: <span class="ident">THREAD_RNG_KEY</span>.<span class="ident">with</span>(<span class="op">|</span><span class="ident">t</span><span class="op">|</span> <span class="ident">t</span>.<span class="ident">get</span>()) }
 }

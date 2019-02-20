@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.4/src/rngs/adapter/read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.5/src/rngs/adapter/read.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>read.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../../light.css" id="themeStyle"><script src="../../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../../settings.html"><img src="../../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -134,7 +134,6 @@
 <span id="134">134</span>
 <span id="135">135</span>
 <span id="136">136</span>
-<span id="137">137</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">// Copyright 2013 The Rust Project Developers.</span>
@@ -153,7 +152,7 @@
 
 
 <span class="doccomment">/// An RNG that reads random bytes straight from any type supporting</span>
-<span class="doccomment">/// `std::io::Read`, for example files.</span>
+<span class="doccomment">/// [`std::io::Read`], for example files.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// This will work best with an infinite reader, but that is not required.</span>
 <span class="doccomment">///</span>
@@ -162,10 +161,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Panics</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// `ReadRng` uses `std::io::read_exact`, which retries on interrupts. All other</span>
-<span class="doccomment">/// errors from the underlying reader, including when it does not have enough</span>
-<span class="doccomment">/// data, will only be reported through [`try_fill_bytes`]. The other</span>
-<span class="doccomment">/// [`RngCore`] methods will panic in case of an error.</span>
+<span class="doccomment">/// `ReadRng` uses [`std::io::Read::read_exact`], which retries on interrupts.</span>
+<span class="doccomment">/// All other errors from the underlying reader, including when it does not</span>
+<span class="doccomment">/// have enough data, will only be reported through [`try_fill_bytes`].</span>
+<span class="doccomment">/// The other [`RngCore`] methods will panic in case of an error.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Example</span>
 <span class="doccomment">///</span>
@@ -178,9 +177,8 @@
 <span class="doccomment">/// println!(&quot;{:x}&quot;, rng.gen::&lt;u32&gt;());</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`OsRng`]: ../struct.OsRng.html</span>
-<span class="doccomment">/// [`RngCore`]: ../../trait.RngCore.html</span>
-<span class="doccomment">/// [`try_fill_bytes`]: ../../trait.RngCore.html#method.tymethod.try_fill_bytes</span>
+<span class="doccomment">/// [`OsRng`]: rand_os::OsRng</span>
+<span class="doccomment">/// [`try_fill_bytes`]: RngCore::try_fill_bytes</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ReadRng</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span> {
     <span class="ident">reader</span>: <span class="ident">R</span>

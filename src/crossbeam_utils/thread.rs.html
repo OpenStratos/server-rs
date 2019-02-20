@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.6.3/src/thread.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/crossbeam-utils-0.6.5/src/thread.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>thread.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -345,6 +345,188 @@
 <span id="345">345</span>
 <span id="346">346</span>
 <span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
+<span id="369">369</span>
+<span id="370">370</span>
+<span id="371">371</span>
+<span id="372">372</span>
+<span id="373">373</span>
+<span id="374">374</span>
+<span id="375">375</span>
+<span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
+<span id="419">419</span>
+<span id="420">420</span>
+<span id="421">421</span>
+<span id="422">422</span>
+<span id="423">423</span>
+<span id="424">424</span>
+<span id="425">425</span>
+<span id="426">426</span>
+<span id="427">427</span>
+<span id="428">428</span>
+<span id="429">429</span>
+<span id="430">430</span>
+<span id="431">431</span>
+<span id="432">432</span>
+<span id="433">433</span>
+<span id="434">434</span>
+<span id="435">435</span>
+<span id="436">436</span>
+<span id="437">437</span>
+<span id="438">438</span>
+<span id="439">439</span>
+<span id="440">440</span>
+<span id="441">441</span>
+<span id="442">442</span>
+<span id="443">443</span>
+<span id="444">444</span>
+<span id="445">445</span>
+<span id="446">446</span>
+<span id="447">447</span>
+<span id="448">448</span>
+<span id="449">449</span>
+<span id="450">450</span>
+<span id="451">451</span>
+<span id="452">452</span>
+<span id="453">453</span>
+<span id="454">454</span>
+<span id="455">455</span>
+<span id="456">456</span>
+<span id="457">457</span>
+<span id="458">458</span>
+<span id="459">459</span>
+<span id="460">460</span>
+<span id="461">461</span>
+<span id="462">462</span>
+<span id="463">463</span>
+<span id="464">464</span>
+<span id="465">465</span>
+<span id="466">466</span>
+<span id="467">467</span>
+<span id="468">468</span>
+<span id="469">469</span>
+<span id="470">470</span>
+<span id="471">471</span>
+<span id="472">472</span>
+<span id="473">473</span>
+<span id="474">474</span>
+<span id="475">475</span>
+<span id="476">476</span>
+<span id="477">477</span>
+<span id="478">478</span>
+<span id="479">479</span>
+<span id="480">480</span>
+<span id="481">481</span>
+<span id="482">482</span>
+<span id="483">483</span>
+<span id="484">484</span>
+<span id="485">485</span>
+<span id="486">486</span>
+<span id="487">487</span>
+<span id="488">488</span>
+<span id="489">489</span>
+<span id="490">490</span>
+<span id="491">491</span>
+<span id="492">492</span>
+<span id="493">493</span>
+<span id="494">494</span>
+<span id="495">495</span>
+<span id="496">496</span>
+<span id="497">497</span>
+<span id="498">498</span>
+<span id="499">499</span>
+<span id="500">500</span>
+<span id="501">501</span>
+<span id="502">502</span>
+<span id="503">503</span>
+<span id="504">504</span>
+<span id="505">505</span>
+<span id="506">506</span>
+<span id="507">507</span>
+<span id="508">508</span>
+<span id="509">509</span>
+<span id="510">510</span>
+<span id="511">511</span>
+<span id="512">512</span>
+<span id="513">513</span>
+<span id="514">514</span>
+<span id="515">515</span>
+<span id="516">516</span>
+<span id="517">517</span>
+<span id="518">518</span>
+<span id="519">519</span>
+<span id="520">520</span>
+<span id="521">521</span>
+<span id="522">522</span>
+<span id="523">523</span>
+<span id="524">524</span>
+<span id="525">525</span>
+<span id="526">526</span>
+<span id="527">527</span>
+<span id="528">528</span>
+<span id="529">529</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Threads that can borrow variables from the stack.</span>
 <span class="doccomment">//!</span>
@@ -359,9 +541,9 @@
 <span class="doccomment">//!     &quot;Carol&quot;.to_string(),</span>
 <span class="doccomment">//! ];</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! thread::scope(|scope| {</span>
+<span class="doccomment">//! thread::scope(|s| {</span>
 <span class="doccomment">//!     for person in &amp;people {</span>
-<span class="doccomment">//!         scope.spawn(move |_| {</span>
+<span class="doccomment">//!         s.spawn(move |_| {</span>
 <span class="doccomment">//!             println!(&quot;Hello, {}!&quot;, person);</span>
 <span class="doccomment">//!         });</span>
 <span class="doccomment">//!     }</span>
@@ -422,9 +604,42 @@
 <span class="doccomment">//! `&#39;static` lifetime because the borrow checker cannot be sure when the thread will complete.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! A scope creates a clear boundary between variables outside the scope and threads inside the</span>
-<span class="doccomment">//! scope. Whenever a scope spawns a thread, it promises to join the thread before the scope ends.</span>
+<span class="doccomment">//! scope. Whenever a s.spawns a thread, it promises to join the thread before the scope ends.</span>
 <span class="doccomment">//! This way we guarantee to the borrow checker that scoped threads only live within the scope and</span>
 <span class="doccomment">//! can safely access variables outside it.</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # Nesting scoped threads</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Sometimes scoped threads need to spawn more threads within the same scope. This is a little</span>
+<span class="doccomment">//! tricky because argument `s` lives *inside* the invocation of `thread::scope()` and as such</span>
+<span class="doccomment">//! cannot be borrowed by scoped threads:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```ignore</span>
+<span class="doccomment">//! use crossbeam_utils::thread;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! thread::scope(|s| {</span>
+<span class="doccomment">//!     s.spawn(|_| {</span>
+<span class="doccomment">//!         // Not going to compile because we&#39;re trying to borrow `s`,</span>
+<span class="doccomment">//!         // which lives *inside* the scope! :(</span>
+<span class="doccomment">//!         s.spawn(|_| println!(&quot;nested thread&quot;));</span>
+<span class="doccomment">//!     }});</span>
+<span class="doccomment">//! });</span>
+<span class="doccomment">//! ```</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! Fortunately, there is a solution. Every scoped thread is passed a reference to its scope as an</span>
+<span class="doccomment">//! argument, which can be used for spawning nested threads:</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ```ignore</span>
+<span class="doccomment">//! use crossbeam_utils::thread;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! thread::scope(|s| {</span>
+<span class="doccomment">//!     // Note the `|s|` here.</span>
+<span class="doccomment">//!     s.spawn(|s| {</span>
+<span class="doccomment">//!         // Yay, this works because we&#39;re using a fresh argument `s`! :)</span>
+<span class="doccomment">//!         s.spawn(|_| println!(&quot;nested thread&quot;));</span>
+<span class="doccomment">//!     }});</span>
+<span class="doccomment">//! });</span>
+<span class="doccomment">//! ```</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [`std::thread::spawn`]: https://doc.rust-lang.org/std/thread/fn.spawn.html</span>
 
@@ -433,39 +648,42 @@
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">marker</span>::<span class="ident">PhantomData</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">mem</span>;
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">panic</span>;
-<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>, <span class="ident">mpsc</span>};
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::{<span class="ident">Arc</span>, <span class="ident">Mutex</span>};
 <span class="kw">use</span> <span class="ident">std</span>::<span class="ident">thread</span>;
+
+<span class="kw">use</span> <span class="ident">sync</span>::<span class="ident">WaitGroup</span>;
 
 <span class="kw">type</span> <span class="ident">SharedVec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>;
 <span class="kw">type</span> <span class="ident">SharedOption</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Arc</span><span class="op">&lt;</span><span class="ident">Mutex</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;&gt;</span><span class="op">&gt;</span>;
 
-<span class="doccomment">/// Creates a new `Scope` for [*scoped thread spawning*](struct.Scope.html#method.spawn).</span>
+<span class="doccomment">/// Creates a new scope for spawning threads.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// No matter what happens, before the `Scope` is dropped, it is guaranteed that all the unjoined</span>
-<span class="doccomment">/// spawned scoped threads are joined.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// `thread::scope()` returns `Ok(())` if all the unjoined spawned threads did not panic. It returns</span>
-<span class="doccomment">/// `Err(e)` if one of them panics with `e`. If many of them panic, it is still guaranteed that all</span>
-<span class="doccomment">/// the threads are joined, and `thread::scope()` returns `Err(e)` with `e` from a panicking thread.</span>
+<span class="doccomment">/// All child threads that haven&#39;t been manually joined will be automatically joined just before</span>
+<span class="doccomment">/// this function invocation ends. If all joined threads have successfully completed, `Ok` is</span>
+<span class="doccomment">/// returned with the return value of `f`. If any of the joined threads has panicked, an `Err` is</span>
+<span class="doccomment">/// returned containing errors from panicked threads.</span>
 <span class="doccomment">///</span>
 <span class="doccomment">/// # Examples</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// Creating and using a scope:</span>
-<span class="doccomment">///</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">/// crossbeam_utils::thread::scope(|scope| {</span>
-<span class="doccomment">///     scope.spawn(|_| println!(&quot;Exiting scope&quot;));</span>
-<span class="doccomment">///     scope.spawn(|_| println!(&quot;Running child thread in scope&quot;));</span>
+<span class="doccomment">/// use crossbeam_utils::thread;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// let var = vec![1, 2, 3];</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// thread::scope(|s| {</span>
+<span class="doccomment">///     s.spawn(|_| {</span>
+<span class="doccomment">///         println!(&quot;A child thread borrowing `var`: {:?}&quot;, var);</span>
+<span class="doccomment">///     });</span>
 <span class="doccomment">/// }).unwrap();</span>
 <span class="doccomment">/// ```</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span>, <span class="ident">F</span>, <span class="ident">R</span><span class="op">&gt;</span>(<span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-&gt;</span> <span class="ident">thread</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">R</span><span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">R</span>,
 {
-    <span class="kw">let</span> (<span class="ident">tx</span>, <span class="ident">rx</span>) <span class="op">=</span> <span class="ident">mpsc</span>::<span class="ident">channel</span>();
+    <span class="kw">let</span> <span class="ident">wg</span> <span class="op">=</span> <span class="ident">WaitGroup</span>::<span class="ident">new</span>();
     <span class="kw">let</span> <span class="ident">scope</span> <span class="op">=</span> <span class="ident">Scope</span>::<span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
         <span class="ident">handles</span>: <span class="ident">SharedVec</span>::<span class="ident">default</span>(),
-        <span class="ident">chan</span>: <span class="ident">tx</span>,
+        <span class="ident">wait_group</span>: <span class="ident">wg</span>.<span class="ident">clone</span>(),
         <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
     };
 
@@ -473,8 +691,8 @@
     <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">panic</span>::<span class="ident">catch_unwind</span>(<span class="ident">panic</span>::<span class="ident">AssertUnwindSafe</span>(<span class="op">||</span> <span class="ident">f</span>(<span class="kw-2">&amp;</span><span class="ident">scope</span>)));
 
     <span class="comment">// Wait until all nested scopes are dropped.</span>
-    <span class="ident">drop</span>(<span class="ident">scope</span>.<span class="ident">chan</span>);
-    <span class="kw">let</span> <span class="kw">_</span> <span class="op">=</span> <span class="ident">rx</span>.<span class="ident">recv</span>();
+    <span class="ident">drop</span>(<span class="ident">scope</span>.<span class="ident">wait_group</span>);
+    <span class="ident">wg</span>.<span class="ident">wait</span>();
 
     <span class="comment">// Join all remaining spawned threads.</span>
     <span class="kw">let</span> <span class="ident">panics</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw">_</span><span class="op">&gt;</span> <span class="op">=</span> {
@@ -511,7 +729,7 @@
     <span class="ident">handles</span>: <span class="ident">SharedVec</span><span class="op">&lt;</span><span class="ident">SharedOption</span><span class="op">&lt;</span><span class="ident">thread</span>::<span class="ident">JoinHandle</span><span class="op">&lt;</span>()<span class="op">&gt;&gt;</span><span class="op">&gt;</span>,
 
     <span class="doccomment">/// Used to wait until all subscopes all dropped.</span>
-    <span class="ident">chan</span>: <span class="ident">mpsc</span>::<span class="ident">Sender</span><span class="op">&lt;</span>()<span class="op">&gt;</span>,
+    <span class="ident">wait_group</span>: <span class="ident">WaitGroup</span>,
 
     <span class="doccomment">/// Borrows data with invariant lifetime `&#39;env`.</span>
     <span class="ident">_marker</span>: <span class="ident">PhantomData</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;env</span> <span class="kw-2">mut</span> <span class="kw-2">&amp;</span><span class="lifetime">&#39;env</span> ()<span class="op">&gt;</span>,
@@ -520,14 +738,35 @@
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> {}
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> <span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Create a scoped thread.</span>
+    <span class="doccomment">/// Spawns a scoped thread.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// `spawn` is similar to the [`spawn`] function in Rust&#39;s standard library. The difference is</span>
-    <span class="doccomment">/// that this thread is scoped, meaning that it&#39;s guaranteed to terminate before the current</span>
-    <span class="doccomment">/// stack frame goes away, allowing you to reference the parent stack frame directly. This is</span>
-    <span class="doccomment">/// ensured by having the parent thread join on the child thread before the scope exits.</span>
+    <span class="doccomment">/// This method is similar to the [`spawn`] function in Rust&#39;s standard library. The difference</span>
+    <span class="doccomment">/// is that this thread is scoped, meaning it&#39;s guaranteed to terminate before the scope exits,</span>
+    <span class="doccomment">/// allowing it to reference variables outside the scope.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The scoped thread is passed a reference to this scope as an argument, which can be used for</span>
+    <span class="doccomment">/// spawning nested threads.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The returned handle can be used to manually join the thread before the scope exits.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// [`spawn`]: https://doc.rust-lang.org/std/thread/fn.spawn.html</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     let handle = s.spawn(|_| {</span>
+    <span class="doccomment">///         println!(&quot;A child thread is running&quot;);</span>
+    <span class="doccomment">///         42</span>
+    <span class="doccomment">///     });</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     // Join the thread and retrieve its result.</span>
+    <span class="doccomment">///     let res = handle.join().unwrap();</span>
+    <span class="doccomment">///     assert_eq!(res, 42);</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;scope</span> <span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-&gt;</span> <span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">T</span>,
@@ -537,8 +776,20 @@
         <span class="self">self</span>.<span class="ident">builder</span>().<span class="ident">spawn</span>(<span class="ident">f</span>).<span class="ident">unwrap</span>()
     }
 
-    <span class="doccomment">/// Generates the base configuration for spawning a scoped thread, from which configuration</span>
-    <span class="doccomment">/// methods can be chained.</span>
+    <span class="doccomment">/// Creates a builder that can configure a thread before spawning.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">/// use std::thread::current;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     s.builder()</span>
+    <span class="doccomment">///         .spawn(|_| println!(&quot;A child thread is running&quot;))</span>
+    <span class="doccomment">///         .unwrap();</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">builder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="lifetime">&#39;scope</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">ScopedThreadBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
         <span class="ident">ScopedThreadBuilder</span> {
             <span class="ident">scope</span>: <span class="self">self</span>,
@@ -553,8 +804,39 @@
     }
 }
 
-<span class="doccomment">/// Scoped thread configuration. Provides detailed control over the properties and behavior of new</span>
-<span class="doccomment">/// scoped threads.</span>
+<span class="doccomment">/// Configures the properties of a new thread.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The two configurable properties are:</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// - [`name`]: Specifies an [associated name for the thread][naming-threads].</span>
+<span class="doccomment">/// - [`stack_size`]: Specifies the [desired stack size for the thread][stack-size].</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The [`spawn`] method will take ownership of the builder and return an [`io::Result`] of the</span>
+<span class="doccomment">/// thread handle with the given configuration.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// The [`Scope::spawn`] method uses a builder with default configuration and unwraps its return</span>
+<span class="doccomment">/// value. You may want to use this builder when you want to recover from a failure to launch a</span>
+<span class="doccomment">/// thread.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// # Examples</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">/// use crossbeam_utils::thread;</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// thread::scope(|s| {</span>
+<span class="doccomment">///     s.builder()</span>
+<span class="doccomment">///         .spawn(|_| println!(&quot;Running a child thread&quot;))</span>
+<span class="doccomment">///         .unwrap();</span>
+<span class="doccomment">/// }).unwrap();</span>
+<span class="doccomment">/// ```</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// [`name`]: struct.ScopedThreadBuilder.html#method.name</span>
+<span class="doccomment">/// [`stack_size`]: struct.ScopedThreadBuilder.html#method.stack_size</span>
+<span class="doccomment">/// [`spawn`]: struct.ScopedThreadBuilder.html#method.spawn</span>
+<span class="doccomment">/// [`Scope::spawn`]: struct.Scope.html#method.spawn</span>
+<span class="doccomment">/// [`io::Result`]: https://doc.rust-lang.org/std/io/type.Result.html</span>
+<span class="doccomment">/// [naming-threads]: https://doc.rust-lang.org/std/thread/index.html#naming-threads</span>
+<span class="doccomment">/// [stack-size]: https://doc.rust-lang.org/std/thread/index.html#stack-size</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ScopedThreadBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span>: <span class="lifetime">&#39;scope</span><span class="op">&gt;</span> {
     <span class="ident">scope</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;scope</span> <span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span>,
@@ -562,20 +844,77 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span><span class="op">&gt;</span> <span class="ident">ScopedThreadBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Names the thread-to-be. Currently the name is used for identification only in panic</span>
-    <span class="doccomment">/// messages.</span>
+    <span class="doccomment">/// Sets the name for the new thread.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The name must not contain null bytes. For more information about named threads, see</span>
+    <span class="doccomment">/// [here][naming-threads].</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">/// use std::thread::current;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     s.builder()</span>
+    <span class="doccomment">///         .name(&quot;my thread&quot;.to_string())</span>
+    <span class="doccomment">///         .spawn(|_| assert_eq!(current().name(), Some(&quot;my thread&quot;)))</span>
+    <span class="doccomment">///         .unwrap();</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// [naming-threads]: https://doc.rust-lang.org/std/thread/index.html#naming-threads</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">name</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">name</span>: <span class="ident">String</span>) <span class="op">-&gt;</span> <span class="ident">ScopedThreadBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">builder</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">name</span>(<span class="ident">name</span>);
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Sets the size of the stack for the new thread.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The stack size is measured in bytes.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     s.builder()</span>
+    <span class="doccomment">///         .stack_size(32 * 1024)</span>
+    <span class="doccomment">///         .spawn(|_| println!(&quot;Running a child thread&quot;))</span>
+    <span class="doccomment">///         .unwrap();</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">stack_size</span>(<span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">size</span>: <span class="ident">usize</span>) <span class="op">-&gt;</span> <span class="ident">ScopedThreadBuilder</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">builder</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">builder</span>.<span class="ident">stack_size</span>(<span class="ident">size</span>);
         <span class="self">self</span>
     }
 
-    <span class="doccomment">/// Spawns a new thread, and returns a join handle for it.</span>
+    <span class="doccomment">/// Spawns a scoped thread with this configuration.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The scoped thread is passed a reference to this scope as an argument, which can be used for</span>
+    <span class="doccomment">/// spawning nested threads.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// The returned handle can be used to manually join the thread before the scope exits.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     let handle = s.builder()</span>
+    <span class="doccomment">///         .spawn(|_| {</span>
+    <span class="doccomment">///             println!(&quot;A child thread is running&quot;);</span>
+    <span class="doccomment">///             42</span>
+    <span class="doccomment">///         })</span>
+    <span class="doccomment">///         .unwrap();</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     // Join the thread and retrieve its result.</span>
+    <span class="doccomment">///     let res = handle.join().unwrap();</span>
+    <span class="doccomment">///     assert_eq!(res, 42);</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spawn</span><span class="op">&lt;</span><span class="ident">F</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="self">self</span>, <span class="ident">f</span>: <span class="ident">F</span>) <span class="op">-&gt;</span> <span class="ident">io</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;&gt;</span>
     <span class="kw">where</span>
         <span class="ident">F</span>: <span class="ident">FnOnce</span>(<span class="kw-2">&amp;</span><span class="ident">Scope</span><span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span>) <span class="op">-&gt;</span> <span class="ident">T</span>,
@@ -592,7 +931,7 @@
             <span class="comment">// A clone of the scope that will be moved into the new thread.</span>
             <span class="kw">let</span> <span class="ident">scope</span> <span class="op">=</span> <span class="ident">Scope</span>::<span class="op">&lt;</span><span class="lifetime">&#39;env</span><span class="op">&gt;</span> {
                 <span class="ident">handles</span>: <span class="ident">Arc</span>::<span class="ident">clone</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">scope</span>.<span class="ident">handles</span>),
-                <span class="ident">chan</span>: <span class="self">self</span>.<span class="ident">scope</span>.<span class="ident">chan</span>.<span class="ident">clone</span>(),
+                <span class="ident">wait_group</span>: <span class="self">self</span>.<span class="ident">scope</span>.<span class="ident">wait_group</span>.<span class="ident">clone</span>(),
                 <span class="ident">_marker</span>: <span class="ident">PhantomData</span>,
             };
 
@@ -642,7 +981,7 @@
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Send</span> <span class="kw">for</span> <span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> {}
 <span class="kw">unsafe</span> <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">Sync</span> <span class="kw">for</span> <span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> {}
 
-<span class="doccomment">/// A handle to a scoped thread</span>
+<span class="doccomment">/// A handle that can be used to join its scoped thread.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// A join handle to the spawned thread.</span>
     <span class="ident">handle</span>: <span class="ident">SharedOption</span><span class="op">&lt;</span><span class="ident">thread</span>::<span class="ident">JoinHandle</span><span class="op">&lt;</span>()<span class="op">&gt;&gt;</span>,
@@ -658,17 +997,33 @@
 }
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> <span class="ident">ScopedJoinHandle</span><span class="op">&lt;</span><span class="lifetime">&#39;scope</span>, <span class="ident">T</span><span class="op">&gt;</span> {
-    <span class="doccomment">/// Waits for the associated thread to finish.</span>
+    <span class="doccomment">/// Waits for the thread to finish and returns its result.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// If the child thread panics, [`Err`] is returned with the parameter given to [`panic`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Err`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err</span>
-    <span class="doccomment">/// [`panic`]: https://doc.rust-lang.org/std/macro.panic.html</span>
+    <span class="doccomment">/// If the child thread panics, an error is returned.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Panics</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This function may panic on some platforms if a thread attempts to join itself or otherwise</span>
     <span class="doccomment">/// may create a deadlock with joining threads.</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     let handle1 = s.spawn(|_| println!(&quot;I&#39;m a happy thread :)&quot;));</span>
+    <span class="doccomment">///     let handle2 = s.spawn(|_| panic!(&quot;I&#39;m a sad thread :(&quot;));</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     // Join the first thread and verify that it succeeded.</span>
+    <span class="doccomment">///     let res = handle1.join();</span>
+    <span class="doccomment">///     assert!(res.is_ok());</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">///     // Join the second thread and verify that it panicked.</span>
+    <span class="doccomment">///     let res = handle2.join();</span>
+    <span class="doccomment">///     assert!(res.is_err());</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">join</span>(<span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">thread</span>::<span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
         <span class="comment">// Take out the handle. The handle will surely be available because the root scope waits</span>
         <span class="comment">// for nested scopes before joining remaining threads.</span>
@@ -680,9 +1035,18 @@
             .<span class="ident">map</span>(<span class="op">|</span>()<span class="op">|</span> <span class="self">self</span>.<span class="ident">result</span>.<span class="ident">lock</span>().<span class="ident">unwrap</span>().<span class="ident">take</span>().<span class="ident">unwrap</span>())
     }
 
-    <span class="doccomment">/// Gets the underlying [`std::thread::Thread`] handle.</span>
+    <span class="doccomment">/// Returns a handle to the underlying thread.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`std::thread::Thread`]: https://doc.rust-lang.org/std/thread/struct.Thread.html</span>
+    <span class="doccomment">/// # Examples</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// ```</span>
+    <span class="doccomment">/// use crossbeam_utils::thread;</span>
+    <span class="doccomment">///</span>
+    <span class="doccomment">/// thread::scope(|s| {</span>
+    <span class="doccomment">///     let handle = s.spawn(|_| println!(&quot;A child thread is running&quot;));</span>
+    <span class="doccomment">///     println!(&quot;The child thread ID: {:?}&quot;, handle.thread().id());</span>
+    <span class="doccomment">/// }).unwrap();</span>
+    <span class="doccomment">/// ```</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">thread</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="ident">thread</span>::<span class="ident">Thread</span> {
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">thread</span>
     }

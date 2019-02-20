@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.4/src/distributions/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.5/src/distributions/mod.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>mod.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css"><link rel="stylesheet" type="text/css" href="../../../light.css" id="themeStyle"><script src="../../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -606,19 +606,6 @@
 <span id="606">606</span>
 <span id="607">607</span>
 <span id="608">608</span>
-<span id="609">609</span>
-<span id="610">610</span>
-<span id="611">611</span>
-<span id="612">612</span>
-<span id="613">613</span>
-<span id="614">614</span>
-<span id="615">615</span>
-<span id="616">616</span>
-<span id="617">617</span>
-<span id="618">618</span>
-<span id="619">619</span>
-<span id="620">620</span>
-<span id="621">621</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">// Copyright 2013-2017 The Rust Project Developers.</span>
@@ -678,7 +665,7 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! User types `T` may also implement `Distribution&lt;T&gt;` for [`Uniform`],</span>
 <span class="doccomment">//! although this is less straightforward than for [`Standard`] (see the</span>
-<span class="doccomment">//! documentation in the [`uniform` module]. Doing so enables generation of</span>
+<span class="doccomment">//! documentation in the [`uniform`] module. Doing so enables generation of</span>
 <span class="doccomment">//! values of type `T` with  [`Rng::gen_range`].</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//!</span>
@@ -687,8 +674,8 @@
 <span class="doccomment">//! There are surprisingly many ways to uniformly generate random floats. A</span>
 <span class="doccomment">//! range between 0 and 1 is standard, but the exact bounds (open vs closed)</span>
 <span class="doccomment">//! and accuracy differ. In addition to the [`Standard`] distribution Rand offers</span>
-<span class="doccomment">//! [`Open01`] and [`OpenClosed01`]. See [Floating point implementation] for</span>
-<span class="doccomment">//! more details.</span>
+<span class="doccomment">//! [`Open01`] and [`OpenClosed01`]. See &quot;Floating point implementation&quot; section of</span>
+<span class="doccomment">//! [`Standard`] documentation for more details.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [`Alphanumeric`] is a simple distribution to sample random letters and</span>
 <span class="doccomment">//! numbers of the `char` type; in contrast [`Standard`] may sample any valid</span>
@@ -762,47 +749,38 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [probability distribution]: https://en.wikipedia.org/wiki/Probability_distribution</span>
-<span class="doccomment">//! [`Distribution`]: trait.Distribution.html</span>
-<span class="doccomment">//! [`gen_range`]: ../trait.Rng.html#method.gen_range</span>
-<span class="doccomment">//! [`gen`]: ../trait.Rng.html#method.gen</span>
-<span class="doccomment">//! [`sample`]: ../trait.Rng.html#method.sample</span>
-<span class="doccomment">//! [`new_inclusive`]: struct.Uniform.html#method.new_inclusive</span>
-<span class="doccomment">//! [`random()`]: ../fn.random.html</span>
-<span class="doccomment">//! [`Rng::gen_bool`]: ../trait.Rng.html#method.gen_bool</span>
-<span class="doccomment">//! [`Rng::gen_range`]: ../trait.Rng.html#method.gen_range</span>
-<span class="doccomment">//! [`Rng::gen()`]: ../trait.Rng.html#method.gen</span>
-<span class="doccomment">//! [`Rng`]: ../trait.Rng.html</span>
-<span class="doccomment">//! [`uniform` module]: uniform/index.html</span>
-<span class="doccomment">//! [Floating point implementation]: struct.Standard.html#floating-point-implementation</span>
-<span class="comment">// distributions</span>
-<span class="doccomment">//! [`Alphanumeric`]: struct.Alphanumeric.html</span>
-<span class="doccomment">//! [`Bernoulli`]: struct.Bernoulli.html</span>
-<span class="doccomment">//! [`Beta`]: struct.Beta.html</span>
-<span class="doccomment">//! [`Binomial`]: struct.Binomial.html</span>
-<span class="doccomment">//! [`Cauchy`]: struct.Cauchy.html</span>
-<span class="doccomment">//! [`ChiSquared`]: struct.ChiSquared.html</span>
-<span class="doccomment">//! [`Dirichlet`]: struct.Dirichlet.html</span>
-<span class="doccomment">//! [`Exp`]: struct.Exp.html</span>
-<span class="doccomment">//! [`Exp1`]: struct.Exp1.html</span>
-<span class="doccomment">//! [`FisherF`]: struct.FisherF.html</span>
-<span class="doccomment">//! [`Gamma`]: struct.Gamma.html</span>
-<span class="doccomment">//! [`LogNormal`]: struct.LogNormal.html</span>
-<span class="doccomment">//! [`Normal`]: struct.Normal.html</span>
-<span class="doccomment">//! [`Open01`]: struct.Open01.html</span>
-<span class="doccomment">//! [`OpenClosed01`]: struct.OpenClosed01.html</span>
-<span class="doccomment">//! [`Pareto`]: struct.Pareto.html</span>
-<span class="doccomment">//! [`Poisson`]: struct.Poisson.html</span>
-<span class="doccomment">//! [`Standard`]: struct.Standard.html</span>
-<span class="doccomment">//! [`StandardNormal`]: struct.StandardNormal.html</span>
-<span class="doccomment">//! [`StudentT`]: struct.StudentT.html</span>
-<span class="doccomment">//! [`Triangular`]: struct.Triangular.html</span>
-<span class="doccomment">//! [`Uniform`]: struct.Uniform.html</span>
-<span class="doccomment">//! [`Uniform::new`]: struct.Uniform.html#method.new</span>
-<span class="doccomment">//! [`Uniform::new_inclusive`]: struct.Uniform.html#method.new_inclusive</span>
-<span class="doccomment">//! [`UnitSphereSurface`]: struct.UnitSphereSurface.html</span>
-<span class="doccomment">//! [`UnitCircle`]: struct.UnitCircle.html</span>
-<span class="doccomment">//! [`Weibull`]: struct.Weibull.html</span>
-<span class="doccomment">//! [`WeightedIndex`]: struct.WeightedIndex.html</span>
+<span class="doccomment">//! [`gen_range`]: Rng::gen_range</span>
+<span class="doccomment">//! [`gen`]: Rng::gen</span>
+<span class="doccomment">//! [`sample`]: Rng::sample</span>
+<span class="doccomment">//! [`new_inclusive`]: Uniform::new_inclusive</span>
+<span class="doccomment">//! [`Alphanumeric`]: distributions::Alphanumeric</span>
+<span class="doccomment">//! [`Bernoulli`]: distributions::Bernoulli</span>
+<span class="doccomment">//! [`Beta`]: distributions::Beta</span>
+<span class="doccomment">//! [`Binomial`]: distributions::Binomial</span>
+<span class="doccomment">//! [`Cauchy`]: distributions::Cauchy</span>
+<span class="doccomment">//! [`ChiSquared`]: distributions::ChiSquared</span>
+<span class="doccomment">//! [`Dirichlet`]: distributions::Dirichlet</span>
+<span class="doccomment">//! [`Exp`]: distributions::Exp</span>
+<span class="doccomment">//! [`Exp1`]: distributions::Exp1</span>
+<span class="doccomment">//! [`FisherF`]: distributions::FisherF</span>
+<span class="doccomment">//! [`Gamma`]: distributions::Gamma</span>
+<span class="doccomment">//! [`LogNormal`]: distributions::LogNormal</span>
+<span class="doccomment">//! [`Normal`]: distributions::Normal</span>
+<span class="doccomment">//! [`Open01`]: distributions::Open01</span>
+<span class="doccomment">//! [`OpenClosed01`]: distributions::OpenClosed01</span>
+<span class="doccomment">//! [`Pareto`]: distributions::Pareto</span>
+<span class="doccomment">//! [`Poisson`]: distributions::Poisson</span>
+<span class="doccomment">//! [`Standard`]: distributions::Standard</span>
+<span class="doccomment">//! [`StandardNormal`]: distributions::StandardNormal</span>
+<span class="doccomment">//! [`StudentT`]: distributions::StudentT</span>
+<span class="doccomment">//! [`Triangular`]: distributions::Triangular</span>
+<span class="doccomment">//! [`Uniform`]: distributions::Uniform</span>
+<span class="doccomment">//! [`Uniform::new`]: distributions::Uniform::new</span>
+<span class="doccomment">//! [`Uniform::new_inclusive`]: distributions::Uniform::new_inclusive</span>
+<span class="doccomment">//! [`UnitSphereSurface`]: distributions::UnitSphereSurface</span>
+<span class="doccomment">//! [`UnitCircle`]: distributions::UnitCircle</span>
+<span class="doccomment">//! [`Weibull`]: distributions::Weibull</span>
+<span class="doccomment">//! [`WeightedIndex`]: distributions::WeightedIndex</span>
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">any</span>(<span class="ident">rustc_1_26</span>, <span class="ident">features</span><span class="op">=</span><span class="string">&quot;nightly&quot;</span>))]</span>
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">iter</span>;
@@ -860,8 +838,7 @@
 <span class="doccomment">/// advantage of not needing to consider thread safety, and for most</span>
 <span class="doccomment">/// distributions efficient state-less sampling algorithms are available.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`Rng`]: ../trait.Rng.html</span>
-<span class="doccomment">/// [`sample_iter`]: trait.Distribution.html#method.sample_iter</span>
+<span class="doccomment">/// [`sample_iter`]: Distribution::method.sample_iter</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Distribution</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Generate a random value of `T`, using `rng` as the source of randomness.</span>
     <span class="kw">fn</span> <span class="ident">sample</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">Rng</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">rng</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">R</span>) <span class="op">-&gt;</span> <span class="ident">T</span>;
@@ -914,8 +891,7 @@
 <span class="doccomment">/// This `struct` is created by the [`sample_iter`] method on [`Distribution`].</span>
 <span class="doccomment">/// See its documentation for more.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`Distribution`]: trait.Distribution.html</span>
-<span class="doccomment">/// [`sample_iter`]: trait.Distribution.html#method.sample_iter</span>
+<span class="doccomment">/// [`sample_iter`]: Distribution::sample_iter</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">DistIter</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">D</span>: <span class="lifetime">&#39;a</span>, <span class="ident">R</span>: <span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span> {
     <span class="ident">distr</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">D</span>,
@@ -1001,9 +977,7 @@
 <span class="doccomment">/// faster on some architectures (on modern Intel CPUs all methods have</span>
 <span class="doccomment">/// approximately equal performance).</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`Open01`]: struct.Open01.html</span>
-<span class="doccomment">/// [`OpenClosed01`]: struct.OpenClosed01.html</span>
-<span class="doccomment">/// [`Uniform`]: uniform/struct.Uniform.html</span>
+<span class="doccomment">/// [`Uniform`]: uniform::Uniform</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">Copy</span>, <span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Standard</span>;
 
@@ -1023,7 +997,7 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// Deprecated: use [`WeightedIndex`] instead.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`WeightedIndex`]: struct.WeightedIndex.html</span>
+<span class="doccomment">/// [`WeightedIndex`]: WeightedIndex</span>
 <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span><span class="op">=</span><span class="string">&quot;0.6.0&quot;</span>, <span class="ident">note</span><span class="op">=</span><span class="string">&quot;use WeightedIndex instead&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">allow</span>(<span class="ident">deprecated</span>)]</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>

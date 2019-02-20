@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.4/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand-0.6.5/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../rand/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -828,28 +828,6 @@
 <span id="828">828</span>
 <span id="829">829</span>
 <span id="830">830</span>
-<span id="831">831</span>
-<span id="832">832</span>
-<span id="833">833</span>
-<span id="834">834</span>
-<span id="835">835</span>
-<span id="836">836</span>
-<span id="837">837</span>
-<span id="838">838</span>
-<span id="839">839</span>
-<span id="840">840</span>
-<span id="841">841</span>
-<span id="842">842</span>
-<span id="843">843</span>
-<span id="844">844</span>
-<span id="845">845</span>
-<span id="846">846</span>
-<span id="847">847</span>
-<span id="848">848</span>
-<span id="849">849</span>
-<span id="850">850</span>
-<span id="851">851</span>
-<span id="852">852</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">// Copyright 2013-2017 The Rust Project Developers.</span>
@@ -870,7 +848,7 @@
 <span class="doccomment">//! To get you started quickly, the easiest and highest-level way to get</span>
 <span class="doccomment">//! a random value is to use [`random()`]; alternatively you can use</span>
 <span class="doccomment">//! [`thread_rng()`]. The [`Rng`] trait provides a useful API on all RNGs, while</span>
-<span class="doccomment">//! the [`distributions` module] and [`seq` module] provide further</span>
+<span class="doccomment">//! the [`distributions`] and [`seq`] modules provide further</span>
 <span class="doccomment">//! functionality on top of RNGs.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```</span>
@@ -892,12 +870,6 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! For the user guide and futher documentation, please read</span>
 <span class="doccomment">//! [The Rust Rand Book](https://rust-random.github.io/book).</span>
-<span class="doccomment">//!</span>
-<span class="doccomment">//! [`distributions` module]: distributions/index.html</span>
-<span class="doccomment">//! [`random()`]: fn.random.html</span>
-<span class="doccomment">//! [`Rng`]: trait.Rng.html</span>
-<span class="doccomment">//! [`seq` module]: seq/index.html</span>
-<span class="doccomment">//! [`thread_rng()`]: fn.thread_rng.html</span>
 
 
 <span class="attribute">#![<span class="ident">doc</span>(<span class="ident">html_logo_url</span> <span class="op">=</span> <span class="string">&quot;https://www.rust-lang.org/logos/rust-logo-128x128-blk.png&quot;</span>,
@@ -917,6 +889,7 @@
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;simd_support&quot;</span>)]</span> <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">packed_simd</span>;
 
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">rand_jitter</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;rand_os&quot;</span>)]</span>
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">rand_os</span>;
 
@@ -1053,12 +1026,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// # let v = foo(&amp;mut thread_rng());</span>
 <span class="doccomment">/// ```</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`RngCore`]: trait.RngCore.html</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">Rng</span>: <span class="ident">RngCore</span> {
     <span class="doccomment">/// Return a random value supporting the [`Standard`] distribution.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Standard`]: distributions/struct.Standard.html</span>
+    <span class="doccomment">/// [`Standard`]: distributions::Standard</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// # Example</span>
     <span class="doccomment">///</span>
@@ -1098,7 +1069,7 @@
     <span class="doccomment">/// println!(&quot;{}&quot;, m);</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Uniform`]: distributions/uniform/struct.Uniform.html</span>
+    <span class="doccomment">/// [`Uniform`]: distributions::uniform::Uniform</span>
     <span class="kw">fn</span> <span class="ident">gen_range</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">SampleUniform</span>, <span class="ident">B1</span>, <span class="ident">B2</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">low</span>: <span class="ident">B1</span>, <span class="ident">high</span>: <span class="ident">B2</span>) <span class="op">-&gt;</span> <span class="ident">T</span>
         <span class="kw">where</span> <span class="ident">B1</span>: <span class="ident">SampleBorrow</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Sized</span>,
               <span class="ident">B2</span>: <span class="ident">SampleBorrow</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Sized</span> {
@@ -1176,9 +1147,8 @@
     <span class="doccomment">/// thread_rng().fill(&amp;mut arr[..]);</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`fill_bytes`]: trait.RngCore.html#method.fill_bytes</span>
-    <span class="doccomment">/// [`try_fill`]: trait.Rng.html#method.try_fill</span>
-    <span class="doccomment">/// [`AsByteSliceMut`]: trait.AsByteSliceMut.html</span>
+    <span class="doccomment">/// [`fill_bytes`]: RngCore::fill_bytes</span>
+    <span class="doccomment">/// [`try_fill`]: Rng::try_fill</span>
     <span class="kw">fn</span> <span class="ident">fill</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsByteSliceMut</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">dest</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span>) {
         <span class="self">self</span>.<span class="ident">fill_bytes</span>(<span class="ident">dest</span>.<span class="ident">as_byte_slice_mut</span>());
         <span class="ident">dest</span>.<span class="ident">to_le</span>();
@@ -1211,10 +1181,8 @@
     <span class="doccomment">/// # try_inner().unwrap()</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`ErrorKind`]: enum.ErrorKind.html</span>
-    <span class="doccomment">/// [`try_fill_bytes`]: trait.RngCore.html#method.try_fill_bytes</span>
-    <span class="doccomment">/// [`fill`]: trait.Rng.html#method.fill</span>
-    <span class="doccomment">/// [`AsByteSliceMut`]: trait.AsByteSliceMut.html</span>
+    <span class="doccomment">/// [`try_fill_bytes`]: RngCore::try_fill_bytes</span>
+    <span class="doccomment">/// [`fill`]: Rng::fill</span>
     <span class="kw">fn</span> <span class="ident">try_fill</span><span class="op">&lt;</span><span class="ident">T</span>: <span class="ident">AsByteSliceMut</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">dest</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">T</span>) <span class="op">-&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>(), <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">try_fill_bytes</span>(<span class="ident">dest</span>.<span class="ident">as_byte_slice_mut</span>())<span class="question-mark">?</span>;
         <span class="ident">dest</span>.<span class="ident">to_le</span>();
@@ -1239,7 +1207,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// If `p &lt; 0` or `p &gt; 1`.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Bernoulli`]: distributions/bernoulli/struct.Bernoulli.html</span>
+    <span class="doccomment">/// [`Bernoulli`]: distributions::bernoulli::Bernoulli</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">gen_bool</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">p</span>: <span class="ident">f64</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">d</span> <span class="op">=</span> <span class="ident">distributions</span>::<span class="ident">Bernoulli</span>::<span class="ident">new</span>(<span class="ident">p</span>);
@@ -1268,7 +1236,7 @@
     <span class="doccomment">/// println!(&quot;{}&quot;, rng.gen_ratio(2, 3));</span>
     <span class="doccomment">/// ```</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// [`Bernoulli`]: distributions/bernoulli/struct.Bernoulli.html</span>
+    <span class="doccomment">/// [`Bernoulli`]: distributions::bernoulli::Bernoulli</span>
     <span class="attribute">#[<span class="ident">inline</span>]</span>
     <span class="kw">fn</span> <span class="ident">gen_ratio</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">numerator</span>: <span class="ident">u32</span>, <span class="ident">denominator</span>: <span class="ident">u32</span>) <span class="op">-&gt;</span> <span class="ident">bool</span> {
         <span class="kw">let</span> <span class="ident">d</span> <span class="op">=</span> <span class="ident">distributions</span>::<span class="ident">Bernoulli</span>::<span class="ident">from_ratio</span>(<span class="ident">numerator</span>, <span class="ident">denominator</span>);
@@ -1277,9 +1245,7 @@
 
     <span class="doccomment">/// Return a random element from `values`.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Deprecated: use [`SliceRandom::choose`] instead.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [`SliceRandom::choose`]: seq/trait.SliceRandom.html#method.choose</span>
+    <span class="doccomment">/// Deprecated: use [`seq::SliceRandom::choose`] instead.</span>
     <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span><span class="op">=</span><span class="string">&quot;0.6.0&quot;</span>, <span class="ident">note</span><span class="op">=</span><span class="string">&quot;use SliceRandom::choose instead&quot;</span>)]</span>
     <span class="kw">fn</span> <span class="ident">choose</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">values</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> [<span class="ident">T</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">seq</span>::<span class="ident">SliceRandom</span>;
@@ -1288,9 +1254,7 @@
 
     <span class="doccomment">/// Return a mutable pointer to a random element from `values`.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Deprecated: use [`SliceRandom::choose_mut`] instead.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [`SliceRandom::choose_mut`]: seq/trait.SliceRandom.html#method.choose_mut</span>
+    <span class="doccomment">/// Deprecated: use [`seq::SliceRandom::choose_mut`] instead.</span>
     <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span><span class="op">=</span><span class="string">&quot;0.6.0&quot;</span>, <span class="ident">note</span><span class="op">=</span><span class="string">&quot;use SliceRandom::choose_mut instead&quot;</span>)]</span>
     <span class="kw">fn</span> <span class="ident">choose_mut</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span>, <span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">values</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> [<span class="ident">T</span>]) <span class="op">-&gt;</span> <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a</span> <span class="kw-2">mut</span> <span class="ident">T</span><span class="op">&gt;</span> {
         <span class="kw">use</span> <span class="ident">seq</span>::<span class="ident">SliceRandom</span>;
@@ -1299,9 +1263,7 @@
 
     <span class="doccomment">/// Shuffle a mutable slice in place.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// Deprecated: use [`SliceRandom::shuffle`] instead.</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// [`SliceRandom::shuffle`]: seq/trait.SliceRandom.html#method.shuffle</span>
+    <span class="doccomment">/// Deprecated: use [`seq::SliceRandom::shuffle`] instead.</span>
     <span class="attribute">#[<span class="ident">deprecated</span>(<span class="ident">since</span><span class="op">=</span><span class="string">&quot;0.6.0&quot;</span>, <span class="ident">note</span><span class="op">=</span><span class="string">&quot;use SliceRandom::shuffle instead&quot;</span>)]</span>
     <span class="kw">fn</span> <span class="ident">shuffle</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">values</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">T</span>]) {
         <span class="kw">use</span> <span class="ident">seq</span>::<span class="ident">SliceRandom</span>;
@@ -1313,10 +1275,7 @@
 
 <span class="doccomment">/// Trait for casting types to byte slices</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// This is used by the [`fill`] and [`try_fill`] methods.</span>
-<span class="doccomment">///</span>
-<span class="doccomment">/// [`fill`]: trait.Rng.html#method.fill</span>
-<span class="doccomment">/// [`try_fill`]: trait.Rng.html#method.try_fill</span>
+<span class="doccomment">/// This is used by the [`Rng::fill`] and [`Rng::try_fill`] methods.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">AsByteSliceMut</span> {
     <span class="doccomment">/// Return a mutable reference to self as a byte slice</span>
     <span class="kw">fn</span> <span class="ident">as_byte_slice_mut</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) <span class="op">-&gt;</span> <span class="kw-2">&amp;</span><span class="kw-2">mut</span> [<span class="ident">u8</span>];
@@ -1433,9 +1392,7 @@
 <span class="doccomment">/// println!(&quot;Random die roll: {}&quot;, rng.gen_range(1, 7));</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`EntropyRng`]: rngs/struct.EntropyRng.html</span>
-<span class="doccomment">/// [`SeedableRng`]: trait.SeedableRng.html</span>
-<span class="doccomment">/// [`SeedableRng::from_seed`]: trait.SeedableRng.html#tymethod.from_seed</span>
+<span class="doccomment">/// [`EntropyRng`]: rngs::EntropyRng</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;std&quot;</span>)]</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">FromEntropy</span>: <span class="ident">SeedableRng</span> {
     <span class="doccomment">/// Creates a new instance, automatically seeded with fresh entropy.</span>
@@ -1520,8 +1477,7 @@
 <span class="doccomment">/// }</span>
 <span class="doccomment">/// ```</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`thread_rng`]: fn.thread_rng.html</span>
-<span class="doccomment">/// [`Standard`]: distributions/struct.Standard.html</span>
+<span class="doccomment">/// [`Standard`]: distributions::Standard</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;std&quot;</span>)]</span>
 <span class="attribute">#[<span class="ident">inline</span>]</span>
 <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">random</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span>() <span class="op">-&gt;</span> <span class="ident">T</span> <span class="kw">where</span> <span class="ident">Standard</span>: <span class="ident">Distribution</span><span class="op">&lt;</span><span class="ident">T</span><span class="op">&gt;</span> {

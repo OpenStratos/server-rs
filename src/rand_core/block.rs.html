@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand_core-0.3.0/src/block.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../rand_core/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/rand_core-0.4.0/src/block.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>block.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><link rel="shortcut icon" href="https://www.rust-lang.org/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../rand_core/index.html'><img src='https://www.rust-lang.org/logos/rust-logo-128x128-blk.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -497,15 +497,6 @@
 <span id="497">497</span>
 <span id="498">498</span>
 <span id="499">499</span>
-<span id="500">500</span>
-<span id="501">501</span>
-<span id="502">502</span>
-<span id="503">503</span>
-<span id="504">504</span>
-<span id="505">505</span>
-<span id="506">506</span>
-<span id="507">507</span>
-<span id="508">508</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// Copyright 2018 Developers of the Rand project.</span>
 <span class="comment">//</span>
@@ -525,40 +516,39 @@
 <span class="doccomment">//! implementations only need to concern themselves with generation of the</span>
 <span class="doccomment">//! block, not the various [`RngCore`] methods (especially [`fill_bytes`], where</span>
 <span class="doccomment">//! the optimal implementations are not trivial), and this allows</span>
-<span class="doccomment">//! [`ReseedingRng`] perform periodic reseeding with very low overhead.</span>
+<span class="doccomment">//! `ReseedingRng` (see [`rand`](https://docs.rs/rand) crate) perform periodic</span>
+<span class="doccomment">//! reseeding with very low overhead.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Example</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! ```norun</span>
 <span class="doccomment">//! use rand_core::block::{BlockRngCore, BlockRng};</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! struct MyRngCore;</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! impl BlockRngCore for MyRngCore {</span>
 <span class="doccomment">//!     type Results = [u32; 16];</span>
-<span class="doccomment">//!     </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//!     fn generate(&amp;mut self, results: &amp;mut Self::Results) {</span>
 <span class="doccomment">//!         unimplemented!()</span>
 <span class="doccomment">//!     }</span>
 <span class="doccomment">//! }</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! impl SeedableRng for MyRngCore {</span>
 <span class="doccomment">//!     type Seed = unimplemented!();</span>
 <span class="doccomment">//!     fn from_seed(seed: Self::Seed) -&gt; Self {</span>
 <span class="doccomment">//!         unimplemented!()</span>
 <span class="doccomment">//!     }</span>
 <span class="doccomment">//! }</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! // optionally, also implement CryptoRng for MyRngCore</span>
-<span class="doccomment">//! </span>
+<span class="doccomment">//!</span>
 <span class="doccomment">//! // Final RNG.</span>
 <span class="doccomment">//! type MyRng = BlockRng&lt;u32, MyRngCore&gt;;</span>
 <span class="doccomment">//! ```</span>
-<span class="doccomment">//! </span>
-<span class="doccomment">//! [`BlockRngCore`]: trait.BlockRngCore.html</span>
-<span class="doccomment">//! [`RngCore`]: ../trait.RngCore.html</span>
-<span class="doccomment">//! [`fill_bytes`]: ../trait.RngCore.html#tymethod.fill_bytes</span>
-<span class="doccomment">//! [`ReseedingRng`]: ../../rand/rngs/adapter/struct.ReseedingRng.html</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! [`BlockRngCore`]: crate::block::BlockRngCore</span>
+<span class="doccomment">//! [`fill_bytes`]: RngCore::fill_bytes</span>
 
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">convert</span>::<span class="ident">AsRef</span>;
 <span class="kw">use</span> <span class="ident">core</span>::<span class="ident">fmt</span>;
@@ -568,12 +558,12 @@
 <span class="doccomment">/// A trait for RNGs which do not generate random numbers individually, but in</span>
 <span class="doccomment">/// blocks (typically `[u32; N]`). This technique is commonly used by</span>
 <span class="doccomment">/// cryptographic RNGs to improve performance.</span>
-<span class="doccomment">/// </span>
-<span class="doccomment">/// See the [module documentation](index.html) for details.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// See the [module][crate::block] documentation for details.</span>
 <span class="kw">pub</span> <span class="kw">trait</span> <span class="ident">BlockRngCore</span> {
     <span class="doccomment">/// Results element type, e.g. `u32`.</span>
     <span class="kw">type</span> <span class="ident">Item</span>;
-    
+
     <span class="doccomment">/// Results type. This is the &#39;block&#39; an RNG implementing `BlockRngCore`</span>
     <span class="doccomment">/// generates, which will usually be an array like `[u32; 16]`.</span>
     <span class="kw">type</span> <span class="ident">Results</span>: <span class="ident">AsRef</span><span class="op">&lt;</span>[<span class="self">Self</span>::<span class="ident">Item</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">AsMut</span><span class="op">&lt;</span>[<span class="self">Self</span>::<span class="ident">Item</span>]<span class="op">&gt;</span> <span class="op">+</span> <span class="ident">Default</span>;
@@ -614,15 +604,10 @@
 <span class="doccomment">///</span>
 <span class="doccomment">/// For easy initialization `BlockRng` also implements [`SeedableRng`].</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`BlockRngCore`]: BlockRngCore.t.html</span>
-<span class="doccomment">/// [`BlockRngCore::generate`]: trait.BlockRngCore.html#tymethod.generate</span>
-<span class="doccomment">/// [`BlockRng64`]: struct.BlockRng64.html</span>
-<span class="doccomment">/// [`RngCore`]: ../RngCore.t.html</span>
-<span class="doccomment">/// [`next_u32`]: ../trait.RngCore.html#tymethod.next_u32</span>
-<span class="doccomment">/// [`next_u64`]: ../trait.RngCore.html#tymethod.next_u64</span>
-<span class="doccomment">/// [`fill_bytes`]: ../trait.RngCore.html#tymethod.fill_bytes</span>
-<span class="doccomment">/// [`try_fill_bytes`]: ../trait.RngCore.html#tymethod.try_fill_bytes</span>
-<span class="doccomment">/// [`SeedableRng`]: ../SeedableRng.t.html</span>
+<span class="doccomment">/// [`next_u32`]: RngCore::next_u32</span>
+<span class="doccomment">/// [`next_u64`]: RngCore::next_u64</span>
+<span class="doccomment">/// [`fill_bytes`]: RngCore::fill_bytes</span>
+<span class="doccomment">/// [`try_fill_bytes`]: RngCore::try_fill_bytes</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;serde1&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlockRng</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">BlockRngCore</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
@@ -656,7 +641,7 @@
     }
 
     <span class="doccomment">/// Get the index into the result buffer.</span>
-    <span class="doccomment">/// </span>
+    <span class="doccomment">///</span>
     <span class="doccomment">/// If this is equal to or larger than the size of the result buffer then</span>
     <span class="doccomment">/// the buffer is &quot;empty&quot; and `generate()` must be called to produce new</span>
     <span class="doccomment">/// results.</span>
@@ -823,13 +808,10 @@
 <span class="doccomment">/// values. If the requested length is not a multiple of 8, some bytes will be</span>
 <span class="doccomment">/// discarded.</span>
 <span class="doccomment">///</span>
-<span class="doccomment">/// [`BlockRngCore`]: BlockRngCore.t.html</span>
-<span class="doccomment">/// [`RngCore`]: ../RngCore.t.html</span>
-<span class="doccomment">/// [`next_u32`]: ../trait.RngCore.html#tymethod.next_u32</span>
-<span class="doccomment">/// [`next_u64`]: ../trait.RngCore.html#tymethod.next_u64</span>
-<span class="doccomment">/// [`fill_bytes`]: ../trait.RngCore.html#tymethod.fill_bytes</span>
-<span class="doccomment">/// [`try_fill_bytes`]: ../trait.RngCore.html#tymethod.try_fill_bytes</span>
-<span class="doccomment">/// [`BlockRng`]: struct.BlockRng.html</span>
+<span class="doccomment">/// [`next_u32`]: RngCore::next_u32</span>
+<span class="doccomment">/// [`next_u64`]: RngCore::next_u64</span>
+<span class="doccomment">/// [`fill_bytes`]: RngCore::fill_bytes</span>
+<span class="doccomment">/// [`try_fill_bytes`]: RngCore::try_fill_bytes</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
 <span class="attribute">#[<span class="ident">cfg_attr</span>(<span class="ident">feature</span><span class="op">=</span><span class="string">&quot;serde1&quot;</span>, <span class="ident">derive</span>(<span class="ident">Serialize</span>, <span class="ident">Deserialize</span>))]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">BlockRng64</span><span class="op">&lt;</span><span class="ident">R</span>: <span class="ident">BlockRngCore</span> <span class="op">+</span> <span class="question-mark">?</span><span class="ident">Sized</span><span class="op">&gt;</span> {
