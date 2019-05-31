@@ -132,6 +132,7 @@ impl Config {
     }
 
     /// Verify the correctness of the configuration, and return a list of errors if invalid.
+    #[allow(clippy::replace_consts)]
     fn verify(&self) -> (bool, String) {
         // Only required for Raspicam
         #[cfg(feature = "raspicam")]
@@ -342,8 +343,9 @@ impl Config {
                 (w, h, f) => {
                     ok = false;
                     errors.push_str(&format!(
-                        "video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
-                         1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found {}x{} {}fps\n",
+                        "video mode must be one of 2592\u{d7}1944 1-15fps, 1920\u{d7}1080 \
+                         1-30fps, 1296\u{d7}972 1-42fps, 1296\u{d7}730 1-49fps, 640\u{d7}480 \
+                         1-60fps, found {}x{} {}fps\n",
                         w, h, f
                     ));
                 }
@@ -995,7 +997,10 @@ where
             E: de::Error,
         {
             if value >= 2 && value <= 28 {
-                Ok(Pin::new(value as u64))
+                #[allow(clippy::cast_sign_loss)]
+                {
+                    Ok(Pin::new(value as u64))
+                }
             } else {
                 Err(E::custom(format!("pin out of range: {}", value)))
             }
@@ -1253,8 +1258,9 @@ mod tests {
              must be below or equal to 2464px, found 10345px\nvideo width must be below or \
              equal to 2592px, found 5648px\nvideo height must be below or equal to 1944px, \
              found 12546px\nvideo framerate must be below or equal to 90fps, found 92fps\n\
-             video mode must be one of 2592×1944 1-15fps, 1920×1080 1-30fps, 1296×972 \
-             1-42fps, 1296×730 1-49fps, 640×480 1-60fps, found 5648x12546 92fps\n"
+             video mode must be one of 2592\u{d7}1944 1-15fps, 1920\u{d7}1080 1-30fps, \
+             1296\u{d7}972 1-42fps, 1296\u{d7}730 1-49fps, 640\u{d7}480 1-60fps, found 5648x12546 \
+             92fps\n"
         );
     }
 

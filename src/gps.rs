@@ -58,7 +58,7 @@ pub struct Gps {
 impl Gps {
     /// Initializes the GPS.
     pub fn initialize(&mut self) -> Result<(), Error> {
-        info!("Initializing GPS…");
+        info!("Initializing GPS\u{2026}");
 
         // TODO turn GPS on, start serial and so on.
         unimplemented!()

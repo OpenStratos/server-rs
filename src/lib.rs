@@ -38,7 +38,7 @@
 
 #![deny(clippy::all)]
 #![forbid(anonymous_parameters)]
-//#![warn(clippy::pedantic)]
+#![warn(clippy::pedantic)]
 #![deny(
     variant_size_differences,
     unused_results,
@@ -54,7 +54,7 @@
     unused_extern_crates
 )]
 // Removing some warnings
-#![allow(unsafe_code, box_pointers)]
+#![allow(unsafe_code, box_pointers, clippy::use_self)]
 
 /// Configuration file.
 pub const CONFIG_FILE: &str = "config.toml";
@@ -143,10 +143,10 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
     #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
     impl Filter for DebugFilter {
         fn filter(&self, record: &Record) -> Response {
-            if record.level() != LevelFilter::Debug {
-                Response::Reject
-            } else {
+            if record.level() == LevelFilter::Debug {
                 Response::Neutral
+            } else {
+                Response::Reject
             }
         }
     }
@@ -158,10 +158,10 @@ pub fn init_loggers() -> Result<log4rs::Handle, Error> {
     #[cfg(any(feature = "gps", feature = "fona", feature = "telemetry"))]
     impl Filter for TraceFilter {
         fn filter(&self, record: &Record) -> Response {
-            if record.level() != LevelFilter::Trace {
-                Response::Reject
-            } else {
+            if record.level() == LevelFilter::Trace {
                 Response::Neutral
+            } else {
+                Response::Reject
             }
         }
     }

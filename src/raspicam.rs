@@ -107,13 +107,13 @@ impl Camera {
             bail!(error::Raspicam::FileExists { file });
         }
 
-        let mut command = Camera::generate_video_command(time, file);
+        let mut command = Self::generate_video_command(time, file);
 
         #[allow(clippy::use_debug)]
         {
             debug!("Recording command: {:?}", command);
         }
-        info!("Starting video recording…");
+        info!("Starting video recording\u{2026}");
 
         if time.is_some() {
             let output = command.output()?;
@@ -195,7 +195,7 @@ impl Camera {
 
     /// Stops the video recording.
     pub fn stop_recording(&mut self) -> Result<(), io::Error> {
-        info!("Stopping video recording…");
+        info!("Stopping video recording\u{2026}");
         if let Some(mut child) = mem::replace(&mut self.process, None) {
             match child.kill() {
                 Ok(()) => {
@@ -209,12 +209,12 @@ impl Camera {
             }
         } else {
             warn!("There was no process to kill when trying to stop recording.");
-            if Camera::is_really_recording()? {
+            if Self::is_really_recording()? {
                 warn!(
                     "The raspivid process existed but it was not controlled by OpenStratos. \
-                     Killing it…"
+                     Killing it\u{2026}"
                 );
-                Camera::kill_process()?;
+                Self::kill_process()?;
                 info!("Forcefully killed the raspivid process");
             }
         }
@@ -252,9 +252,11 @@ impl Camera {
     {
         let file_name = file_name.into();
 
-        info!("Taking picture…");
+        info!("Taking picture\u{2026}");
         if self.is_recording() {
-            warn!("The camera was recording video when trying to take the picture. Stopping…");
+            warn!(
+                "The camera was recording video when trying to take the picture. Stopping\u{2026}"
+            );
             self.stop_recording()?;
         }
         let file = self.picture_dir.join(if cfg!(test) {
@@ -275,12 +277,12 @@ impl Camera {
             return Err(error::Raspicam::FileExists { file }.into());
         }
 
-        let mut command = Camera::generate_picture_command(file);
+        let mut command = Self::generate_picture_command(file);
         #[allow(clippy::use_debug)]
         {
             debug!("Picture command: {:?}", command);
         }
-        info!("Taking picture…");
+        info!("Taking picture\u{2026}");
 
         let output = command.output()?;
         if output.status.success() {
@@ -352,9 +354,9 @@ impl Camera {
 
 impl Drop for Camera {
     fn drop(&mut self) {
-        info!("Shutting down…");
+        info!("Shutting down\u{2026}");
         if self.is_recording() {
-            info!("The camera is recording video, stopping…");
+            info!("The camera is recording video, stopping\u{2026}");
             match self.stop_recording() {
                 Ok(()) => {
                     info!("Video recording stopped.");

@@ -89,10 +89,14 @@ impl StateMachine for OpenStratos<Init> {
 /// Checks if the available disk space is enough.
 fn check_disk_space() -> Result<(), Error> {
     let disk_space = get_available_disk_space()?;
-    info!(
-        "Available disk space: {:.2} GiB",
-        disk_space as f32 / 1024_f32 / 1024_f32 / 1024_f32
-    );
+
+    #[allow(clippy::cast_precision_loss)]
+    {
+        info!(
+            "Available disk space: {:.2} GiB",
+            disk_space as f32 / 1024_f32 / 1024_f32 / 1024_f32
+        );
+    }
 
     #[cfg(feature = "raspicam")]
     info!(
@@ -123,15 +127,15 @@ fn check_disk_space() -> Result<(), Error> {
 /// Initializes the GPS module.
 #[cfg(feature = "gps")]
 fn initialize_gps() -> Result<(), Error> {
-    info!("Initializing GPS…");
+    info!("Initializing GPS\u{2026}");
     match GPS.lock() {
-        Ok(mut gps) => gps.initialize().context(crate_error::Init::GpsInit)?,
+        Ok(mut gps) => gps.initialize().context(crate_error::Init::Gps)?,
         Err(poisoned) => {
             error!("The GPS mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(crate_error::Init::GpsInit)?
+                .context(crate_error::Init::Gps)?
         }
     }
     info!("GPS initialized.");
@@ -141,22 +145,22 @@ fn initialize_gps() -> Result<(), Error> {
 /// Initializes the FONA module.
 #[cfg(feature = "fona")]
 fn initialize_fona() -> Result<(), Error> {
-    info!("Initializing Adafruit FONA GSM module…");
+    info!("Initializing Adafruit FONA GSM module\u{2026}");
     match FONA.lock() {
-        Ok(mut fona) => fona.initialize().context(crate_error::Init::FonaInit)?,
+        Ok(mut fona) => fona.initialize().context(crate_error::Init::Fona)?,
         Err(poisoned) => {
             error!("The FONA mutex was poisoned.");
             poisoned
                 .into_inner()
                 .initialize()
-                .context(crate_error::Init::FonaInit)?
+                .context(crate_error::Init::Fona)?
         }
     }
     info!("Adafruit FONA GSM module initialized.");
 
     check_batteries()?;
 
-    info!("Waiting for GSM connectivity…");
+    info!("Waiting for GSM connectivity\u{2026}");
     while {
         match FONA.lock() {
             Ok(mut fona) => !fona
@@ -181,7 +185,7 @@ fn initialize_fona() -> Result<(), Error> {
 /// Checks the batteries of the probe using the FONA's built-in ADC.
 #[cfg(feature = "fona")]
 fn check_batteries() -> Result<(), Error> {
-    info!("Checking batteries…");
+    info!("Checking batteries\u{2026}");
 
     let fona_bat_percent = match FONA.lock() {
         Ok(mut fona) => fona
@@ -241,8 +245,8 @@ fn test_raspicam() -> Result<(), Error> {
 
     use crate::raspicam::CAMERA;
 
-    info!("Testing camera recording…");
-    info!("Recording 10 seconds as test…");
+    info!("Testing camera recording\u{2026}");
+    info!("Recording 10 seconds as test\u{2026}");
     match CAMERA.lock() {
         Ok(mut cam) => cam
             .record(Duration::from_secs(10), TEST_VIDEO_FILE)
@@ -259,7 +263,7 @@ fn test_raspicam() -> Result<(), Error> {
     let video_path = CONFIG.data_dir().join(VIDEO_DIR).join(TEST_VIDEO_FILE);
     if video_path.exists() {
         info!("Camera test OK.");
-        info!("Removing test file…");
+        info!("Removing test file\u{2026}");
         remove_file(&video_path).context(crate_error::Raspicam::TestRemove {
             test_file: video_path.clone(),
         })?;

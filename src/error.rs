@@ -289,11 +289,11 @@ pub enum Init {
     /// Error initializing GPS module.
     #[cfg(feature = "gps")]
     #[fail(display = "error initializing GPS module")]
-    GpsInit,
+    Gps,
     /// Error initializing FONA module.
     #[cfg(feature = "fona")]
     #[fail(display = "error initializing FONA module")]
-    FonaInit,
+    Fona,
     /// Error checking GSM connectivity.
     #[cfg(feature = "fona")]
     #[fail(display = "error checking GSM connectivity")]

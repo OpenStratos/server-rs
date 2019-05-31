@@ -33,6 +33,8 @@ env:
 - DEFAULT_FEATURES=true FEATURES="no_power_off"
 - DEFAULT_FEATURES=false
 - DEFAULT_FEATURES=false FEATURES="no_power_off"
+- DEFAULT_FEATURES=false FEATURES="all_hardware"
+- DEFAULT_FEATURES=false FEATURES="all_hardware no_power_off"
 # Testing with fona
 - DEFAULT_FEATURES=false FEATURES="fona"
 - DEFAULT_FEATURES=false FEATURES="fona gps"

@@ -52,6 +52,7 @@ pub trait GetState {
 }
 
 /// Trait implementing the main logic of the program.
+#[allow(clippy::module_name_repetitions)]
 pub trait MainLogic: GetState {
     /// Performs the main logic of the state.
     fn main_logic(self) -> Result<(), Error>;
@@ -159,7 +160,7 @@ pub enum State {
 
 impl State {
     /// Gets the last state of the application if there is one.
-    pub fn get_last() -> Result<Option<State>, Error> {
+    pub fn get_last() -> Result<Option<Self>, Error> {
         let path = CONFIG.data_dir().join(STATE_FILE);
         if !path.exists() {
             return Ok(None);
@@ -204,7 +205,7 @@ impl State {
 impl FromStr for State {
     type Err = error::LastState;
 
-    fn from_str(s: &str) -> Result<State, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "INITIALIZING" => Ok(State::Init),
             #[cfg(feature = "gps")]
@@ -399,7 +400,7 @@ mod tests {
         let _ = "ACQUIRING_FIX".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::AcquiringFix` is translated to *ACQUIRING_FIX* as a string.
+    /// Tests that the `State::AcquiringFix` is translated to `ACQUIRING_FIX` as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_acquiring_fix() {
@@ -430,7 +431,7 @@ mod tests {
         let _ = "FIX_ACQUIRED".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::FixAcquired` is translated to *FIX_ACQUIRED* as a string.
+    /// Tests that the `State::FixAcquired` is translated to `FIX_ACQUIRED` as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_fix_acquired() {
@@ -464,7 +465,7 @@ mod tests {
         let _ = "WAITING_LAUNCH".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::WaitingLaunch` is translated to *WAITING_LAUNCH* as a string.
+    /// Tests that the `State::WaitingLaunch` is translated to `WAITING_LAUNCH` as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_waiting_launch() {
@@ -495,7 +496,7 @@ mod tests {
         let _ = "GOING_UP".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::GoingUp` is translated to *GOING_UP* as a string.
+    /// Tests that the `State::GoingUp` is translated to `GOING_UP` as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_going_up() {
@@ -526,7 +527,7 @@ mod tests {
         let _ = "GOING_DOWN".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::GoingDown` is translated to *GOING_DOWN* as a string.
+    /// Tests that the `State::GoingDown` is translated to `GOING_DOWN` as a string.
     #[test]
     #[cfg(feature = "gps")]
     fn it_as_str_going_down() {
@@ -578,7 +579,7 @@ mod tests {
         assert_eq!("SHUT_DOWN".parse::<State>().unwrap(), State::ShutDown);
     }
 
-    /// Tests that the `State::ShutDown` is translated to *SHUT_DOWN* as a string.
+    /// Tests that the `State::ShutDown` is translated to `SHUT_DOWN` as a string.
     #[test]
     fn it_as_str_shut_down() {
         assert_eq!("SHUT_DOWN", State::ShutDown.as_str());
@@ -598,7 +599,7 @@ mod tests {
         assert_eq!("SAFE_MODE".parse::<State>().unwrap(), State::SafeMode);
     }
 
-    /// Tests that the `State::SafeMode` is translated to *SAFE_MODE* as a string.
+    /// Tests that the `State::SafeMode` is translated to `SAFE_MODE` as a string.
     #[test]
     fn it_as_str_safe_mode() {
         assert_eq!("SAFE_MODE", State::SafeMode.as_str());
@@ -628,7 +629,7 @@ mod tests {
         let _ = "ETERNAL_LOOP".parse::<State>().unwrap();
     }
 
-    /// Tests that the `State::EternalLoop` is translated to *ETERNAL_LOOP* as a string.
+    /// Tests that the `State::EternalLoop` is translated to `ETERNAL_LOOP` as a string.
     #[test]
     #[cfg(not(feature = "gps"))]
     fn it_as_str_eternal_loop() {

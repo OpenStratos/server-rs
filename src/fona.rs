@@ -45,7 +45,7 @@ impl Fona {
         if self.is_on()? {
             info!("FONA module is on, rebooting for stability.");
             self.turn_off()?;
-            info!("Module is off, sleeping 3 seconds before turning it on…");
+            info!("Module is off, sleeping 3 seconds before turning it on\u{2026}");
             thread::sleep(Duration::from_secs(3));
         }
 
@@ -72,10 +72,7 @@ impl Fona {
             thread::sleep(Duration::from_millis(100));
         }
 
-        if self.send_command_read("AT")? != "OK" {
-            error!("Initialization error.");
-            Err(error::Fona::Init.into())
-        } else {
+        if self.send_command_read("AT")? == "OK" {
             thread::sleep(Duration::from_millis(100));
             info!("Initialization OK.");
 
@@ -88,6 +85,9 @@ impl Fona {
             } else {
                 Err(error::Fona::EchoOff.into())
             }
+        } else {
+            error!("Initialization error.");
+            Err(error::Fona::Init.into())
         }
     }
 
@@ -102,7 +102,7 @@ impl Fona {
             warn!("Trying to turn FONA on but it was already on.");
             Ok(())
         } else {
-            info!("Turning FONA on…");
+            info!("Turning FONA on\u{2026}");
 
             CONFIG.fona().power_gpio().set_value(0)?;
             thread::sleep(Duration::from_secs(2));
@@ -119,7 +119,7 @@ impl Fona {
     /// Tuns off the FONA module.
     pub fn turn_off(&mut self) -> Result<(), Error> {
         if self.is_on()? {
-            info!("Turning FONA off…");
+            info!("Turning FONA off\u{2026}");
 
             CONFIG.fona().power_gpio().set_value(0)?;
             thread::sleep(Duration::from_secs(2));
@@ -167,7 +167,7 @@ impl Fona {
             }
 
             if let Some(ref mut serial) = self.serial {
-                debug!("Sending message…");
+                debug!("Sending message\u{2026}");
 
                 // Write message
                 serial
@@ -242,30 +242,30 @@ impl Fona {
         if self.send_command_read("AT+CGATT=1")? != "OK" {
             error!("Error getting location on `AT+CGATT=1` response.");
 
-            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtCgatt.into());
+            } else {
                 error!("Error turning GPRS down.");
 
                 return Err(error::Fona::LocAtGprsDown
                     .context(error::Fona::LocAtCgatt)
                     .into());
-            } else {
-                info!("GPRS off.");
-                return Err(error::Fona::LocAtCgatt.into());
             }
         }
 
         if self.send_command_read(r#"AT+SAPBR=3,1,"CONTYPE","GPRS""#)? != "OK" {
             error!(r#"Error getting location on `AT+SAPBR=3,1,"CONTYPE","GPRS"` response."#);
 
-            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbrContype.into());
+            } else {
                 error!("Error turning GPRS down.");
 
                 return Err(error::Fona::LocAtGprsDown
                     .context(error::Fona::LocAtSapbrContype)
                     .into());
-            } else {
-                info!("GPRS off.");
-                return Err(error::Fona::LocAtSapbrContype.into());
             }
         }
 
@@ -276,30 +276,30 @@ impl Fona {
         if self.send_command_read(&apn_message)? != "OK" {
             error!("Error getting location on `{}` response.", apn_message);
 
-            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbrApn.into());
+            } else {
                 error!("Error turning GPRS down.");
 
                 return Err(error::Fona::LocAtGprsDown
                     .context(error::Fona::LocAtSapbrApn)
                     .into());
-            } else {
-                info!("GPRS off.");
-                return Err(error::Fona::LocAtSapbrApn.into());
             }
         }
 
         if self.send_command_read("AT+SAPBR=1,1")? != "OK" {
             error!("Error getting location on `AT+SAPBR=1,1` response.");
 
-            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtSapbr.into());
+            } else {
                 error!("Error turning GPRS down.");
 
                 return Err(error::Fona::LocAtGprsDown
                     .context(error::Fona::LocAtSapbr)
                     .into());
-            } else {
-                info!("GPRS off.");
-                return Err(error::Fona::LocAtSapbr.into());
             }
         }
 
@@ -320,24 +320,24 @@ impl Fona {
         if self.read_line()? != "OK" {
             error!("Error getting location on `AT+CIPGSMLOC=1,1` response.");
 
-            if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+            if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+                info!("GPRS off.");
+                return Err(error::Fona::LocAtCipgsmloc.into());
+            } else {
                 error!("Error turning GPRS down.");
 
                 return Err(error::Fona::LocAtGprsDown
                     .context(error::Fona::LocAtCipgsmloc)
                     .into());
-            } else {
-                info!("GPRS off.");
-                return Err(error::Fona::LocAtCipgsmloc.into());
             }
         }
 
-        if self.send_command_read("AT+SAPBR=0,1")? != "OK" {
+        if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
+            info!("GPRS off.");
+        } else {
             error!("Error turning GPRS down.");
 
             return Err(error::Fona::LocAtGprsDown.into());
-        } else {
-            info!("GPRS off.");
         }
 
         Ok(Location {
@@ -468,14 +468,14 @@ impl Fona {
             return Err(error::Fona::NoSerial.into());
         }
 
-        if !self
+        if self
             .read_line()
             .context(error::Fona::SendCommandCrlf)?
             .is_empty()
         {
-            Err(error::Fona::SendCommandCrlf.into())
-        } else {
             Ok(())
+        } else {
+            Err(error::Fona::SendCommandCrlf.into())
         }
     }
 
@@ -521,7 +521,7 @@ impl Drop for Fona {
     fn drop(&mut self) {
         match self.is_on() {
             Ok(true) => {
-                info!("Turning FONA off…");
+                info!("Turning FONA off\u{2026}");
                 if let Err(e) = self.turn_off() {
                     error!("{}", generate_error_string(&e, "Error turning FONA off"));
                 }
