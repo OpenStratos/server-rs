@@ -1,0 +1,197 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `arc_swap` crate."><meta name="keywords" content="rust, rustlang, rust-lang, arc_swap"><title>arc_swap - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../dark.css"><link rel="stylesheet" type="text/css" href="../light.css" id="themeStyle"><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="shortcut icon" href="../favicon.ico"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../arc_swap/index.html'><img src='../rust-logo.png' alt='logo' width='100'></a><p class='location'>Crate arc_swap</p><div class="sidebar-elems"><a id='all-types' href='all.html'><p>See all arc_swap's items</p></a><div class="block items"><ul><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></div><p class='location'></p><script>window.sidebarCurrent = {name: 'arc_swap', ty: 'mod', relpath: '../'};</script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class='fqn'><span class='out-of-band'><span id='render-detail'><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class='inner'>&#x2212;</span>]</a></span><a class='srclink' href='../src/arc_swap/lib.rs.html#1-1935' title='goto source code'>[src]</a></span><span class='in-band'>Crate <a class="mod" href=''>arc_swap</a></span></h1><div class='docblock'><p>Making <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a> itself atomic</p>
+<p>This library provides the <a href="struct.ArcSwapAny.html"><code>ArcSwapAny</code></a> type (which you probably don't want to use
+directly) and several type aliases that set it up for common use cases:</p>
+<ul>
+<li><a href="type.ArcSwap.html"><code>ArcSwap</code></a>, which operates on <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc&lt;T&gt;</code></a>.</li>
+<li>[<code>ArcSwapOption</code>][ArcSwapOption], which operates on <code>Option&lt;Arc&lt;T&gt;&gt;</code>.</li>
+<li>[<code>IndependentArcSwap</code>][ArcSwapOption], which uses slightly different trade-of decisions ‒ see
+below.</li>
+</ul>
+<p>Note that as these are <em>type aliases</em>, the useful methods are defined on
+<a href="struct.ArcSwapAny.html"><code>ArcSwapAny</code></a> directly and you want to look at its documentation, not on the
+aliases.</p>
+<p>This is similar to <a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html"><code>RwLock&lt;Arc&lt;T&gt;&gt;</code></a>, but it is faster, the readers are never blocked
+(not even by writes) and it is more configurable.</p>
+<p>Or, you can look at it this way. There's <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc&lt;T&gt;</code></a> ‒ it knows when it stops being used and
+therefore can clean up memory. But once there's a <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc&lt;T&gt;</code></a> somewhere, shared between
+threads, it has to keep pointing to the same thing. On the other hand, there's
+<a href="https://doc.rust-lang.org/std/sync/atomic/struct.AtomicPtr.html"><code>AtomicPtr</code></a> which can be changed even when shared between
+threads, but it doesn't know when the data pointed to is no longer in use so it
+doesn't clean up. This is a hybrid between the two.</p>
+<h1 id="motivation" class="section-header"><a href="#motivation">Motivation</a></h1>
+<p>First, the C++ <a href="http://en.cppreference.com/w/cpp/memory/shared_ptr"><code>shared_ptr</code></a> can act this way. The fact that it's only the surface
+API and all the implementations I could find hide a mutex inside wasn't known to me when I
+started working on this. So I decided Rust needs to keep up there.</p>
+<p>Second, I like hard problems and this seems like an apt supply of them.</p>
+<p>And third, I actually have few use cases for something like this.</p>
+<h1 id="performance-characteristics" class="section-header"><a href="#performance-characteristics">Performance characteristics</a></h1>
+<p>It is optimised for read-heavy situations with only occasional writes. Few examples might be:</p>
+<ul>
+<li>Global configuration data structure, which is updated once in a blue moon when an operator
+manually does some changes, but looked into through the whole program all the time. Looking
+into it should be cheap and multiple threads should be able to look into it at the same time.</li>
+<li>Some in-memory database or maybe routing tables, where lookup latency matters. Updating the
+routing tables isn't an excuse to stop processing packets even for a short while.</li>
+</ul>
+<h2 id="lock-free-readers" class="section-header"><a href="#lock-free-readers">Lock-free readers</a></h2>
+<p>All the read operations are always <a href="https://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom">lock-free</a>. Most of the time, they are actually
+<a href="https://en.wikipedia.org/wiki/Non-blocking_algorithm#Wait-freedom">wait-free</a>. The only one that is <em>only</em> lock-free is the first <a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a> access in each
+thread (across all the pointers).</p>
+<p>So, when the documentation talks about <em>contention</em>, it talks about multiple cores having to
+sort out who changes the bytes in a cache line first and who is next. This slows things down,
+but it still rolls forward and stop for no one, not like with the mutex-style contention when
+one holds the lock and others wait outside.</p>
+<p>Unfortunately, there are cases where readers block writers from completion. It's much more
+limited in scope than with <a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html"><code>Mutex</code></a> or <a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html"><code>RwLock</code></a> and steady stream of readers
+will <em>not</em> prevent an update from happening indefinitely (only a reader stuck in a critical
+section could, and when used according to recommendations, the critical sections contain no
+loops and are only several instructions short).</p>
+<h2 id="speeds" class="section-header"><a href="#speeds">Speeds</a></h2>
+<p>The base line speed of read operations is similar to using an <em>uncontended</em> <a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html"><code>Mutex</code></a>.
+However, <a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a> and <a href="struct.ArcSwapAny.html#method.peek"><code>peek</code></a> suffer no contention from any other read
+operations and only slight ones during updates. The <a href="struct.ArcSwapAny.html#method.load"><code>load</code></a> operation is additionally
+contended only on the reference count of the <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a> inside ‒ so, in general, while
+<a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html"><code>Mutex</code></a> rapidly loses its performance when being in active use by multiple threads at
+once and <a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html"><code>RwLock</code></a> is slow to start with, <a href="struct.ArcSwapAny.html"><code>ArcSwapAny</code></a> mostly keeps its
+performance even when read by many threads in parallel.</p>
+<p>Write operations are considered expensive. A write operation is more expensive than access to
+an <em>uncontended</em> <a href="https://doc.rust-lang.org/std/sync/struct.Mutex.html"><code>Mutex</code></a> and on some architectures even slower than uncontended
+<a href="https://doc.rust-lang.org/std/sync/struct.RwLock.html"><code>RwLock</code></a>. However, it is faster than either when contended.</p>
+<p>There are some (very unscientific) <a href="https://github.com/vorner/arc-swap/tree/master/benches">benchmarks</a> within the source code of the library.</p>
+<p>The exact numbers are highly dependant on the machine used (both absolute numbers and relative
+between different data structures). Not only architectures have a huge impact (eg. x86 vs ARM),
+but even AMD vs. Intel or two different Intel processors. Therefore, if what matters is more
+the speed than the wait-free guarantees, you're advised to do your own measurements.</p>
+<h2 id="choosing-the-right-reading-operation" class="section-header"><a href="#choosing-the-right-reading-operation">Choosing the right reading operation</a></h2>
+<p>Performance is world of trade-offs. Therefore, the library offers several very similar methods
+to read the pointer. The default choice should nevertheless probably be <a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a>.</p>
+<p>Only one of them is functionally different ‒
+<a href="struct.ArcSwapAny.html#method.peek_signal_safe"><code>peek_signal_safe</code></a>. See below for <a href="#unix-signal-handlers">signals</a>, but in
+general, it is the only thing you want to use inside a signal handler and you don't want to use
+it anywhere else.</p>
+<ul>
+<li><a href="struct.ArcSwapAny.html#method.load"><code>load</code></a> creates a full blown <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a>. It's the most heavy-weight around and while
+<a href="https://en.wikipedia.org/wiki/Non-blocking_algorithm#Wait-freedom">wait-free</a>, it suffers from contention on the reference count in the <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a>, so when
+used from too many threads at once, it'll become slow. On the other hand, there's no
+restriction on how long you can hold onto the result or how many of them you keep around, so
+this is appropriate if creating handles for long-term storage. It also provides a bridge to
+other algorithms which only take the <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a>.</li>
+<li><a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a> returns a proxy object that works as a pointer to the stored data and can be
+upgraded to full <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a> later on if needed. There's no limit on how long it can live
+around. However, it internally comes at two flavors, one cheap and one containing a full
+<a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a> in it. Each thread is entitled to only limited total number of cheap ones at a
+given time (currently 8) and if more are constructed, the others fall back on the full
+version (which then uses <a href="struct.ArcSwapAny.html#method.load"><code>load</code></a> internally). Therefore, <a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a> can be fast
+(almost as fast as <a href="struct.ArcSwapAny.html#method.peek"><code>peek</code></a>) but only as long as the thread calling it doesn't have too
+many leases around at the time.</li>
+<li><a href="struct.ArcSwapAny.html#method.peek"><code>peek</code></a> is the cheapest with the most predictable performance characteristics.
+However, as long as the returned guard object is alive, the internal generation lock is being
+held and that prevents write operations from completion and they'll spin-wait for the unlock.
+By default, all the pointer instances share the <em>same</em> generation lock (and it'll therefore
+prevent write operations even on <em>other</em> pointers from completion). However, the
+<a href="type.IndependentArcSwap.html"><code>IndependentArcSwap</code></a> uses a private generation lock for each instance.
+In general, this is suitable for very fast things ‒ like reading a single scalar value out of
+a configuration, but not keeping it around or doing expensive lookups in data.</li>
+</ul>
+<p>Additionally, it is possible to use <a href="cache/index.html">cache handles</a> to get further speed
+improvement at the cost of less comfortable API and possibly keeping the older values alive for
+longer than necessary.</p>
+<h1 id="rcu" class="section-header"><a href="#rcu">RCU</a></h1>
+<p>This also offers an <a href="struct.ArcSwapAny.html#method.rcu">RCU implementation</a>, for read-heavy
+situations. Note that the RCU update is considered relatively slow operation (slower than
+simple write). In case there's only one update thread, using
+<a href="struct.ArcSwapAny.html#method.store"><code>store</code></a> is enough.</p>
+<h1 id="atomic-orderings" class="section-header"><a href="#atomic-orderings">Atomic orderings</a></h1>
+<p>It is guaranteed each operation performs at least one <code>SeqCst</code> atomic read-write operation,
+therefore even operations on different instances have a defined global order of operations.</p>
+<h1 id="unix-signal-handlers" class="section-header"><a href="#unix-signal-handlers">Unix signal handlers</a></h1>
+<p>Unix signals are hard to use correctly, partly because there is a very restricted set of
+functions one might use inside them. Specifically, it is <em>not</em> allowed to use mutexes inside
+them (because that could cause a deadlock).</p>
+<p>On the other hand, it is possible to use <a href="struct.ArcSwapAny.html#method.peek_signal_safe"><code>peek_signal_safe</code></a> (but not the
+others). Note that the signal handler is not allowed to allocate or deallocate
+memory, therefore it is not recommended to <a href="struct.Guard.html#method.upgrade"><code>upgrade</code></a> the
+returned guard (it is strictly speaking possible to use that safely, but it is hard and brings
+no benefit).</p>
+<h1 id="customization" class="section-header"><a href="#customization">Customization</a></h1>
+<p>While the default <a href="type.ArcSwap.html"><code>ArcSwap</code></a> and <a href="struct.ArcSwapAny.html#method.lease"><code>lease</code></a> is probably good enough for most of
+the needs, the library allows a wide range of customizations:</p>
+<ul>
+<li>It allows storing nullable (<code>Option&lt;Arc&lt;_&gt;&gt;</code>) and non-nullable pointers.</li>
+<li>It is possible to store other reference counted pointers (eg. if you want to use it with a
+hypothetical <code>Arc</code> that doesn't have weak counts), by implementing the <a href="trait.RefCnt.hmtl"><code>RefCnt</code></a>
+trait.</li>
+<li>It allows choosing internal locking strategy by the <a href="gen_lock/trait.LockStorage.html"><code>LockStorage</code></a> trait.</li>
+</ul>
+<h1 id="examples" class="section-header"><a href="#examples">Examples</a></h1>
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">arc_swap</span>;
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">crossbeam_utils</span>;
+
+<span class="kw">use</span> <span class="ident">std</span>::<span class="ident">sync</span>::<span class="ident">Arc</span>;
+
+<span class="kw">use</span> <span class="ident">arc_swap</span>::<span class="ident">ArcSwap</span>;
+<span class="kw">use</span> <span class="ident">crossbeam_utils</span>::<span class="ident">thread</span>;
+
+<span class="kw">fn</span> <span class="ident">main</span>() {
+    <span class="kw">let</span> <span class="ident">config</span> <span class="op">=</span> <span class="ident">ArcSwap</span>::<span class="ident">from</span>(<span class="ident">Arc</span>::<span class="ident">new</span>(<span class="ident">String</span>::<span class="ident">default</span>()));
+    <span class="ident">thread</span>::<span class="ident">scope</span>(<span class="op">|</span><span class="ident">scope</span><span class="op">|</span> {
+        <span class="ident">scope</span>.<span class="ident">spawn</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+            <span class="kw">let</span> <span class="ident">new_conf</span> <span class="op">=</span> <span class="ident">Arc</span>::<span class="ident">new</span>(<span class="string">&quot;New configuration&quot;</span>.<span class="ident">to_owned</span>());
+            <span class="ident">config</span>.<span class="ident">store</span>(<span class="ident">new_conf</span>);
+        });
+        <span class="kw">for</span> <span class="kw">_</span> <span class="kw">in</span> <span class="number">0</span>..<span class="number">10</span> {
+            <span class="ident">scope</span>.<span class="ident">spawn</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
+                <span class="kw">loop</span> {
+                    <span class="kw">let</span> <span class="ident">cfg</span> <span class="op">=</span> <span class="ident">config</span>.<span class="ident">lease</span>();
+                    <span class="kw">if</span> <span class="op">!</span><span class="ident">cfg</span>.<span class="ident">is_empty</span>() {
+                        <span class="macro">assert_eq</span><span class="macro">!</span>(<span class="kw-2">*</span><span class="ident">cfg</span>, <span class="string">&quot;New configuration&quot;</span>);
+                        <span class="kw">return</span>;
+                    }
+                }
+            });
+        }
+    }).<span class="ident">unwrap</span>();
+}</pre></div>
+<h1 id="alternatives" class="section-header"><a href="#alternatives">Alternatives</a></h1>
+<p>There are other means to get similar functionality you might want to consider:</p>
+<h2 id="mutexarc_-and-rwlockarc_" class="section-header"><a href="#mutexarc_-and-rwlockarc_"><code>Mutex&lt;Arc&lt;_&gt;&gt;</code> and <code>RwLock&lt;Arc&lt;_&gt;&gt;</code></a></h2>
+<p>They have significantly worse performance in the contented scenario but are comparable in
+uncontended cases. They are directly in the standard library, which means better testing and
+less dependencies.</p>
+<h2 id="the-same-but-with-parking_lot" class="section-header"><a href="#the-same-but-with-parking_lot">The same, but with <a href="https://docs.rs/parking_lot">parking_lot</a></a></h2>
+<p>Parking lot contains alternative implementations of <code>Mutex</code> and <code>RwLock</code> that are faster than
+the standard library primitives. They still suffer from contention.</p>
+<h2 id="crossbeamatomicarccell" class="section-header"><a href="#crossbeamatomicarccell"><a href="https://docs.rs/crossbeam/0.5.0/crossbeam/atomic/struct.ArcCell.html"><code>crossbeam::atomic::ArcCell</code></a></a></h2>
+<p>This internally contains a spin-lock equivalent and is very close to the characteristics of
+<code>parking_lot::Mutex&lt;Arc&lt;_&gt;&gt;</code>. This is unofficially deprecated. See the
+<a href="https://github.com/crossbeam-rs/crossbeam/issues/160">relevant issue</a>.</p>
+<h2 id="crossbeam-arccell" class="section-header"><a href="#crossbeam-arccell"><a href="https://docs.rs/crossbeam-arccell/"><code>crossbeam-arccell</code></a></a></h2>
+<p>It is mentioned here because of the name. Despite of the name, this does something very
+different (which <em>might</em> possibly solve similar problems). It's API is not centric to <code>Arc</code> or
+any kind of pointer, but rather it has snapshots of its internal value that can be exchanged
+very fast.</p>
+<h2 id="atomicarc" class="section-header"><a href="#atomicarc"><a href="https://github.com/stjepang/atomic/blob/master/src/atomic_arc.rs#L20"><code>AtomicArc</code></a></a></h2>
+<p>This one is probably the closest thing to <a href="type.ArcSwap.html"><code>ArcSwap</code></a> on the API level. Both read and
+write operations are <a href="https://en.wikipedia.org/wiki/Non-blocking_algorithm#Lock-freedom">lock-free</a>, but neither is <a href="https://en.wikipedia.org/wiki/Non-blocking_algorithm#Wait-freedom">wait-free</a>, and the performance of reads and
+writes are more balanced ‒ while <a href="type.ArcSwap.html"><code>ArcSwap</code></a> is optimized for reading, <a href="https://github.com/stjepang/atomic/blob/master/src/atomic_arc.rs#L20"><code>AtomicArc</code></a>
+is „balanced“.</p>
+<p>The biggest current downside is, it is in a prototype stage and not released yet.</p>
+</div><h2 id='modules' class='section-header'><a href="#modules">Modules</a></h2>
+<table><tr class='module-item'><td><a class="mod" href="cache/index.html" title='arc_swap::cache mod'>cache</a></td><td class='docblock-short'><p>Caching handle into the [ArcSwapAny].</p>
+</td></tr><tr class='module-item'><td><a class="mod" href="gen_lock/index.html" title='arc_swap::gen_lock mod'>gen_lock</a></td><td class='docblock-short'><p>Customization of where and how the generation lock works.</p>
+</td></tr></table><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table><tr class='module-item'><td><a class="struct" href="struct.ArcSwapAny.html" title='arc_swap::ArcSwapAny struct'>ArcSwapAny</a></td><td class='docblock-short'><p>An atomic storage for a smart pointer like <a href="https://doc.rust-lang.org/std/sync/struct.Arc.html"><code>Arc</code></a> or <code>Option&lt;Arc&gt;</code>.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Guard.html" title='arc_swap::Guard struct'>Guard</a></td><td class='docblock-short'><p>A short-term proxy object from <a href="struct.ArcSwapAny.html#method.peek"><code>peek</code></a>.</p>
+</td></tr><tr class='module-item'><td><a class="struct" href="struct.Lease.html" title='arc_swap::Lease struct'>Lease</a></td><td class='docblock-short'><p>A temporary storage of the pointer.</p>
+</td></tr></table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table><tr class='module-item'><td><a class="trait" href="trait.AsRaw.html" title='arc_swap::AsRaw trait'>AsRaw</a></td><td class='docblock-short'><p>A trait describing things that can be turned into a raw pointer.</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.NonNull.html" title='arc_swap::NonNull trait'>NonNull</a></td><td class='docblock-short'><p>A trait describing smart pointers that can't hold NULL.</p>
+</td></tr><tr class='module-item'><td><a class="trait" href="trait.RefCnt.html" title='arc_swap::RefCnt trait'>RefCnt</a></td><td class='docblock-short'><p>A trait describing smart reference counted pointers.</p>
+</td></tr></table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table><tr class='module-item'><td><a class="fn" href="fn.ptr_eq.html" title='arc_swap::ptr_eq fn'>ptr_eq</a></td><td class='docblock-short'><p>Comparison of two pointer-like things.</p>
+</td></tr></table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table><tr class='module-item'><td><a class="type" href="type.ArcSwap.html" title='arc_swap::ArcSwap type'>ArcSwap</a></td><td class='docblock-short'><p>An atomic storage for <code>Arc</code>.</p>
+</td></tr><tr class='module-item'><td><a class="type" href="type.ArcSwapOption.html" title='arc_swap::ArcSwapOption type'>ArcSwapOption</a></td><td class='docblock-short'><p>An atomic storage for <code>Option&lt;Arc&gt;</code>.</p>
+</td></tr><tr class='module-item'><td><a class="type" href="type.IndependentArcSwap.html" title='arc_swap::IndependentArcSwap type'>IndependentArcSwap</a></td><td class='docblock-short'><p>An atomic storage that doesn't share the internal generation locks with others.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><aside id="help" class="hidden"><div><h1 class="hidden">Help</h1><div class="shortcuts"><h2>Keyboard Shortcuts</h2><dl><dt><kbd>?</kbd></dt><dd>Show this help dialog</dd><dt><kbd>S</kbd></dt><dd>Focus the search field</dd><dt><kbd>↑</kbd></dt><dd>Move up in search results</dd><dt><kbd>↓</kbd></dt><dd>Move down in search results</dd><dt><kbd>↹</kbd></dt><dd>Switch tab</dd><dt><kbd>&#9166;</kbd></dt><dd>Go to active search result</dd><dt><kbd>+</kbd></dt><dd>Expand all sections</dd><dt><kbd>-</kbd></dt><dd>Collapse all sections</dd></dl></div><div class="infos"><h2>Search Tricks</h2><p>Prefix searches with a type followed by a colon (e.g., <code>fn:</code>) to restrict the search to a given type.</p><p>Accepted types are: <code>fn</code>, <code>mod</code>, <code>struct</code>, <code>enum</code>, <code>trait</code>, <code>type</code>, <code>macro</code>, and <code>const</code>.</p><p>Search functions by type signature (e.g., <code>vec -> usize</code> or <code>* -> vec</code>)</p><p>Search multiple things at once by splitting your query with comma (e.g., <code>str,u8</code> or <code>String,struct:Vec,test</code>)</p></div></div></aside><script>window.rootPath = "../";window.currentCrate = "arc_swap";</script><script src="../aliases.js"></script><script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>
