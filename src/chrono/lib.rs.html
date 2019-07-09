@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/chrono-0.4.6/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../chrono/index.html'><img src='../../rust-logo.png' alt='logo' width='100'></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source to the Rust file `/home/travis/.cargo/registry/src/github.com-1ecc6299db9ec823/chrono-0.4.7/src/lib.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>lib.rs.html -- source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css"><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="shortcut icon" href="../../favicon.ico"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../chrono/index.html'><div class='logo-container'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form js-only"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -992,6 +992,10 @@
 <span id="992">992</span>
 <span id="993">993</span>
 <span id="994">994</span>
+<span id="995">995</span>
+<span id="996">996</span>
+<span id="997">997</span>
+<span id="998">998</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">// This is a part of Chrono.</span>
 <span class="comment">// See README.md and LICENSE.txt for details.</span>
@@ -1061,7 +1065,7 @@
 <span class="doccomment">//! months.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! Chrono does not yet natively support</span>
-<span class="doccomment">//! the standard [`Duration`](https://docs.rs/time/0.1.40/time/struct.Duration.html) type,</span>
+<span class="doccomment">//! the standard [`Duration`](https://doc.rust-lang.org/std/time/struct.Duration.html) type,</span>
 <span class="doccomment">//! but it will be supported in the future.</span>
 <span class="doccomment">//! Meanwhile you can convert between two types with</span>
 <span class="doccomment">//! [`Duration::from_std`](https://docs.rs/time/0.1.40/time/struct.Duration.html#method.from_std)</span>
@@ -1153,15 +1157,15 @@
 <span class="doccomment">//! The following illustrates most supported operations to the date and time:</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
-<span class="doccomment">//! # extern crate chrono; extern crate time; fn main() {</span>
+<span class="doccomment">//! # extern crate chrono;</span>
+<span class="doccomment">//! extern crate time;</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! # fn main() {</span>
 <span class="doccomment">//! use chrono::prelude::*;</span>
 <span class="doccomment">//! use time::Duration;</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! # /* we intentionally fake the datetime...</span>
 <span class="doccomment">//! // assume this returned `2014-11-28T21:45:59.324310806+09:00`:</span>
-<span class="doccomment">//! let dt = Local::now();</span>
-<span class="doccomment">//! # */ // up to here. we now define a fixed datetime for the illustrative purpose.</span>
-<span class="doccomment">//! # let dt = FixedOffset::east(9*3600).ymd(2014, 11, 28).and_hms_nano(21, 45, 59, 324310806);</span>
+<span class="doccomment">//! let dt = FixedOffset::east(9*3600).ymd(2014, 11, 28).and_hms_nano(21, 45, 59, 324310806);</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // property accessors</span>
 <span class="doccomment">//! assert_eq!((dt.year(), dt.month(), dt.day()), (2014, 11, 28));</span>
@@ -1297,10 +1301,8 @@
 <span class="doccomment">//! to get the number of additional number of nanoseconds.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! ```rust</span>
-<span class="doccomment">//! # use chrono::DateTime;</span>
-<span class="doccomment">//! # use chrono::Utc;</span>
 <span class="doccomment">//! // We need the trait in scope to use Utc::timestamp().</span>
-<span class="doccomment">//! use chrono::TimeZone;</span>
+<span class="doccomment">//! use chrono::{DateTime, TimeZone, Utc};</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! // Construct a datetime from epoch:</span>
 <span class="doccomment">//! let dt = Utc.timestamp(1_500_000_000, 0);</span>
@@ -1408,6 +1410,12 @@
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">rustc_serialize</span>;
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;serde&quot;</span>)]</span>
 <span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">serde</span> <span class="kw">as</span> <span class="ident">serdelib</span>;
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="attribute">#[<span class="ident">macro_use</span>]</span>
+<span class="kw">extern</span> <span class="kw">crate</span> <span class="ident">doc_comment</span>;
+
+<span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">test</span>)]</span>
+<span class="macro">doctest</span><span class="macro">!</span>(<span class="string">&quot;../README.md&quot;</span>);
 
 <span class="comment">// this reexport is to aid the transition and should not be in the prelude!</span>
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">oldtime</span>::<span class="ident">Duration</span>;
@@ -1446,7 +1454,7 @@
 <span class="kw">mod</span> <span class="ident">oldtime</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">offset</span>;
 <span class="kw">pub</span> <span class="kw">mod</span> <span class="ident">naive</span> {
-    <span class="doccomment">//! Date and time types which do not concern about the timezones.</span>
+    <span class="doccomment">//! Date and time types unconcerned with timezones.</span>
     <span class="doccomment">//!</span>
     <span class="doccomment">//! They are primarily building blocks for other types</span>
     <span class="doccomment">//! (e.g. [`TimeZone`](../offset/trait.TimeZone.html)),</span>
