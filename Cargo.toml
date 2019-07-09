@@ -51,11 +51,11 @@ lazy_static = "1.3.0"
 toml = "0.5.1"
 log = "0.4.6"
 colored = "1.8.0"
-chrono = "0.4.6"
-libc = "0.2.57"
-serde = { version = "1.0.91", features = ["derive"] }
+chrono = "0.4.7"
+libc = "0.2.59"
+serde = { version = "1.0.94", features = ["derive"] }
 sysfs_gpio = { version = "0.5.4", optional = true }
-tokio-serial = { version = "3.2.0", optional = true }
+tokio-serial = { version = "3.2.14", optional = true }
 
 [dependencies.log4rs]
 version = "0.8.3"
