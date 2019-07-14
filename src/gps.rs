@@ -4,11 +4,11 @@
 
 use std::{
     fmt,
-    io::{self, Write},
+    io::{self, Read, Write},
     str::FromStr,
     sync::Mutex,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use chrono::{DateTime, Utc};
@@ -95,7 +95,7 @@ impl Gps {
         info!("Configuration frames sent");
 
         info!("Setting GPS to airborne (<1g) mode");
-        if self.enter_airborne_1g_mode().is_ok() {
+        if Gps::enter_airborne_1g_mode(&mut serial).is_ok() {
             info!("GPS entered airborne (<1g) mode successfully");
         } else {
             warn!("GPS failed to enter airborne (<1g) mode");
@@ -120,22 +120,79 @@ impl Gps {
 
     /// Checks if the GPS is on.
     pub fn is_on(&self) -> Result<bool, Error> {
-        unimplemented!()
+        Ok(CONFIG.gps().power_gpio().get_value()? == 1)
     }
 
     /// Turns the GPS on.
     pub fn turn_on(&self) -> Result<(), Error> {
-        unimplemented!()
+        if self.is_on()? {
+            warn!("Turning on the GPS but it was already on.");
+        } else {
+            CONFIG.gps().power_gpio().set_value(1)?
+        }
+
+        Ok(())
     }
 
     /// Turns the GPS off.
     pub fn turn_off(&self) -> Result<(), Error> {
-        unimplemented!()
+        if self.is_on()? {
+            CONFIG.gps().power_gpio().set_value(0)?
+        } else {
+            warn!("Turning off the GPS but it was already off.");
+        }
+
+        Ok(())
     }
 
     /// Enters airborne (<1g) GPS mode.
-    fn enter_airborne_1g_mode(&self) -> Result<(), Error> {
-        unimplemented!()
+    fn enter_airborne_1g_mode(serial: &mut Serial) -> Result<(), Error> {
+        let msg = [
+            // Header, class, ID, Length
+            0xB5, 0x62, 0x06, 0x24, 0x24, 0x00,
+            // Payload:
+            // Mask, Dynmodel, FixType
+            0xFF, 0xFF, 0x06, 0x03, 0x00, 0x00, 0x00, 0x00, 0x10, 0x27, 0x00, 0x00, 0x05, 0x00,
+            0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Checksum
+            0x16, 0xDC,
+        ];
+        let mut ack = [
+            0xB5, 0x62, 0x05, 0x01, 0x02, 0x00, msg[2], msg[3], 0x00, 0x00,
+        ];
+        // Compute checksum
+        for i in 2..8 {
+            ack[8] += ack[i];
+            ack[9] += ack[8];
+        }
+
+        let start = Instant::now();
+        while start.elapsed() < Duration::from_secs(6) {
+            // Send the message
+            serial.flush()?;
+            serial.write_all(&[0xFF])?;
+            thread::sleep(Duration::from_millis(500));
+            serial.write_all(&msg)?;
+
+            // Wait for the ACK
+            let mut checked_bytes = 0;
+            let ack_start = Instant::now();
+            while ack_start.elapsed() < Duration::from_secs(3) {
+                if checked_bytes == 10 {
+                    return Ok(());
+                }
+
+                let mut byte = [0];
+                serial.read_exact(&mut byte)?; // FIXME: could this block?
+                if byte[0] == ack[checked_bytes] {
+                    checked_bytes += 1;
+                } else {
+                    checked_bytes = 0;
+                }
+            }
+        }
+
+        unimplemented!() // TODO: return error
     }
 
     /// Gets the latest GPS data.
@@ -145,7 +202,26 @@ impl Gps {
 
     /// Parses a GPS frame.
     fn parse_frame(line: Result<String, io::Error>) -> Result<Frame, Error> {
-        let _line_str = line?;
+        let _line_str = line?; //                 if (bytes_ordered > 9)
+                               // 		{
+                               // 			return true;
+                               // 		}
+
+        // 		gettimeofday(&time_now, NULL);
+        // 		ms_now = (long)((time_now.tv_sec)*1000 + (time_now.tv_usec)/1000);
+
+        // 		if (this->serial->available())
+        // 		{
+        // 			byte = this->serial->read_byte();
+        // 			if (byte == ack_packet[bytes_ordered])
+        // 			{
+        // 				bytes_ordered++;
+        // 			}
+        // 			else
+        // 			{
+        // 				bytes_ordered = 0;
+        // 			}
+        // }
         unimplemented!()
     }
 }

@@ -580,16 +580,18 @@ mod tests {
     #[cfg(feature = "gps")]
     fn exif_data_complete() {
         let data = ExifData {
-            gps_latitude: (LatitudeRef::North, 23.44497),
-            gps_longitude: (LongitudeRef::East, 100.05792),
-            gps_altitude: 1500.34,
-            // gps_timestamp:
-            //     DateTime::<UTC>::from_utc(NaiveDateTime::from_timestamp(1490443906, 0), UTC),
-            gps_satellites: 7,
-            gps_status: FixStatus::Active,
-            gps_dop: 3.21,
-            gps_speed: 13.5,
-            gps_track: 1.65,
+            gps_latitude: Some((LatitudeRef::North, 23.44497)),
+            gps_longitude: Some((LongitudeRef::East, 100.05792)),
+            gps_altitude: Some(1500.34),
+            // gps_timestamp: Some(DateTime::<UTC>::from_utc(
+            //     NaiveDateTime::from_timestamp(1490443906, 0),
+            //     UTC,
+            // )),
+            gps_satellites: Some(7),
+            gps_status: Some(FixStatus::Active),
+            gps_dop: Some(3.21),
+            gps_speed: Some(13.5),
+            gps_track: Some(1.65),
         };
 
         assert_eq!(
