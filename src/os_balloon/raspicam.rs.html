@@ -585,6 +585,32 @@
 <span id="585">585</span>
 <span id="586">586</span>
 <span id="587">587</span>
+<span id="588">588</span>
+<span id="589">589</span>
+<span id="590">590</span>
+<span id="591">591</span>
+<span id="592">592</span>
+<span id="593">593</span>
+<span id="594">594</span>
+<span id="595">595</span>
+<span id="596">596</span>
+<span id="597">597</span>
+<span id="598">598</span>
+<span id="599">599</span>
+<span id="600">600</span>
+<span id="601">601</span>
+<span id="602">602</span>
+<span id="603">603</span>
+<span id="604">604</span>
+<span id="605">605</span>
+<span id="606">606</span>
+<span id="607">607</span>
+<span id="608">608</span>
+<span id="609">609</span>
+<span id="610">610</span>
+<span id="611">611</span>
+<span id="612">612</span>
+<span id="613">613</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="doccomment">//! Raspberry Pi camera module.</span>
 
@@ -961,25 +987,25 @@
 
 <span class="doccomment">/// Structure representing EXIF data for a picture.</span>
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">Default</span>, <span class="ident">Clone</span>, <span class="ident">Copy</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">ExifData</span> {
     <span class="doccomment">/// GPS latitude and reference.</span>
-    <span class="ident">gps_latitude</span>: (<span class="ident">LatitudeRef</span>, <span class="ident">f32</span>),
+    <span class="ident">gps_latitude</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">LatitudeRef</span>, <span class="ident">f32</span>)<span class="op">&gt;</span>,
     <span class="doccomment">/// GPS longitude and reference.</span>
-    <span class="ident">gps_longitude</span>: (<span class="ident">LongitudeRef</span>, <span class="ident">f32</span>),
+    <span class="ident">gps_longitude</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span>(<span class="ident">LongitudeRef</span>, <span class="ident">f32</span>)<span class="op">&gt;</span>,
     <span class="doccomment">/// GPS altitude from sea level.</span>
-    <span class="ident">gps_altitude</span>: <span class="ident">f32</span>,
-    <span class="comment">// TODO gps_timestamp: DateTime&lt;UTC&gt;,</span>
+    <span class="ident">gps_altitude</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
+    <span class="comment">// TODO gps_timestamp: Option&lt;DateTime&lt;UTC&gt;&gt;,</span>
     <span class="doccomment">/// Number of GPS satellites.</span>
-    <span class="ident">gps_satellites</span>: <span class="ident">u8</span>,
+    <span class="ident">gps_satellites</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u8</span><span class="op">&gt;</span>,
     <span class="doccomment">/// GPS fix status.</span>
-    <span class="ident">gps_status</span>: <span class="ident">FixStatus</span>,
+    <span class="ident">gps_status</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">FixStatus</span><span class="op">&gt;</span>,
     <span class="doccomment">/// GPS position dilution of precision.</span>
-    <span class="ident">gps_dop</span>: <span class="ident">f32</span>,
+    <span class="ident">gps_dop</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
     <span class="doccomment">/// GPS speed.</span>
-    <span class="ident">gps_speed</span>: <span class="ident">f32</span>,
+    <span class="ident">gps_speed</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
     <span class="doccomment">/// GPS course.</span>
-    <span class="ident">gps_track</span>: <span class="ident">f32</span>,
+    <span class="ident">gps_track</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">f32</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
@@ -996,16 +1022,23 @@
             }
         };
 
-        <span class="self">Self</span> {
-            <span class="ident">gps_latitude</span>: (<span class="ident">LatitudeRef</span>::<span class="ident">from</span>(<span class="ident">gps</span>.<span class="ident">latitude</span>()), <span class="ident">gps</span>.<span class="ident">latitude</span>()),
-            <span class="ident">gps_longitude</span>: (<span class="ident">LongitudeRef</span>::<span class="ident">from</span>(<span class="ident">gps</span>.<span class="ident">longitude</span>()), <span class="ident">gps</span>.<span class="ident">longitude</span>()),
-            <span class="ident">gps_altitude</span>: <span class="ident">gps</span>.<span class="ident">altitude</span>(),
-            <span class="comment">// TODO gps_timestamp: DateTime&lt;UTC&gt;,</span>
-            <span class="ident">gps_satellites</span>: <span class="ident">gps</span>.<span class="ident">satellites</span>(),
-            <span class="ident">gps_status</span>: <span class="ident">gps</span>.<span class="ident">status</span>(),
-            <span class="ident">gps_dop</span>: <span class="ident">gps</span>.<span class="ident">pdop</span>(),
-            <span class="ident">gps_speed</span>: <span class="ident">gps</span>.<span class="ident">speed</span>(),
-            <span class="ident">gps_track</span>: <span class="ident">gps</span>.<span class="ident">course</span>(),
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>) <span class="op">=</span> <span class="ident">gps</span>.<span class="ident">latest_data</span>() {
+            <span class="self">Self</span> {
+                <span class="ident">gps_latitude</span>: <span class="prelude-val">Some</span>((<span class="ident">LatitudeRef</span>::<span class="ident">from</span>(<span class="ident">gps_data</span>.<span class="ident">latitude</span>()), <span class="ident">gps_data</span>.<span class="ident">latitude</span>())),
+                <span class="ident">gps_longitude</span>: <span class="prelude-val">Some</span>((
+                    <span class="ident">LongitudeRef</span>::<span class="ident">from</span>(<span class="ident">gps_data</span>.<span class="ident">longitude</span>()),
+                    <span class="ident">gps_data</span>.<span class="ident">longitude</span>(),
+                )),
+                <span class="ident">gps_altitude</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">altitude</span>()),
+                <span class="comment">// TODO gps_timestamp: Some(DateTime&lt;UTC&gt;),</span>
+                <span class="ident">gps_satellites</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">satellites</span>()),
+                <span class="ident">gps_status</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">status</span>()),
+                <span class="ident">gps_dop</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">pdop</span>()),
+                <span class="ident">gps_speed</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">speed</span>()),
+                <span class="ident">gps_track</span>: <span class="prelude-val">Some</span>(<span class="ident">gps_data</span>.<span class="ident">course</span>()),
+            }
+        } <span class="kw">else</span> {
+            <span class="self">Self</span>::<span class="ident">default</span>()
         }
     }
 }
@@ -1015,48 +1048,65 @@
     <span class="kw">fn</span> <span class="ident">to_string</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) <span class="op">-&gt;</span> <span class="ident">String</span> {
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">exif</span> <span class="op">=</span> <span class="ident">String</span>::<span class="ident">from</span>(<span class="string">&quot; -x GPSMeasureMode=3 -x GPS.GPSDifferential=0&quot;</span>);
 
-        <span class="kw">let</span> (<span class="ident">lat_ref</span>, <span class="ident">lat</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_latitude</span>;
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000&quot;</span>,
-            <span class="ident">lat_ref</span>,
-            <span class="ident">lat</span> <span class="op">*</span> <span class="number">1_000_000_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">lat_ref</span>, <span class="ident">lat</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_latitude</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot; -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000&quot;</span>,
+                <span class="ident">lat_ref</span>,
+                <span class="ident">lat</span> <span class="op">*</span> <span class="number">1_000_000_f32</span>
+            ));
+        }
 
-        <span class="kw">let</span> (<span class="ident">lon_ref</span>, <span class="ident">lon</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_longitude</span>;
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000&quot;</span>,
-            <span class="ident">lon_ref</span>,
-            <span class="ident">lon</span> <span class="op">*</span> <span class="number">1_000_000_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">lon_ref</span>, <span class="ident">lon</span>)) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_longitude</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot; -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000&quot;</span>,
+                <span class="ident">lon_ref</span>,
+                <span class="ident">lon</span> <span class="op">*</span> <span class="number">1_000_000_f32</span>
+            ));
+        }
 
         <span class="comment">// TODO configurable altitude ref.</span>
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100&quot;</span>,
-            <span class="self">self</span>.<span class="ident">gps_altitude</span> <span class="op">*</span> <span class="number">100_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_altitude</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_altitude</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot; -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100&quot;</span>,
+                <span class="ident">gps_altitude</span> <span class="op">*</span> <span class="number">100_f32</span>
+            ));
+        }
 
         <span class="comment">// TODO add GPS timestamp</span>
-        <span class="comment">// exif.push_str(&amp;format!(&quot; -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100&quot;,</span>
-        <span class="comment">//                        self.gps_timestamp * 100f32));</span>
+        <span class="comment">// if let Some(gps_timestamp) = self.gps_timestamp {</span>
+        <span class="comment">//     exif.push_str(&amp;format!(</span>
+        <span class="comment">//         &quot; -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100&quot;,</span>
+        <span class="comment">//         gps_timestamp * 100_f32</span>
+        <span class="comment">//     ));</span>
+        <span class="comment">// }</span>
 
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSSatellites={}&quot;</span>, <span class="self">self</span>.<span class="ident">gps_satellites</span>));
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSStatus={}&quot;</span>, <span class="self">self</span>.<span class="ident">gps_status</span>));
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSDOP={:.0}/1000&quot;</span>,
-            <span class="self">self</span>.<span class="ident">gps_dop</span> <span class="op">*</span> <span class="number">1_000_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_satellites</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_satellites</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSSatellites={}&quot;</span>, <span class="ident">gps_satellites</span>));
+        }
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_status</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_status</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSStatus={}&quot;</span>, <span class="ident">gps_status</span>));
+        }
+
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_dop</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_dop</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(<span class="string">&quot; -x GPS.GPSDOP={:.0}/1000&quot;</span>, <span class="ident">gps_dop</span> <span class="op">*</span> <span class="number">1_000_f32</span>));
+        }
 
         <span class="comment">// TODO configurable speed ref.</span>
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000&quot;</span>,
-            <span class="self">self</span>.<span class="ident">gps_speed</span> <span class="op">*</span> <span class="number">1_000_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_speed</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_speed</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot; -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000&quot;</span>,
+                <span class="ident">gps_speed</span> <span class="op">*</span> <span class="number">1_000_f32</span>
+            ));
+        }
 
         <span class="comment">// TODO configurable track ref.</span>
-        <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
-            <span class="string">&quot; -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000&quot;</span>,
-            <span class="self">self</span>.<span class="ident">gps_track</span> <span class="op">*</span> <span class="number">1_000_f32</span>
-        ));
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">gps_track</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">gps_track</span> {
+            <span class="ident">exif</span>.<span class="ident">push_str</span>(<span class="kw-2">&amp;</span><span class="macro">format</span><span class="macro">!</span>(
+                <span class="string">&quot; -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000&quot;</span>,
+                <span class="ident">gps_track</span> <span class="op">*</span> <span class="number">1_000_f32</span>
+            ));
+        }
 
         <span class="ident">exif</span>
     }
@@ -1144,16 +1194,18 @@
     <span class="attribute">#[<span class="ident">cfg</span>(<span class="ident">feature</span> <span class="op">=</span> <span class="string">&quot;gps&quot;</span>)]</span>
     <span class="kw">fn</span> <span class="ident">exif_data_complete</span>() {
         <span class="kw">let</span> <span class="ident">data</span> <span class="op">=</span> <span class="ident">ExifData</span> {
-            <span class="ident">gps_latitude</span>: (<span class="ident">LatitudeRef</span>::<span class="ident">North</span>, <span class="number">23.44497</span>),
-            <span class="ident">gps_longitude</span>: (<span class="ident">LongitudeRef</span>::<span class="ident">East</span>, <span class="number">100.05792</span>),
-            <span class="ident">gps_altitude</span>: <span class="number">1500.34</span>,
-            <span class="comment">// gps_timestamp:</span>
-            <span class="comment">//     DateTime::&lt;UTC&gt;::from_utc(NaiveDateTime::from_timestamp(1490443906, 0), UTC),</span>
-            <span class="ident">gps_satellites</span>: <span class="number">7</span>,
-            <span class="ident">gps_status</span>: <span class="ident">FixStatus</span>::<span class="ident">Active</span>,
-            <span class="ident">gps_dop</span>: <span class="number">3.21</span>,
-            <span class="ident">gps_speed</span>: <span class="number">13.5</span>,
-            <span class="ident">gps_track</span>: <span class="number">1.65</span>,
+            <span class="ident">gps_latitude</span>: <span class="prelude-val">Some</span>((<span class="ident">LatitudeRef</span>::<span class="ident">North</span>, <span class="number">23.44497</span>)),
+            <span class="ident">gps_longitude</span>: <span class="prelude-val">Some</span>((<span class="ident">LongitudeRef</span>::<span class="ident">East</span>, <span class="number">100.05792</span>)),
+            <span class="ident">gps_altitude</span>: <span class="prelude-val">Some</span>(<span class="number">1500.34</span>),
+            <span class="comment">// gps_timestamp: Some(DateTime::&lt;UTC&gt;::from_utc(</span>
+            <span class="comment">//     NaiveDateTime::from_timestamp(1490443906, 0),</span>
+            <span class="comment">//     UTC,</span>
+            <span class="comment">// )),</span>
+            <span class="ident">gps_satellites</span>: <span class="prelude-val">Some</span>(<span class="number">7</span>),
+            <span class="ident">gps_status</span>: <span class="prelude-val">Some</span>(<span class="ident">FixStatus</span>::<span class="ident">Active</span>),
+            <span class="ident">gps_dop</span>: <span class="prelude-val">Some</span>(<span class="number">3.21</span>),
+            <span class="ident">gps_speed</span>: <span class="prelude-val">Some</span>(<span class="number">13.5</span>),
+            <span class="ident">gps_track</span>: <span class="prelude-val">Some</span>(<span class="number">1.65</span>),
         };
 
         <span class="macro">assert_eq</span><span class="macro">!</span>(

@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["FixStatus","GPS fix status."]],"static":[["GPS",""]],"struct":[["GPS","GPS data for concurrent check."],["Gps","GPS information structure."]]});
+initSidebarItems({"enum":[["FixStatus","GPS fix status."]],"static":[["GPS",""]],"struct":[["Frame","This structure represents a GPS frame."],["GPS","GPS data for concurrent check."],["Gps","GPS information structure."]]});
