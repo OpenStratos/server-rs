@@ -373,25 +373,25 @@ impl Drop for Camera {
 
 /// Structure representing EXIF data for a picture.
 #[cfg(feature = "gps")]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Default, Clone, Copy)]
 pub struct ExifData {
     /// GPS latitude and reference.
-    gps_latitude: (LatitudeRef, f32),
+    gps_latitude: Option<(LatitudeRef, f32)>,
     /// GPS longitude and reference.
-    gps_longitude: (LongitudeRef, f32),
+    gps_longitude: Option<(LongitudeRef, f32)>,
     /// GPS altitude from sea level.
-    gps_altitude: f32,
-    // TODO gps_timestamp: DateTime<UTC>,
+    gps_altitude: Option<f32>,
+    // TODO gps_timestamp: Option<DateTime<UTC>>,
     /// Number of GPS satellites.
-    gps_satellites: u8,
+    gps_satellites: Option<u8>,
     /// GPS fix status.
-    gps_status: FixStatus,
+    gps_status: Option<FixStatus>,
     /// GPS position dilution of precision.
-    gps_dop: f32,
+    gps_dop: Option<f32>,
     /// GPS speed.
-    gps_speed: f32,
+    gps_speed: Option<f32>,
     /// GPS course.
-    gps_track: f32,
+    gps_track: Option<f32>,
 }
 
 #[cfg(feature = "gps")]
@@ -408,16 +408,23 @@ impl ExifData {
             }
         };
 
-        Self {
-            gps_latitude: (LatitudeRef::from(gps.latitude()), gps.latitude()),
-            gps_longitude: (LongitudeRef::from(gps.longitude()), gps.longitude()),
-            gps_altitude: gps.altitude(),
-            // TODO gps_timestamp: DateTime<UTC>,
-            gps_satellites: gps.satellites(),
-            gps_status: gps.status(),
-            gps_dop: gps.pdop(),
-            gps_speed: gps.speed(),
-            gps_track: gps.course(),
+        if let Some(gps_data) = gps.latest_data() {
+            Self {
+                gps_latitude: Some((LatitudeRef::from(gps_data.latitude()), gps_data.latitude())),
+                gps_longitude: Some((
+                    LongitudeRef::from(gps_data.longitude()),
+                    gps_data.longitude(),
+                )),
+                gps_altitude: Some(gps_data.altitude()),
+                // TODO gps_timestamp: Some(DateTime<UTC>),
+                gps_satellites: Some(gps_data.satellites()),
+                gps_status: Some(gps_data.status()),
+                gps_dop: Some(gps_data.pdop()),
+                gps_speed: Some(gps_data.speed()),
+                gps_track: Some(gps_data.course()),
+            }
+        } else {
+            Self::default()
         }
     }
 }
@@ -427,48 +434,65 @@ impl ToString for ExifData {
     fn to_string(&self) -> String {
         let mut exif = String::from(" -x GPSMeasureMode=3 -x GPS.GPSDifferential=0");
 
-        let (lat_ref, lat) = self.gps_latitude;
-        exif.push_str(&format!(
-            " -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
-            lat_ref,
-            lat * 1_000_000_f32
-        ));
+        if let Some((lat_ref, lat)) = self.gps_latitude {
+            exif.push_str(&format!(
+                " -x GPS.GPSLatitudeRef={} -x GPS.GPSLatitude={:.0}/1000000",
+                lat_ref,
+                lat * 1_000_000_f32
+            ));
+        }
 
-        let (lon_ref, lon) = self.gps_longitude;
-        exif.push_str(&format!(
-            " -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
-            lon_ref,
-            lon * 1_000_000_f32
-        ));
+        if let Some((lon_ref, lon)) = self.gps_longitude {
+            exif.push_str(&format!(
+                " -x GPS.GPSLongitudeRef={} -x GPS.GPSLongitude={:.0}/1000000",
+                lon_ref,
+                lon * 1_000_000_f32
+            ));
+        }
 
         // TODO configurable altitude ref.
-        exif.push_str(&format!(
-            " -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-            self.gps_altitude * 100_f32
-        ));
+        if let Some(gps_altitude) = self.gps_altitude {
+            exif.push_str(&format!(
+                " -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
+                gps_altitude * 100_f32
+            ));
+        }
 
         // TODO add GPS timestamp
-        // exif.push_str(&format!(" -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
-        //                        self.gps_timestamp * 100f32));
+        // if let Some(gps_timestamp) = self.gps_timestamp {
+        //     exif.push_str(&format!(
+        //         " -x GPS.GPSAltitudeRef=0 -x GPS.GPSAltitude={:.0}/100",
+        //         gps_timestamp * 100_f32
+        //     ));
+        // }
 
-        exif.push_str(&format!(" -x GPS.GPSSatellites={}", self.gps_satellites));
-        exif.push_str(&format!(" -x GPS.GPSStatus={}", self.gps_status));
-        exif.push_str(&format!(
-            " -x GPS.GPSDOP={:.0}/1000",
-            self.gps_dop * 1_000_f32
-        ));
+        if let Some(gps_satellites) = self.gps_satellites {
+            exif.push_str(&format!(" -x GPS.GPSSatellites={}", gps_satellites));
+        }
+
+        if let Some(gps_status) = self.gps_status {
+            exif.push_str(&format!(" -x GPS.GPSStatus={}", gps_status));
+        }
+
+        if let Some(gps_dop) = self.gps_dop {
+            exif.push_str(&format!(" -x GPS.GPSDOP={:.0}/1000", gps_dop * 1_000_f32));
+        }
 
         // TODO configurable speed ref.
-        exif.push_str(&format!(
-            " -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
-            self.gps_speed * 1_000_f32
-        ));
+        if let Some(gps_speed) = self.gps_speed {
+            exif.push_str(&format!(
+                " -x GPS.GPSSpeedRef=N -x GPS.GPSSpeed={}/1000",
+                gps_speed * 1_000_f32
+            ));
+        }
 
         // TODO configurable track ref.
-        exif.push_str(&format!(
-            " -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
-            self.gps_track * 1_000_f32
-        ));
+        if let Some(gps_track) = self.gps_track {
+            exif.push_str(&format!(
+                " -x GPS.GPSTrackRef=T -x GPS.GPSTrack={}/1000",
+                gps_track * 1_000_f32
+            ));
+        }
 
         exif
     }

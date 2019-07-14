@@ -33,15 +33,15 @@ path = "src/main.rs"
 default = ["all_hardware", "colored/no-color"]
 all_hardware = ["gps", "raspicam", "fona", "telemetry"]
 # GPS feature.
-gps = ["sysfs_gpio", "tokio-serial"]
+gps = ["sysfs_gpio", "tokio-serial", "tokio"]
 # Raspberry Pi camera.
 raspicam = []
 # Adafruit FONA GSM module.
-fona = ["sysfs_gpio", "tokio-serial"]
+fona = ["sysfs_gpio", "tokio-serial", "tokio"]
 # Do not send SMSs (so that it does not cost money)
 no_sms = ["fona"]
 # Transparent serial telemetry.
-telemetry = ["tokio-serial"]
+telemetry = ["tokio-serial", "tokio"]
 # Do not ever power off the system, only exit.
 no_power_off = []
 
@@ -49,13 +49,14 @@ no_power_off = []
 failure = "0.1.5"
 lazy_static = "1.3.0"
 toml = "0.5.1"
-log = "0.4.6"
+log = "0.4.7"
 colored = "1.8.0"
 chrono = "0.4.7"
 libc = "0.2.59"
 serde = { version = "1.0.94", features = ["derive"] }
 sysfs_gpio = { version = "0.5.4", optional = true }
 tokio-serial = { version = "3.2.14", optional = true }
+tokio = { version = "0.1.22", optional = true }
 
 [dependencies.log4rs]
 version = "0.8.3"
