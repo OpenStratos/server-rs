@@ -2,6 +2,10 @@
 
 #![allow(missing_debug_implementations)]
 
+use crate::{config::CONFIG, error};
+use anyhow::{Context, Error};
+use chrono::{DateTime, Utc};
+use once_cell::sync::Lazy;
 use std::{
     fmt,
     io::{self, Read, Write},
@@ -10,25 +14,11 @@ use std::{
     thread,
     time::{Duration, Instant},
 };
-
-use chrono::{DateTime, Utc};
-use failure::{Error, ResultExt};
-use lazy_static::lazy_static;
-use log::{info, warn};
 use sysfs_gpio::Direction;
-use tokio::{
-    self,
-    codec::{Decoder, LinesCodec},
-    prelude::{Future, Stream},
-};
-use tokio_serial::{Serial, SerialPortSettings};
+use tracing::{info, warn};
 
-use crate::{config::CONFIG, error};
-
-lazy_static! {
-    /// GPS data for concurrent check.
-    pub static ref GPS: Mutex<Gps> = Mutex::new(Gps::default());
-}
+/// GPS data for concurrent check.
+pub static GPS: Lazy<Mutex<Gps>> = Lazy::new(|| Mutex::new(Gps::default()));
 
 /// GPS information structure.
 #[derive(Debug, Default)]
@@ -57,11 +47,13 @@ impl Gps {
         info!("GPS on.");
 
         info!("Starting serial connection\u{2026}");
-        let mut serial_settings = SerialPortSettings::default();
-        serial_settings.baud_rate = CONFIG.gps().baud_rate();
-        let mut serial =
-            Serial::from_path(CONFIG.gps().uart(), &serial_settings).context(error::Gps::Init)?;
-        serial.set_exclusive(false).context(error::Gps::Init)?;
+        let mut serial = tokio_serial::new(
+            CONFIG.gps().uart().to_string_lossy(),
+            CONFIG.gps().baud_rate(),
+        )
+        .open()
+        .context(error::Gps::Init)?;
+        // serial.set_exclusive(false).context(error::Gps::Init)?;
         info!("Serial connection started.");
 
         info!("Sending configuration frames\u{2026}");
@@ -102,18 +94,18 @@ impl Gps {
         }
 
         // TODO: select appropriate maximum length
-        let (_writer, reader) = LinesCodec::new_with_max_length(250)
-            .framed(serial)
-            .then(Self::parse_frame)
-            .split();
+        // let (_writer, reader) = LinesCodec::new_with_max_length(250)
+        //     .framed(serial)
+        //     .then(Self::parse_frame)
+        //     .split();
 
-        let processor = reader
-            .for_each(|frame| {
-                GPS.lock().unwrap().latest_data = if frame.is_valid() { Some(frame) } else { None };
-                Ok(())
-            })
-            .map_err(|e| warn!("Error processing frame: {}", e));
-        tokio::run(processor);
+        // let processor = reader
+        //     .for_each(|frame| {
+        //         GPS.lock().unwrap().latest_data = if frame.is_valid() { Some(frame) } else { None };
+        //         Ok(())
+        //     })
+        //     .map_err(|e| warn!("Error processing frame: {}", e));
+        // tokio::run(processor);
 
         Ok(())
     }
@@ -146,7 +138,10 @@ impl Gps {
     }
 
     /// Enters airborne (<1g) GPS mode.
-    fn enter_airborne_1g_mode(serial: &mut Serial) -> Result<(), Error> {
+    fn enter_airborne_1g_mode<S>(serial: &mut S) -> Result<(), Error>
+    where
+        S: Write + Read,
+    {
         let msg = [
             // Header, class, ID, Length
             0xB5, 0x62, 0x06, 0x24, 0x24, 0x00,

@@ -1,6 +1,6 @@
 //! Shut down logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{MainLogic, OpenStratos, ShutDown};
 

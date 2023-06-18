@@ -1,6 +1,6 @@
 //! Fix acquired logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{FixAcquired, OpenStratos, StateMachine, WaitingLaunch};
 

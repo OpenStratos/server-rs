@@ -18,6 +18,9 @@ mod shut_down;
 #[cfg(feature = "gps")]
 mod waiting_launch;
 
+use crate::{config::CONFIG, error, STATE_FILE};
+use anyhow::{Context, Error};
+use once_cell::sync::Lazy;
 use std::{
     fmt,
     fs::{File, OpenOptions},
@@ -25,16 +28,9 @@ use std::{
     str::FromStr,
     sync::Mutex,
 };
+use tracing::error;
 
-use failure::{Error, ResultExt};
-use lazy_static::lazy_static;
-use log::error;
-
-use crate::{config::CONFIG, error, STATE_FILE};
-
-lazy_static! {
-    static ref CURRENT_STATE: Mutex<State> = Mutex::new(State::Init);
-}
+static CURRENT_STATE: Lazy<Mutex<State>> = Lazy::new(|| Mutex::new(State::Init));
 
 /// Trait representing a state machine.
 pub trait StateMachine {

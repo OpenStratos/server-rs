@@ -6,27 +6,23 @@
 
 use std::{fmt, io::Write, sync::Mutex, thread, time::Duration};
 
-use failure::{bail, Error, Fail, ResultExt};
-use lazy_static::lazy_static;
-use log::{debug, error, info, warn};
-use tokio_serial::{Serial, SerialPortSettings};
+use anyhow::{bail, Context, Error};
+use once_cell::sync::Lazy;
+use tokio_serial::SerialPort;
+use tracing::{debug, error, info, warn};
 
 use crate::{config::CONFIG, error, generate_error_string};
 
-lazy_static! {
-    /// The FONA module control structure.
-    pub static ref FONA: Mutex<Fona> = Mutex::new(Fona { serial: None });
-}
+/// The FONA module control structure.
+pub static FONA: Lazy<Mutex<Fona>> = Lazy::new(|| Mutex::new(Fona { serial: None }));
 
 /// Adafruit FONA control structure.
 pub struct Fona {
-    serial: Option<Serial>,
+    serial: Option<Box<dyn SerialPort>>,
 }
 
 impl fmt::Debug for Fona {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        use tokio_serial::SerialPort;
-
         write!(
             f,
             "Fona {{ serial: {:?} }}",
@@ -56,11 +52,13 @@ impl Fona {
         }
 
         info!("Starting serial connection.");
-        let mut settings = SerialPortSettings::default();
-        settings.baud_rate = CONFIG.fona().baud_rate();
 
-        let serial = Serial::from_path(CONFIG.fona().uart(), &settings)?;
-        // serial.set_timeout(Duration::from_secs(5));
+        let serial = tokio_serial::new(
+            CONFIG.fona().uart().to_string_lossy(),
+            CONFIG.fona().baud_rate(),
+        )
+        //.timeout(Duration::from_secs(5))
+        .open()?;
         self.serial = Some(serial);
         info!("Serial connection started.");
 
@@ -245,13 +243,11 @@ impl Fona {
             if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
                 info!("GPRS off.");
                 return Err(error::Fona::LocAtCgatt.into());
-            } else {
-                error!("Error turning GPRS down.");
-
-                return Err(error::Fona::LocAtGprsDown
-                    .context(error::Fona::LocAtCgatt)
-                    .into());
             }
+
+            error!("Error turning GPRS down.");
+
+            return Err(error::Fona::LocAtGprsDown).context(error::Fona::LocAtCgatt);
         }
 
         if self.send_command_read(r#"AT+SAPBR=3,1,"CONTYPE","GPRS""#)? != "OK" {
@@ -260,13 +256,10 @@ impl Fona {
             if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
                 info!("GPRS off.");
                 return Err(error::Fona::LocAtSapbrContype.into());
-            } else {
-                error!("Error turning GPRS down.");
-
-                return Err(error::Fona::LocAtGprsDown
-                    .context(error::Fona::LocAtSapbrContype)
-                    .into());
             }
+            error!("Error turning GPRS down.");
+
+            return Err(error::Fona::LocAtGprsDown).context(error::Fona::LocAtSapbrContype);
         }
 
         let apn_message = format!(
@@ -279,13 +272,10 @@ impl Fona {
             if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
                 info!("GPRS off.");
                 return Err(error::Fona::LocAtSapbrApn.into());
-            } else {
-                error!("Error turning GPRS down.");
-
-                return Err(error::Fona::LocAtGprsDown
-                    .context(error::Fona::LocAtSapbrApn)
-                    .into());
             }
+            error!("Error turning GPRS down.");
+
+            return Err(error::Fona::LocAtGprsDown).context(error::Fona::LocAtSapbrApn);
         }
 
         if self.send_command_read("AT+SAPBR=1,1")? != "OK" {
@@ -294,13 +284,10 @@ impl Fona {
             if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
                 info!("GPRS off.");
                 return Err(error::Fona::LocAtSapbr.into());
-            } else {
-                error!("Error turning GPRS down.");
-
-                return Err(error::Fona::LocAtGprsDown
-                    .context(error::Fona::LocAtSapbr)
-                    .into());
             }
+
+            error!("Error turning GPRS down.");
+            return Err(error::Fona::LocAtGprsDown).context(error::Fona::LocAtSapbr);
         }
 
         let location_response = self.send_command_read("AT+CIPGSMLOC=1,1")?;
@@ -323,13 +310,10 @@ impl Fona {
             if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
                 info!("GPRS off.");
                 return Err(error::Fona::LocAtCipgsmloc.into());
-            } else {
-                error!("Error turning GPRS down.");
-
-                return Err(error::Fona::LocAtGprsDown
-                    .context(error::Fona::LocAtCipgsmloc)
-                    .into());
             }
+
+            error!("Error turning GPRS down.");
+            return Err(error::Fona::LocAtGprsDown).context(error::Fona::LocAtCipgsmloc);
         }
 
         if self.send_command_read("AT+SAPBR=0,1")? == "OK" {
@@ -552,11 +536,13 @@ pub struct Location {
 
 impl Location {
     /// Gets the latitude of the location, in degrees (°).
+    #[must_use]
     pub fn latitude(self) -> f32 {
         self.latitude
     }
 
     /// Gets the longitude of the location, in degrees (°).
+    #[must_use]
     pub fn longitude(self) -> f32 {
         self.longitude
     }

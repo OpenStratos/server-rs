@@ -1,6 +1,6 @@
 //! Landed logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{Landed, OpenStratos, ShutDown, StateMachine};
 

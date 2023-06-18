@@ -163,8 +163,8 @@
 )]
 
 use colored::Colorize;
-use log::{error, info};
-use os_balloon::{generate_error_string, init_loggers, run, CONFIG};
+use os_balloon::{generate_error_string, run, CONFIG};
+use tracing::{error, info};
 
 /// Program entry point.
 ///
@@ -175,13 +175,13 @@ pub fn main() {
     if CONFIG.debug() {
         println!("Debug mode active");
     }
-    if let Err(e) = init_loggers() {
-        println!(
-            "{}",
-            generate_error_string(&e, "Error initializing loggers").red()
-        );
-        panic!();
-    }
+    // if let Err(e) = init_loggers() {
+    //     println!(
+    //         "{}",
+    //         generate_error_string(&e, "Error initializing loggers").red()
+    //     );
+    //     panic!();
+    // }
     info!("OpenStratos {} starting", env!("CARGO_PKG_VERSION"));
 
     if let Err(e) = run() {

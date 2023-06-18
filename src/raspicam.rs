@@ -2,6 +2,7 @@
 
 #![allow(missing_debug_implementations)]
 
+use anyhow::{bail, Error};
 use std::{
     fs, io, mem,
     path::{Path, PathBuf},
@@ -11,12 +12,10 @@ use std::{
     time::Duration,
 };
 // Only required for GPS
+use once_cell::sync::Lazy;
 #[cfg(feature = "gps")]
 use std::fmt;
-
-use failure::{bail, Error};
-use lazy_static::lazy_static;
-use log::{debug, error, info, warn};
+use tracing::{debug, error, info, warn};
 
 #[cfg(feature = "gps")]
 use crate::gps::{FixStatus, GPS};
@@ -27,14 +26,14 @@ pub const VIDEO_DIR: &str = "video";
 /// Image directory inside data directory.
 pub const IMG_DIR: &str = "img";
 
-lazy_static! {
-    /// Shared static camera object.
-    pub static ref CAMERA: Mutex<Camera> = Mutex::new(Camera {
+/// Shared static camera object.
+pub static CAMERA: Lazy<Mutex<Camera>> = Lazy::new(|| {
+    Mutex::new(Camera {
         video_dir: CONFIG.data_dir().join(VIDEO_DIR),
         picture_dir: CONFIG.data_dir().join(IMG_DIR),
         process: None,
-    });
-}
+    })
+});
 
 /// Camera structure.
 ///
@@ -196,7 +195,7 @@ impl Camera {
     /// Stops the video recording.
     pub fn stop_recording(&mut self) -> Result<(), io::Error> {
         info!("Stopping video recording\u{2026}");
-        if let Some(mut child) = mem::replace(&mut self.process, None) {
+        if let Some(mut child) = self.process.take() {
             match child.kill() {
                 Ok(()) => {
                     info!("Video recording stopped correctly.");

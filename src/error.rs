@@ -1,31 +1,30 @@
 //! Error module.
 
 use std::{fmt, path::PathBuf};
-
-use failure::Fail;
+use thiserror::Error;
 
 use crate::STATE_FILE;
 
 /// Errors that happened in a certain part of the logic.
-#[derive(Debug, Clone, Copy, Fail)]
+#[derive(Debug, Clone, Copy, Error)]
 pub enum Logic {
     /// Initialization error.
-    #[fail(display = "there was an error during the initialization")]
+    #[error("there was an error during the initialization")]
     Init,
 }
 
 /// GPS errors.
 #[cfg(feature = "gps")]
-#[derive(Debug, Clone, Fail)]
+#[derive(Debug, Clone, Error)]
 pub enum Gps {
     /// GPS initialization error.
-    #[fail(display = "an error occurred trying to initialize the GPS module")]
+    #[error("an error occurred trying to initialize the GPS module")]
     Init,
     /// The GPS was already initialized when trying to initialize it.
-    #[fail(display = "the GPS was already initialized when OpenStratos tried to initialize it")]
+    #[error("the GPS was already initialized when OpenStratos tried to initialize it")]
     AlreadyInitialized,
     /// Invalid GPS status code.
-    #[fail(display = "invalid GPS status: '{}'", status)]
+    #[error("invalid GPS status: '{}'", status)]
     InvalidStatus {
         /// The invalid GPS status code that was received
         status: String,
@@ -33,7 +32,7 @@ pub enum Gps {
 }
 
 /// Configuration errors.
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Config {
     /// Error opening the configuration file.
     Open {
@@ -81,7 +80,7 @@ impl fmt::Display for Config {
 }
 
 /// Errors dealing with the file system.
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Fs {
     /// Error initializing the `data` filesystem.
     DataInit,
@@ -104,21 +103,21 @@ impl fmt::Display for Fs {
 }
 
 /// Errors handling loggers and logs.
-#[derive(Debug, Clone, Copy, Fail)]
+#[derive(Debug, Clone, Copy, Error)]
 pub enum Log {
     /// Error creating a log appender.
-    #[fail(display = "error creating the `{}` appender", name)]
+    #[error("error creating the `{}` appender", name)]
     Appender {
         /// The name of the log appender.
         name: &'static str,
     },
     /// Error building the logger.
-    #[fail(display = "error building the logger")]
+    #[error("error building the logger")]
     Build,
 }
 
 /// Errors related to reading and modifying the last known state.
-#[derive(Debug, Clone, Fail)]
+#[derive(Debug, Clone, Error)]
 pub enum LastState {
     /// Error opening the last state file.
     FileOpen,
@@ -155,96 +154,92 @@ impl fmt::Display for LastState {
 
 /// Errors related to the use of the Adafruit FONA module.
 #[cfg(feature = "fona")]
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Fona {
     /// Error initializing the FONA module.
-    #[fail(display = "there was an error during the initialization of the FONA module")]
+    #[error("there was an error during the initialization of the FONA module")]
     Init,
     /// Error turning the FONA module on.
-    #[fail(display = "the FONA module did not turn on")]
+    #[error("the FONA module did not turn on")]
     PowerOn,
     /// Error turning the FONA module's "echo" functionality off.
-    #[fail(display = "there was an error turning the FONA 'echo' off")]
+    #[error("there was an error turning the FONA 'echo' off")]
     EchoOff,
     /// There was no open serial connection when trying to send a command to the FONA module.
-    #[fail(
-        display = "there was no open serial connection when trying to send a command to the \
-                   FONA module"
+    #[error(
+        "there was no open serial connection when trying to send a command to the FONA module"
     )]
     NoSerial,
     /// `EOF` was found in the FONA serial.
-    #[fail(display = "EOF was found when reading the FONA serial")]
+    #[error("EOF was found when reading the FONA serial")]
     SerialEnd,
     /// SMS was too long to be sent.
-    #[fail(display = "SMS was longer than the 160 character limit")]
+    #[error("SMS was longer than the 160 character limit")]
     LongSms,
     /// Error sending SMS on `AT+CMGF=1` response.
-    #[fail(display = "error sending SMS on `AT+CMGF=1` response")]
+    #[error("error sending SMS on `AT+CMGF=1` response")]
     SmsAtCmgf,
     /// Error sending `AT+CMGS` message when sending an SMS.
-    #[fail(display = "error sending AT+CMGS message sending SMS")]
+    #[error("error sending AT+CMGS message sending SMS")]
     SmsAtCmgs,
     /// Error reading `+CMGS` response sending SMS.
-    #[fail(display = "error reading +CMGS response sending SMS")]
+    #[error("error reading +CMGS response sending SMS")]
     SmsCmgs,
     /// No OK received after sending SMS.
-    #[fail(display = "no OK received after sending SMS")]
+    #[error("no OK received after sending SMS")]
     SmsOk,
     /// Error getting location on `AT+CMGF=1` response.
-    #[fail(display = "error getting location on `AT+CMGF=1` response")]
+    #[error("error getting location on `AT+CMGF=1` response")]
     LocAtCmgf,
     /// Error getting location on `AT+CGATT=1` response.
-    #[fail(display = "error getting location on `AT+CGATT=1` response")]
+    #[error("error getting location on `AT+CGATT=1` response")]
     LocAtCgatt,
     /// Error getting location on `AT+SAPBR=1,1` response.
-    #[fail(display = "Error getting location on `AT+SAPBR=1,1` response.")]
+    #[error("Error getting location on `AT+SAPBR=1,1` response.")]
     LocAtSapbr,
     /// Error getting location on `AT+SAPBR=3,1,"CONTYPE","GPRS"` response.
-    #[fail(display = "Error getting location on `AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"` response.")]
+    #[error("Error getting location on `AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"` response.")]
     LocAtSapbrContype,
     /// Error getting location on `AT+SAPBR=3,1,"APN","{fona.location_service}"` response.
-    #[fail(
-        display = "Error getting location on `AT+SAPBR=3,1,\"APN\",\"{{fona.location_service}}\"` response."
+    #[error(
+        "Error getting location on `AT+SAPBR=3,1,\"APN\",\"{{fona.location_service}}\"` response."
     )]
     LocAtSapbrApn,
     /// Error getting location on `AT+CIPGSMLOC=1,1` response.
-    #[fail(display = "Error getting location on `AT+CIPGSMLOC=1,1` response.")]
+    #[error("Error getting location on `AT+CIPGSMLOC=1,1` response.")]
     LocAtCipgsmloc,
     /// Error turning GPRS down.
-    #[fail(display = "error turning GPRS down")]
+    #[error("error turning GPRS down")]
     LocAtGprsDown,
     /// Error getting longitude via GPRS.
-    #[fail(display = "error getting longitude via GPRS")]
+    #[error("error getting longitude via GPRS")]
     LocLon,
     /// Error getting latitude via GPRS.
-    #[fail(display = "error getting latitude via GPRS")]
+    #[error("error getting latitude via GPRS")]
     LocLat,
     /// Error reading CRLF (*\r\n*) after sending command to FONA.
-    #[fail(
-        display = "an error occurred when trying to read CRLF (\\r\\n) after sending command to \
-                   FONA"
-    )]
+    #[error("an error occurred when trying to read CRLF (\\r\\n) after sending command to FONA")]
     SendCommandCrlf,
     /// FONA serial found EOF.
-    #[fail(display = "FONA returned a partial response: `{}`", response)]
+    #[error("FONA returned a partial response: `{}`", response)]
     PartialResponse {
         /// Contents of the partial response.
         response: String,
     },
     /// Error sending command to FONA.
-    #[fail(display = "there was a I/O error when trying to send a command to the FONA module")]
+    #[error("there was a I/O error when trying to send a command to the FONA module")]
     Command,
     /// Invalid response to AT+CBC (battery charge) command.
-    #[fail(display = "FONA returned an invalid response to AT+CBC")]
+    #[error("FONA returned an invalid response to AT+CBC")]
     CBCInvalidResponse,
     /// Invalid response to AT+CADC? (read ADC) command.
-    #[fail(display = "FONA returned an invalid response to AT+CADC?")]
+    #[error("FONA returned an invalid response to AT+CADC?")]
     CADCInvalidResponse,
 }
 
 /// Errors related to the Raspicam camera.
 #[cfg(feature = "raspicam")]
-#[derive(Debug, Fail)]
+#[derive(Debug, Error)]
 pub enum Raspicam {
     /// Camera was already recording.
     AlreadyRecording,
@@ -284,26 +279,26 @@ impl fmt::Display for Raspicam {
 
 /// Errors related to logic initialization.
 #[cfg(any(feature = "fona", feature = "gps"))]
-#[derive(Debug, Clone, Copy, Fail)]
+#[derive(Debug, Clone, Copy, Error)]
 pub enum Init {
     /// Error initializing GPS module.
     #[cfg(feature = "gps")]
-    #[fail(display = "error initializing GPS module")]
+    #[error("error initializing GPS module")]
     Gps,
     /// Error initializing FONA module.
     #[cfg(feature = "fona")]
-    #[fail(display = "error initializing FONA module")]
+    #[error("error initializing FONA module")]
     Fona,
     /// Error checking GSM connectivity.
     #[cfg(feature = "fona")]
-    #[fail(display = "error checking GSM connectivity")]
+    #[error("error checking GSM connectivity")]
     CheckGsmConnectivity,
     /// Error checking battery status.
     #[cfg(feature = "fona")]
-    #[fail(display = "error checking battery status")]
+    #[error("error checking battery status")]
     CheckBatteries,
     /// Not enough battery for the flight.
     #[cfg(feature = "fona")]
-    #[fail(display = "not enough battery for the flight")]
+    #[error("not enough battery for the flight")]
     NotEnoughBattery,
 }

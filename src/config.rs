@@ -50,9 +50,9 @@ use std::{ffi::OsStr, i8, u16};
 #[cfg(any(feature = "gps", feature = "fona"))]
 use std::fmt;
 
+use anyhow::{Context, Error};
 use colored::Colorize;
-use failure::{Error, ResultExt};
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use toml;
 
@@ -66,15 +66,16 @@ use sysfs_gpio::Pin;
 
 use crate::{error, generate_error_string, CONFIG_FILE};
 
-lazy_static! {
-    /// Configuration object.
-    pub static ref CONFIG: Config = match Config::from_file(CONFIG_FILE) {
-        Err(e) => {
-            panic!("{}", generate_error_string(&e, "error loading configuration").red());
-        },
-        Ok(c) => c,
-    };
-}
+/// Configuration object.
+pub static CONFIG: Lazy<Config> = Lazy::new(|| match Config::from_file(CONFIG_FILE) {
+    Err(e) => {
+        panic!(
+            "{}",
+            generate_error_string(&e, "error loading configuration").red()
+        );
+    }
+    Ok(c) => c,
+});
 
 /// Configuration object.
 #[derive(Debug, Deserialize)]
@@ -132,7 +133,7 @@ impl Config {
     }
 
     /// Verify the correctness of the configuration, and return a list of errors if invalid.
-    #[allow(clippy::replace_consts)]
+    #[allow(clippy::too_many_lines)]
     fn verify(&self) -> (bool, String) {
         // Only required for Raspicam
         #[cfg(feature = "raspicam")]
@@ -158,12 +159,14 @@ impl Config {
                 ));
             }
 
-            if let Some(r @ 360...u16::MAX) = self.picture.rotation {
-                ok = false;
-                errors.push_str(&format!(
-                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
-                    r
-                ));
+            if let Some(rotation) = self.picture.rotation {
+                if rotation > 359 {
+                    ok = false;
+                    errors.push_str(&format!(
+                        "camera rotation must be between 0 and 359 degrees, found {rotation} \
+                         degrees\n"
+                    ));
+                }
             }
 
             if self.picture.quality > 100 {
@@ -174,67 +177,57 @@ impl Config {
                 ));
             }
 
-            if let Some(b @ 101...u8::MAX) = self.picture.brightness {
-                ok = false;
-                errors.push_str(&format!(
-                    "picture brightness must be between 0 and 100, found {}\n",
-                    b
-                ));
-            }
-
-            match self.picture.contrast {
-                Some(c @ i8::MIN...-101) | Some(c @ 101...i8::MAX) => {
+            if let Some(brightness) = self.picture.brightness {
+                if brightness > 100 {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture contrast must be between -100 and 100, found {}\n",
-                        c
+                        "picture brightness must be between 0 and 100, found {brightness}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.picture.sharpness {
-                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
+            if let Some(contrast) = self.picture.contrast {
+                if !(-100..=100).contains(&contrast) {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture sharpness must be between -100 and 100, found {}\n",
-                        s
+                        "picture contrast must be between -100 and 100, found {contrast}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.picture.saturation {
-                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
+            if let Some(sharpness) = self.picture.sharpness {
+                if !(-100..=100).contains(&sharpness) {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture saturation must be between -100 and 100, found {}\n",
-                        s
+                        "picture sharpness must be between -100 and 100, found {sharpness}\n",
                     ));
                 }
-                _ => {}
+            }
+            if let Some(saturation) = self.picture.saturation {
+                if !(-100..=100).contains(&saturation) {
+                    ok = false;
+                    errors.push_str(&format!(
+                        "picture saturation must be between -100 and 100, found {saturation}\n",
+                    ));
+                }
             }
 
-            match self.picture.iso {
-                Some(i @ 0...99) | Some(i @ 801...u16::MAX) => {
+            if let Some(iso) = self.picture.iso {
+                if !(100..=800).contains(&iso) {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture ISO must be between 100 and 800, found {}\n",
-                        i
+                        "picture ISO must be between 100 and 800, found {iso}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.picture.ev {
-                Some(e @ i8::MIN...-11) | Some(e @ 11...i8::MAX) => {
+            if let Some(ev) = self.picture.ev {
+                if !(-10..=10).contains(&ev) {
                     ok = false;
                     errors.push_str(&format!(
-                        "picture EV compensation must be between -10 and 10, found {}\n",
-                        e
+                        "picture EV compensation must be between -10 and 10, found {ev}\n",
                     ));
                 }
-                _ => {}
             }
 
             // Check for video configuration errors.
@@ -253,12 +246,14 @@ impl Config {
                 ));
             }
 
-            if let Some(r @ 360...u16::MAX) = self.video.rotation {
-                ok = false;
-                errors.push_str(&format!(
-                    "camera rotation must be between 0 and 359 degrees, found {} degrees\n",
-                    r
-                ));
+            if let Some(rotation) = self.video.rotation {
+                if rotation > 359 {
+                    ok = false;
+                    errors.push_str(&format!(
+                        "camera rotation must be between 0 and 359 degrees, found {rotation} \
+                         degrees\n",
+                    ));
+                }
             }
 
             if self.video.fps > 90 {
@@ -269,84 +264,73 @@ impl Config {
                 ));
             }
 
-            if let Some(b @ 101...u8::MAX) = self.video.brightness {
-                ok = false;
-                errors.push_str(&format!(
-                    "video brightness must be between 0 and 100, found {}\n",
-                    b
-                ));
-            }
-
-            match self.video.contrast {
-                Some(c @ i8::MIN...-101) | Some(c @ 101...i8::MAX) => {
+            if let Some(brightness) = self.video.brightness {
+                if brightness > 100 {
                     ok = false;
                     errors.push_str(&format!(
-                        "video contrast must be between -100 and 100, found {}\n",
-                        c
+                        "video brightness must be between 0 and 100, found {brightness}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.video.sharpness {
-                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
+            if let Some(contrast) = self.video.contrast {
+                if !(-100..=100).contains(&contrast) {
                     ok = false;
                     errors.push_str(&format!(
-                        "video sharpness must be between -100 and 100, found \
-                         {}\n",
-                        s
+                        "video contrast must be between -100 and 100, found {contrast}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.video.saturation {
-                Some(s @ i8::MIN...-101) | Some(s @ 101...i8::MAX) => {
+            if let Some(sharpness) = self.video.sharpness {
+                if !(-100..=100).contains(&sharpness) {
                     ok = false;
                     errors.push_str(&format!(
-                        "video saturation must be between -100 and 100, found {}\n",
-                        s
+                        "video sharpness must be between -100 and 100, found {sharpness}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.video.iso {
-                Some(i @ 0...99) | Some(i @ 801...u16::MAX) => {
+            if let Some(saturation) = self.video.saturation {
+                if !(-100..=100).contains(&saturation) {
                     ok = false;
                     errors.push_str(&format!(
-                        "video ISO must be between 100 and 800, found {}\n",
-                        i
+                        "video saturation must be between -100 and 100, found {saturation}\n",
                     ));
                 }
-                _ => {}
             }
 
-            match self.video.ev {
-                Some(e @ i8::MIN...-11) | Some(e @ 11...i8::MAX) => {
+            if let Some(iso) = self.video.iso {
+                if !(100..=800).contains(&iso) {
                     ok = false;
                     errors.push_str(&format!(
-                        "video EV compensation must be between -10 and 10, found {}\n",
-                        e
+                        "video ISO must be between 100 and 800, found {iso}\n",
                     ));
                 }
-                _ => {}
+            }
+
+            if let Some(ev) = self.video.ev {
+                if !(-10..=10).contains(&ev) {
+                    ok = false;
+                    errors.push_str(&format!(
+                        "video EV compensation must be between -10 and 10, found {ev}\n",
+                    ));
+                }
             }
 
             // Video modes.
             match (self.video.width, self.video.height, self.video.fps) {
-                (2592, 1944, 1...15)
-                | (1920, 1080, 1...30)
-                | (1296, 972, 1...42)
-                | (1296, 730, 1...49)
-                | (640, 480, 1...90) => {}
+                (2592, 1944, 1..=15)
+                | (1920, 1080, 1..=30)
+                | (1296, 972, 1..=42)
+                | (1296, 730, 1..=49)
+                | (640, 480, 1..=90) => {}
                 (w, h, f) => {
                     ok = false;
                     errors.push_str(&format!(
                         "video mode must be one of 2592\u{d7}1944 1-15fps, 1920\u{d7}1080 \
                          1-30fps, 1296\u{d7}972 1-42fps, 1296\u{d7}730 1-49fps, 640\u{d7}480 \
-                         1-60fps, found {}x{} {}fps\n",
-                        w, h, f
+                         1-90fps, found {w}x{h} {f}fps\n",
                     ));
                 }
             }
@@ -367,52 +351,61 @@ impl Config {
     }
 
     /// Gets wether OpenStratos should run in debug mode.
+    #[must_use]
     pub fn debug(&self) -> bool {
         self.debug == Some(true)
     }
 
     /// Gets the flight information.
+    #[must_use]
     pub fn flight(&self) -> Flight {
         self.flight
     }
 
     /// Gets battery configuration
     #[cfg(feature = "fona")]
+    #[must_use]
     pub fn battery(&self) -> Battery {
         self.battery
     }
 
     /// Gets the configuration for video.
     #[cfg(feature = "raspicam")]
+    #[must_use]
     pub fn video(&self) -> &Video {
         &self.video
     }
 
     /// Gets the configuration for pictures.
     #[cfg(feature = "raspicam")]
+    #[must_use]
     pub fn picture(&self) -> &Picture {
         &self.picture
     }
 
     /// Gets the GPS configuration.
     #[cfg(feature = "gps")]
+    #[must_use]
     pub fn gps(&self) -> &Gps {
         &self.gps
     }
 
     /// Gets the FONA module configuration.
     #[cfg(feature = "fona")]
+    #[must_use]
     pub fn fona(&self) -> &Fona {
         &self.fona
     }
 
     /// Gets the telemetry configuration.
     #[cfg(feature = "telemetry")]
+    #[must_use]
     pub fn telemetry(&self) -> &Telemetry {
         &self.telemetry
     }
 
     /// Gets the configured data directory.
+    #[must_use]
     pub fn data_dir(&self) -> &Path {
         self.data_dir.as_path()
     }
@@ -429,11 +422,13 @@ pub struct Flight {
 
 impl Flight {
     /// Gets the approximate expected flight length, in minutes.
+    #[must_use]
     pub fn length(self) -> u32 {
         self.length
     }
 
     /// Gets the approximate expected maximum height, in meters.
+    #[must_use]
     pub fn expected_max_height(self) -> u32 {
         self.expected_max_height
     }
@@ -460,31 +455,37 @@ pub struct Battery {
 #[cfg(feature = "fona")]
 impl Battery {
     /// Gets the minimum voltage for the main battery when empty, at 0%, in volts (`V`).
+    #[must_use]
     pub fn main_min(self) -> f32 {
         self.main_min
     }
 
     /// Gets the maximum voltage for the main battery when full, at 100%, in volts (`V`).
+    #[must_use]
     pub fn main_max(self) -> f32 {
         self.main_max
     }
 
     /// Gets the minimum voltage for the FONA battery when empty, at 0%, in volts (`V`).
+    #[must_use]
     pub fn fona_min(self) -> f32 {
         self.fona_min
     }
 
     /// Gets the maximum voltage for the FONA battery when full, at 0%, in volts (`V`).
+    #[must_use]
     pub fn fona_max(self) -> f32 {
-        self.fona_min
+        self.fona_max
     }
 
     /// Gets the minimum admissible percentage for main battery for the launch.
+    #[must_use]
     pub fn main_min_percent(self) -> f32 {
         self.main_min_percent
     }
 
     /// Gets the minimum admissible percentage for FONA battery for the launch.
+    #[must_use]
     pub fn fona_min_percent(self) -> f32 {
         self.fona_min_percent
     }
@@ -527,71 +528,85 @@ pub struct Video {
 #[cfg(feature = "raspicam")]
 impl Video {
     /// Gets the configured video height for the camera, in pixels.
+    #[must_use]
     pub fn height(self) -> u16 {
         self.height
     }
 
     /// Gets the configured video width for the camera, in pixels.
+    #[must_use]
     pub fn width(self) -> u16 {
         self.width
     }
 
     /// Gets the configured picture rotation for the camera, in degrees (°).
+    #[must_use]
     pub fn rotation(self) -> Option<u16> {
         self.rotation
     }
 
     /// Gets the configured video framerate for the camera, in frames per second.
+    #[must_use]
     pub fn fps(self) -> u8 {
         self.fps
     }
 
     /// Gets the configured bitrate for videos.
+    #[must_use]
     pub fn bitrate(self) -> u32 {
         self.bitrate
     }
 
     /// Gets the configured exposure for videos.
+    #[must_use]
     pub fn exposure(self) -> Option<Exposure> {
         self.exposure
     }
 
     /// Gets the configured brightness for videos.
+    #[must_use]
     pub fn brightness(self) -> Option<u8> {
         self.brightness
     }
 
     /// Gets the configured contrast for videos.
+    #[must_use]
     pub fn contrast(self) -> Option<i8> {
         self.contrast
     }
 
     /// Gets the configured sharpness for videos.
+    #[must_use]
     pub fn sharpness(self) -> Option<i8> {
         self.sharpness
     }
 
     /// Gets the configured saturation for videos.
+    #[must_use]
     pub fn saturation(self) -> Option<i8> {
         self.saturation
     }
 
     /// Gets the configured ISO for videos.
+    #[must_use]
     pub fn iso(self) -> Option<u16> {
         self.iso
     }
 
     /// Gets if video stabilization needs to be turned on.
+    #[must_use]
     pub fn stabilization(self) -> bool {
         self.stabilization == Some(true)
     }
 
     /// Gets the configured EV compensation for videos.
+    #[must_use]
     pub fn ev(self) -> Option<i8> {
         self.ev
     }
 
     /// Gets the configured automatic white balance for videos.
+    #[must_use]
     pub fn white_balance(self) -> Option<WhiteBalance> {
         self.white_balance
     }
@@ -641,77 +656,92 @@ pub struct Picture {
 #[cfg(feature = "raspicam")]
 impl Picture {
     /// Gets the configured picture height for the camera, in pixels.
+    #[must_use]
     pub fn height(self) -> u16 {
         self.height
     }
 
     /// Gets the configured picture width for the camera, in pixels.
+    #[must_use]
     pub fn width(self) -> u16 {
         self.width
     }
 
     /// Gets the configured picture rotation for the camera, in degrees (°).
+    #[must_use]
     pub fn rotation(self) -> Option<u16> {
         self.rotation
     }
 
     /// Gets the configured picture quality for the camera.
+    #[must_use]
     pub fn quality(self) -> u8 {
         self.quality
     }
 
     /// Gets wether the camera should add available EXIF information to pictures.
     #[cfg(feature = "gps")]
+    #[must_use]
     pub fn exif(self) -> bool {
         self.exif == Some(true)
     }
 
     /// Gets wether the camera should add raw sensor data to pictures as JPEG metadata.
+    #[must_use]
     pub fn raw(self) -> bool {
         self.raw == Some(true)
     }
 
     /// Gets the configured exposure for pictures.
+    #[must_use]
     pub fn exposure(self) -> Option<Exposure> {
         self.exposure
     }
 
     /// Gets the configured brightness for pictures.
+    #[must_use]
     pub fn brightness(self) -> Option<u8> {
         self.brightness
     }
 
     /// Gets the configured contrast for pictures.
+    #[must_use]
     pub fn contrast(self) -> Option<i8> {
         self.contrast
     }
 
     /// Gets the configured sharpness for pictures.
+    #[must_use]
     pub fn sharpness(self) -> Option<i8> {
         self.sharpness
     }
 
     /// Gets the configured saturation for pictures.
+    #[must_use]
     pub fn saturation(self) -> Option<i8> {
         self.saturation
     }
 
     /// Gets the configured ISO for pictures.
+    #[must_use]
     pub fn iso(self) -> Option<u16> {
         self.iso
     }
 
     /// Gets the configured EV compensation for pictures.
+    #[must_use]
     pub fn ev(self) -> Option<i8> {
         self.ev
     }
 
     /// Gets the configured automatic white balance for pictures.
+    #[must_use]
     pub fn white_balance(self) -> Option<WhiteBalance> {
         self.white_balance
     }
 
     /// Gets the interval between pictures during flight.
+    #[must_use]
     pub fn interval(self) -> u32 {
         self.interval
     }
@@ -719,11 +749,13 @@ impl Picture {
     /// Gets the timeout for repeated picture.
     ///
     /// Repeat each picture after these seconds (for issues with probe movement).
+    #[must_use]
     pub fn repeat(self) -> Option<u32> {
         self.repeat
     }
 
     /// Gets the timeout for first picture after launch, in seconds.
+    #[must_use]
     pub fn first_timeout(self) -> u32 {
         self.first_timeout
     }
@@ -841,16 +873,19 @@ pub struct Gps {
 #[cfg(feature = "gps")]
 impl Gps {
     /// Gets the UART serial console path.
+    #[must_use]
     pub fn uart(&self) -> &Path {
         &self.uart
     }
 
     /// Gets the serial console baud rate.
+    #[must_use]
     pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
 
     /// Gets the power GPIO pin.
+    #[must_use]
     pub fn power_gpio(&self) -> Pin {
         self.power_gpio
     }
@@ -879,31 +914,37 @@ pub struct Fona {
 #[cfg(feature = "fona")]
 impl Fona {
     /// Gets the UART serial console path.
+    #[must_use]
     pub fn uart(&self) -> &Path {
         &self.uart
     }
 
     /// Gets the serial console baud rate.
+    #[must_use]
     pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
 
     /// Gets the power GPIO pin.
+    #[must_use]
     pub fn power_gpio(&self) -> Pin {
         self.power_gpio
     }
 
     /// Gets the status GPIO pin.
+    #[must_use]
     pub fn status_gpio(&self) -> Pin {
         self.status_gpio
     }
 
     /// Gets the phone number for SMSs.
+    #[must_use]
     pub fn sms_phone(&self) -> &PhoneNumber {
         &self.sms_phone
     }
 
     /// Gets the location service for GSM location retrieval.
+    #[must_use]
     pub fn location_service(&self) -> &str {
         &self.location_service
     }
@@ -917,6 +958,7 @@ pub struct PhoneNumber(String);
 #[cfg(feature = "fona")]
 impl PhoneNumber {
     /// Gets the phone number as a string.
+    #[must_use]
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -964,11 +1006,13 @@ pub struct Telemetry {
 #[cfg(feature = "telemetry")]
 impl Telemetry {
     /// Gets the UART serial console path.
+    #[must_use]
     pub fn uart(&self) -> &Path {
         &self.uart
     }
 
     /// Gets the serial console baud rate.
+    #[must_use]
     pub fn baud_rate(&self) -> u32 {
         self.baud_rate
     }
@@ -996,13 +1040,13 @@ where
         where
             E: de::Error,
         {
-            if value >= 2 && value <= 28 {
+            if (2..=28).contains(&value) {
                 #[allow(clippy::cast_sign_loss)]
                 {
                     Ok(Pin::new(value as u64))
                 }
             } else {
-                Err(E::custom(format!("pin out of range: {}", value)))
+                Err(E::custom(format!("pin out of range: {value}")))
             }
         }
     }
@@ -1035,14 +1079,14 @@ mod tests {
     fn load_config() {
         let config = Config::from_file("config.toml").unwrap();
 
-        assert_eq!(config.debug(), true);
+        assert!(config.debug());
         #[cfg(feature = "raspicam")]
         {
             assert_eq!(config.picture().height(), 2464);
             assert_eq!(config.picture().width(), 3280);
             #[cfg(feature = "gps")]
             {
-                assert_eq!(config.picture().exif(), true);
+                assert!(config.picture().exif());
             }
             assert_eq!(config.video().height(), 1080);
             assert_eq!(config.video().width(), 1920);
@@ -1053,13 +1097,14 @@ mod tests {
         {
             assert_eq!(config.gps().uart(), Path::new("/dev/ttyAMA0"));
             assert_eq!(config.gps().baud_rate(), 9_600);
-            assert_eq!(config.gps().power_gpio().get_pin(), 3)
+            assert_eq!(config.gps().power_gpio().get_pin(), 3);
         }
     }
 
     /// Tests an invalid configuration, and the error output.
     #[test]
     #[cfg(feature = "raspicam")]
+    #[allow(clippy::too_many_lines)]
     fn config_error() {
         let flight = Flight {
             length: 300,
@@ -1251,7 +1296,7 @@ mod tests {
 
         let (verify, errors) = config.verify();
 
-        assert_eq!(verify, false);
+        assert!(!verify);
         assert_eq!(
             errors,
             "picture width must be below or equal to 3280px, found 5246px\npicture height \

@@ -1,6 +1,6 @@
 //! Acquiring fix logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{AcquiringFix, FixAcquired, OpenStratos, StateMachine};
 

@@ -1,6 +1,6 @@
 //! Waiting launch logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{GoingUp, OpenStratos, StateMachine, WaitingLaunch};
 

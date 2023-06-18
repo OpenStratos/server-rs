@@ -1,6 +1,6 @@
 //! Going up logic.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{GoingDown, GoingUp, OpenStratos, StateMachine};
 

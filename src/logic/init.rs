@@ -15,8 +15,8 @@ use std::thread;
 use std::process;
 
 #[cfg(any(feature = "gps", feature = "fona", feature = "raspicam"))]
-use failure::ResultExt;
-use log::{error, info};
+use anyhow::Context;
+use tracing::{error, info};
 
 #[cfg(any(feature = "gps", feature = "fona", feature = "raspicam"))]
 use super::error as crate_error;
@@ -44,11 +44,11 @@ impl StateMachine for OpenStratos<Init> {
     #[cfg(not(feature = "gps"))]
     type Next = OpenStratos<EternalLoop>;
 
-    #[allow(clippy::block_in_if_condition_expr)]
     fn execute(self) -> Result<Self::Next, Error> {
         check_disk_space()?;
 
         #[cfg(feature = "gps")]
+        #[allow(clippy::question_mark)]
         {
             if let Err(e) = initialize_gps() {
                 // TODO: shut down GPS.
@@ -57,6 +57,7 @@ impl StateMachine for OpenStratos<Init> {
         }
 
         #[cfg(feature = "fona")]
+        #[allow(clippy::question_mark)]
         {
             if let Err(e) = initialize_fona() {
                 // TODO: shut down GPS (if feature enabled) and FONA.
@@ -65,6 +66,7 @@ impl StateMachine for OpenStratos<Init> {
         }
 
         #[cfg(feature = "raspicam")]
+        #[allow(clippy::question_mark)]
         {
             if let Err(e) = test_raspicam() {
                 // TODO: shut down GPS (if feature enabled) and FONA (if feature enabled).
@@ -135,7 +137,7 @@ fn initialize_gps() -> Result<(), Error> {
             poisoned
                 .into_inner()
                 .initialize()
-                .context(crate_error::Init::Gps)?
+                .context(crate_error::Init::Gps)?;
         }
     }
     info!("GPS initialized.");
@@ -153,7 +155,7 @@ fn initialize_fona() -> Result<(), Error> {
             poisoned
                 .into_inner()
                 .initialize()
-                .context(crate_error::Init::Fona)?
+                .context(crate_error::Init::Fona)?;
         }
     }
     info!("Adafruit FONA GSM module initialized.");
@@ -256,7 +258,7 @@ fn test_raspicam() -> Result<(), Error> {
             poisoned
                 .into_inner()
                 .record(Duration::from_secs(10), TEST_VIDEO_FILE)
-                .context(crate_error::Raspicam::Test)?
+                .context(crate_error::Raspicam::Test)?;
         }
     }
 
@@ -265,7 +267,7 @@ fn test_raspicam() -> Result<(), Error> {
         info!("Camera test OK.");
         info!("Removing test file\u{2026}");
         remove_file(&video_path).context(crate_error::Raspicam::TestRemove {
-            test_file: video_path.clone(),
+            test_file: video_path,
         })?;
         info!("Test file removed.");
     } else {

@@ -1,6 +1,6 @@
 //! Eternal loop, if GPS is not enabled.
 
-use failure::Error;
+use anyhow::Error;
 
 use super::{EternalLoop, OpenStratos, ShutDown, StateMachine};
 
